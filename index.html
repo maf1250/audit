@@ -35,7 +35,7 @@
         .btn-primary { background: var(--primary); color: #fff; border: none; padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; cursor: pointer; transition: all var(--dur) var(--ease); }
         .btn-primary:hover { background: var(--primary-hover); }
         
-        .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 4px 12px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
+        .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 6px 16px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
         .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
 
         .input-number { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius-sm); width: 60px; text-align: center; font-family: inherit; }
@@ -254,6 +254,7 @@
             
             let regStatus = row['حالة تسجيل'] || '';
             let traineeStatus = row['حالة المتدرب'] || '';
+            let grade = row['الدرجة'] ? row['الدرجة'].toString().trim() : ''; // قراءة عمود الدرجة
             
             if(!traineesMap[id]) {
                 traineesMap[id] = {
@@ -266,10 +267,11 @@
                     crns: {}, 
                     courseCodes: new Set(), 
                     weeklyCrnAbsences: {},
-                    weekStatuses: {}, // تم التهيئة هنا لتفادي الخطأ
+                    weekStatuses: {}, 
                     weeksAbsentCount: 0,
                     totalUniqueCourses: 0,
-                    totalDeprivedCourses: 0
+                    totalDeprivedCourses: 0,
+                    totalWeeklyHours: 0 // إجمالي ساعات المتدرب في الأسبوع
                 };
             }
             
@@ -278,22 +280,24 @@
             let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
 
             let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي');
+            let isDeprived = (grade === 'ح'); // الحرمان الرسمي من عمود الدرجة
 
             if(crn && courseCode && !isCourseExcluded) {
                 traineesMap[id].courseCodes.add(courseCode);
                 
                 if (!traineesMap[id].crns[crn]) {
                     let ch = courseHours[crn] || 0;
+                    traineesMap[id].totalWeeklyHours += ch; // جمع الساعات الأسبوعية
+                    
                     traineesMap[id].crns[crn] = {
                         code: courseCode,
                         name: courseName,
                         hours: ch,
                         absHours: 0,
-                        isOfficiallyDeprived: false
+                        isOfficiallyDeprived: isDeprived
                     };
-                }
-                
-                if (regStatus.includes('حرمان')) {
+                } else if (isDeprived) {
+                    // إذا تكرر المقرر (عملي/نظري) وكان أحدهما محروم، يُحرم في الاثنين
                     traineesMap[id].crns[crn].isOfficiallyDeprived = true;
                 }
             }
@@ -319,15 +323,12 @@
             }
 
             if(!traineesMap[id].weeklyCrnAbsences[weekNum]) {
-                traineesMap[id].weeklyCrnAbsences[weekNum] = {};
-            }
-            if(!traineesMap[id].weeklyCrnAbsences[weekNum][crn]) {
-                traineesMap[id].weeklyCrnAbsences[weekNum][crn] = { hours: 0, isExcusedOnly: true };
+                traineesMap[id].weeklyCrnAbsences[weekNum] = { totalAbsHours: 0, hasUnexcused: false };
             }
             
-            traineesMap[id].weeklyCrnAbsences[weekNum][crn].hours += absHours;
+            traineesMap[id].weeklyCrnAbsences[weekNum].totalAbsHours += absHours;
             if(excuse.includes('بدون عذر')) {
-                traineesMap[id].weeklyCrnAbsences[weekNum][crn].isExcusedOnly = false;
+                traineesMap[id].weeklyCrnAbsences[weekNum].hasUnexcused = true;
             }
         });
 
@@ -353,6 +354,7 @@
                 let crnData = t.crns[crn];
                 let totalCrnHours = crnData.hours * totalWeeks;
                 
+                // الحرمان يعتمد حصرياً على عمود الدرجة (ح)
                 if (crnData.isOfficiallyDeprived) {
                     t.deprivedCourseCodes.add(crnData.code);
                 }
@@ -378,41 +380,34 @@
 
             t.weeksAbsentCount = 0;
             
-            let activeCrns = Object.keys(t.crns);
-            let totalCoursesCount = activeCrns.length;
-
+            // حساب حالة الأسابيع (المنطق الذكي المعتمد على الساعات)
             for(let w=1; w<=totalWeeks; w++) {
-                let absentCount = 0;
-                let presentCount = 0;
-                let probableCount = 0;
+                let wData = t.weeklyCrnAbsences[w];
+                let totalAbsW = wData ? wData.totalAbsHours : 0;
+                let hasUnexcused = wData ? wData.hasUnexcused : false;
 
-                activeCrns.forEach(crn => {
-                    let wData = t.weeklyCrnAbsences[w] ? t.weeklyCrnAbsences[w][crn] : null;
-                    let trainerTookAttendance = crnHasData[crn] && crnHasData[crn][w];
-
-                    if (wData && wData.hours > 0 && !wData.isExcusedOnly) {
-                        absentCount++; 
-                    } else if (trainerTookAttendance) {
-                        presentCount++; 
-                    } else {
-                        probableCount++; 
-                    }
-                });
-
-                if (totalCoursesCount === 0) {
+                if (t.totalWeeklyHours === 0) {
                     t.weekStatuses[w] = "-";
-                } else if (absentCount === totalCoursesCount) {
+                } else if (totalAbsW >= t.totalWeeklyHours && hasUnexcused) {
                     t.weekStatuses[w] = "كامل";
                     t.weeksAbsentCount++;
-                } else if (absentCount > 0) {
+                } else if (totalAbsW > 0 && hasUnexcused) {
                     t.weekStatuses[w] = "جزئي";
                     t.weeksAbsentCount++;
-                } else if (presentCount > 0) {
-                    t.weekStatuses[w] = "-"; 
-                } else if (probableCount === totalCoursesCount) {
-                    t.weekStatuses[w] = "محتمل";
                 } else {
-                    t.weekStatuses[w] = "محتمل";
+                    // إذا لم يكن هناك غياب بدون عذر، نتحقق هل قام المدربون بالتحضير؟
+                    let attendanceTaken = false;
+                    Object.keys(t.crns).forEach(crn => {
+                        if (crnHasData[crn] && crnHasData[crn][w]) {
+                            attendanceTaken = true;
+                        }
+                    });
+
+                    if (attendanceTaken) {
+                        t.weekStatuses[w] = "-"; // حاضر
+                    } else {
+                        t.weekStatuses[w] = "محتمل"; // لم يتم التحضير
+                    }
                 }
             }
 
@@ -497,12 +492,13 @@
         htmlExc += `</tbody></table>`;
         document.getElementById('table-excluded').innerHTML = htmlExc;
 
-        // 6. صفحة نسبة الغياب والواتساب
+        // 6. صفحة نسبة الغياب والواتساب (تم تعديل الأعمدة)
         let htmlPerc = `<table><thead><tr>
             <th>رقم المتدرب</th>
             <th>اسم المتدرب</th>
-            <th>المقرر</th>
-            <th>الشعبة</th>
+            <th>رمز المقرر</th>
+            <th>اسم المقرر</th>
+            <th>الشعبة (CRN)</th>
             <th>نسبة الغياب</th>
             <th>الحالة</th>
             <th>إجراء</th>
@@ -515,7 +511,9 @@
             
             let statusBadge = '';
             if (p.isDeprived) {
-                statusBadge = '<span class="badge badge-danger">محروم</span>';
+                statusBadge = '<span class="badge badge-danger">محروم (ح)</span>';
+            } else if (p.absPercentage >= 20) {
+                statusBadge = '<span class="badge badge-danger">تجاوز 20%</span>';
             } else if (p.absPercentage >= 15) {
                 statusBadge = '<span class="badge badge-warning">إنذار</span>';
             } else {
@@ -525,6 +523,7 @@
             htmlPerc += `<tr>
                 <td class="mono">${p.traineeId}</td>
                 <td>${p.traineeName}</td>
+                <td class="mono">${p.courseCode}</td>
                 <td>${p.courseName}</td>
                 <td class="mono">${p.crn}</td>
                 <td class="mono text-center" style="color: ${p.absPercentage >= 15 ? 'var(--danger)' : 'var(--text-primary)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td>
