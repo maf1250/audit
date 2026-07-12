@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         
-        :root,[data-theme=dark]{--bg-base:#131a1d;--bg-surface:#1a2226;--bg-elevated:#222c31;--bg-hover:#2a363c;--bg-inset:#0e1416;--border:#2c383e;--border-strong:#3a474e;--text-primary:#e8eeef;--text-secondary:#9fb0b5;--text-muted:#6d7e84;--primary:#34c2b4;--primary-hover:#4ed2c5;--primary-subtle:#2bb5a824;--primary-border:#2bb5a866;--on-primary:#07211e;--success:#5cb86c;--success-subtle:#5cb86c26;--warning:#d9a93e;--warning-subtle:#d9a93e26;--danger:#d96868;--danger-subtle:#d9686826;--info:#5da4c4;--info-subtle:#5da4c426;--font-family:"Cairo", sans-serif;--fs-xs:.6875rem;--fs-sm:.75rem;--fs-base:.8125rem;--fs-md:.875rem;--fs-lg:1rem;--fs-xl:1.25rem;--fs-2xl:1.5rem;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:999px;--ease:cubic-bezier(.4, 0, .2, 1);--dur:.15s;--header-h:56px;}
+        :root,[data-theme=dark]{--bg-base:#131a1d;--bg-surface:#1a2226;--bg-elevated:#222c31;--bg-hover:#2a363c;--bg-inset:#0e1416;--border:#2c383e;--border-strong:#3a474e;--text-primary:#e8eeef;--text-secondary:#9fb0b5;--text-muted:#6d7e84;--primary:#34c2b4;--primary-hover:#4ed2c5;--primary-subtle:#2bb5a824;--primary-border:#2bb5a866;--on-primary:#07211e;--success:#5cb86c;--success-subtle:#5cb86c26;--warning:#d9a93e;--warning-subtle:#d9a93e26;--danger:#d96868;--danger-subtle:#d9686826;--info:#5da4c4;--info-subtle:#5da4c426;--font-family:"Cairo", sans-serif;--fs-xs:.6875rem;--fs-sm:.75rem;--fs-base:.8125rem;--fs-md:.875rem;--fs-lg:1rem;--fs-xl:1.25rem;--fs-2xl:1.5rem;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:999px;--ease:cubic-bezier(.4, 0, .2, 1);--dur:.15s;--header-h:65px;}
         
         body { font-family: var(--font-family); font-size: var(--fs-base); color: var(--text-primary); background: var(--bg-base); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         * { box-sizing: border-box; }
@@ -37,13 +37,19 @@
         .info-card h4 { margin: 0 0 var(--sp-3) 0; color: var(--info); font-size: var(--fs-md); }
         .info-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--sp-3); color: var(--text-secondary); }
         .info-card li { display: flex; align-items: center; gap: var(--sp-3); line-height: 1.5; }
-        .info-badge-wrapper { flex-shrink: 0; width: 60px; text-align: center; }
+        .info-badge-wrapper { flex-shrink: 0; width: 75px; text-align: center; }
 
         .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 6px 16px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all var(--dur) var(--ease); white-space: nowrap; }
         .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
 
         .input-number { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius-sm); width: 60px; text-align: center; font-family: inherit; }
         
+        /* حقل البحث */
+        .search-box { position: relative; display: flex; align-items: center; }
+        .input-text { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px 8px 32px; border-radius: var(--radius-sm); width: 250px; font-family: inherit; font-size: 13px; transition: all var(--dur) var(--ease); }
+        .input-text:focus { outline: none; border-color: var(--primary); background: var(--bg-elevated); box-shadow: 0 0 0 2px var(--primary-subtle); }
+        .search-icon { position: absolute; left: 10px; color: var(--text-muted); width: 16px; height: 16px; }
+
         ._tableWrapper { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; background: var(--bg-surface); max-height: calc(100vh - 150px); }
         
         /* الجداول */
@@ -106,7 +112,11 @@
         <div class="_header">
             <h3 id="pageTitle" style="margin: 0;">رفع البيانات</h3>
             <div class="gap-2">
-                <label>عدد أسابيع الفصل:</label>
+                <div class="search-box">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" class="input-text" placeholder="بحث بالاسم أو الرقم الجامعي..." onkeyup="filterTables()">
+                </div>
+                <label style="margin-right: 15px;">عدد أسابيع الفصل:</label>
                 <input type="number" id="totalWeeks" class="input-number" value="18" onchange="processData()">
             </div>
         </div>
@@ -132,7 +142,7 @@
                 </div>
 
                 <div class="info-card">
-                    <h4>دليل وقراءة حالات الغياب الأسبوعي:</h4>
+                    <h4>دليل وقراءة حالات ونسب الغياب:</h4>
                     <ul>
                         <li>
                             <div class="info-badge-wrapper"><span class="badge badge-danger">كامل</span></div>
@@ -149,6 +159,15 @@
                         <li>
                             <div class="info-badge-wrapper"><span style="color:var(--text-muted); font-weight:bold; font-size: 16px;">-</span></div>
                             <div id="legend-present">تعني أن المتدرب <strong>حاضر</strong> (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).</div>
+                        </li>
+                        <hr style="border: 0; border-top: 1px dashed var(--border); width: 100%; margin: 8px 0;">
+                        <li>
+                            <div class="info-badge-wrapper"><span class="badge badge-danger">حرمان (ح)</span></div>
+                            <div id="legend-deprived">تعني أن المتدرب تجاوز الحد المسموح للغياب وتم رصد درجة الحرمان (ح) له رسمياً في النظام.</div>
+                        </li>
+                        <li>
+                            <div class="info-badge-wrapper"><span class="badge badge-danger">تجاوز 20%</span></div>
+                            <div id="legend-twenty">تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).</div>
                         </li>
                     </ul>
                 </div>
@@ -228,6 +247,37 @@
         return p;
     };
     
+    // دالة البحث وتصفية الجداول الفورية
+    window.filterTables = function() {
+        let input = document.getElementById('searchInput');
+        let filter = input.value.trim().toLowerCase();
+        
+        // الأقسام التي تحتوي على جداول يجب تصفيتها
+        let tabs = ['table-main', 'table-matrix', 'table-percentages', 'table-fullweek', 'table-deprived-all', 'table-deprived-except', 'table-excluded'];
+        
+        tabs.forEach(tabId => {
+            let table = document.querySelector(`#${tabId} table`);
+            if (table) {
+                let trs = table.querySelectorAll('tbody tr');
+                trs.forEach(tr => {
+                    // افتراض أن العمود الأول هو الرقم والعمود الثاني هو الاسم
+                    let idTd = tr.getElementsByTagName("td")[0];
+                    let nameTd = tr.getElementsByTagName("td")[1];
+                    if (idTd || nameTd) {
+                        let idVal = idTd.textContent || idTd.innerText;
+                        let nameVal = nameTd.textContent || nameTd.innerText;
+                        
+                        if (idVal.toLowerCase().indexOf(filter) > -1 || nameVal.toLowerCase().indexOf(filter) > -1) {
+                            tr.style.display = "";
+                        } else {
+                            tr.style.display = "none";
+                        }
+                    }
+                });
+            }
+        });
+    };
+
     window.updateUIText = function() {
         document.getElementById('nav-main').innerText = isFemale ? 'المتدربات (الرئيسي)' : 'المتدربون (الرئيسي)';
         document.getElementById('nav-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبين والمطوي قيدهم';
@@ -247,6 +297,15 @@
         document.getElementById('legend-present').innerHTML = isFemale
             ? 'تعني أن المتدربة حاضرة (تم تحضيرها في محاضرة واحدة على الأقل ولم يسجل لها أي غياب).'
             : 'تعني أن المتدرب حاضر (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).';
+
+        // الحرمان وتجاوز النسبة
+        document.getElementById('legend-deprived').innerHTML = isFemale
+            ? 'تعني أن المتدربة تجاوزت الحد المسموح للغياب وتم رصد درجة الحرمان (ح) لها رسمياً في النظام.'
+            : 'تعني أن المتدرب تجاوز الحد المسموح للغياب وتم رصد درجة الحرمان (ح) له رسمياً في النظام.';
+
+        document.getElementById('legend-twenty').innerHTML = isFemale
+            ? 'تعني أن نسبة غياب المتدربة في المقرر بلغت 20% فأكثر (مؤهلة للحرمان إذا لم تُقبل أعذارها).'
+            : 'تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).';
 
         let activeTab = document.querySelector('._navItem.active');
         if (activeTab && activeTab.id !== 'nav-main' && activeTab.id !== 'nav-excluded') {
@@ -554,7 +613,7 @@
         htmlMain += `</tbody></table>`;
         document.getElementById('table-main').innerHTML = htmlMain;
 
-        // 2. مصفوفة الغياب (الجديدة)
+        // 2. مصفوفة الغياب (مع دمج النسبة للحرمان)
         let htmlMatrix = `<table><thead><tr>
             <th class="nowrap">${colId}</th>
             <th class="nowrap name-cell">${colName}</th>
@@ -575,7 +634,8 @@
                 
                 if (c.isOfficiallyDeprived) {
                     cardClass = 'c-danger';
-                    pctText = isFemale ? 'محرومة (ح)' : 'محروم (ح)';
+                    let depText = isFemale ? 'محرومة (ح)' : 'محروم (ح)';
+                    pctText = `${depText} | ${c.absPercentage.toFixed(1)}%`;
                 } else if (c.absPercentage >= 20) {
                     cardClass = 'c-danger';
                 } else if (c.absPercentage >= 15) {
@@ -669,6 +729,9 @@
         });
         htmlPerc += `</tbody></table>`;
         document.getElementById('table-percentages').innerHTML = htmlPerc;
+
+        // تطبيق فلتر البحث فور انتهاء بناء الجداول (للحفاظ على البحث إذا تم رفع ملف جديد)
+        window.filterTables();
     };
 </script>
 </body>
