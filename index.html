@@ -35,7 +35,7 @@
         .btn-primary { background: var(--primary); color: #fff; border: none; padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; cursor: pointer; transition: all var(--dur) var(--ease); }
         .btn-primary:hover { background: var(--primary-hover); }
         
-        .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 4px 12px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; transition: all var(--dur) var(--ease); }
+        .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 6px 16px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
         .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
 
         .input-number { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius-sm); width: 60px; text-align: center; font-family: inherit; }
@@ -120,6 +120,7 @@
     let rawData = { sf01: [], ss01: [], so04: [] };
     let processedData = { active: [], excluded: [], percentages: [] };
     let courseHours = {}; 
+    let crnHasData = {}; // لتتبع هل المدرب حضّر الشعبة في هذا الأسبوع أم لا
     let semesterStartDay = 0; 
 
     function switchTab(tabId) {
@@ -146,6 +147,7 @@
         reader.readAsArrayBuffer(file);
     }
 
+    // دالة حساب الساعات بناءً على الوقت (نفس معادلة الإكسل الخاصة بك)
     function calculateContactHours(timeStr) {
         if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes('-')) return 0;
         let parts = timeStr.split('-');
@@ -190,34 +192,23 @@
 
         const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
 
-        // 1. استخراج ساعات المقررات من SS01 بدقة
+        // 1. استخراج ساعات المقررات من SS01
         courseHours = {};
-        let crnDays = {}; // لمنع تكرار الساعات لنفس اليوم
+        let crnDays = {}; 
         
         rawData.ss01.forEach(row => {
             let crn = row['الرقم المرجعي'] || row['CRN'];
-            let contactHoursCol = row['ساعات الاتصال'];
             let time = row['الوقت'] || row['فترة المحاضرة'];
             let day = row['اليوم'] || '';
             
-            if (crn) {
-                // إذا كان عمود ساعات الاتصال موجوداً، نأخذ القيمة الأكبر للشعبة (لتفادي جمع المكرر)
-                if (contactHoursCol !== undefined && contactHoursCol !== "") {
-                    let h = parseFloat(contactHoursCol);
-                    if (!courseHours[crn] || h > courseHours[crn]) {
-                        courseHours[crn] = h;
-                    }
-                } 
-                // إذا لم يوجد، نحسب من الوقت مع منع تكرار نفس اليوم
-                else if (time) {
-                    let uniqueKey = day + time;
-                    if (!crnDays[crn]) crnDays[crn] = new Set();
-                    
-                    if (!crnDays[crn].has(uniqueKey)) {
-                        crnDays[crn].add(uniqueKey);
-                        let h = calculateContactHours(time);
-                        courseHours[crn] = (courseHours[crn] || 0) + h;
-                    }
+            if (crn && time) {
+                let uniqueKey = day + time;
+                if (!crnDays[crn]) crnDays[crn] = new Set();
+                
+                if (!crnDays[crn].has(uniqueKey)) {
+                    crnDays[crn].add(uniqueKey);
+                    let h = calculateContactHours(time);
+                    courseHours[crn] = (courseHours[crn] || 0) + h;
                 }
             }
         });
@@ -231,14 +222,29 @@
         });
         semesterStartDay = minDay;
 
-        // 3. تجهيز بيانات المتدربين من SF01
+        // 3. بناء سجل تحضير المدربين (لمعرفة الغياب المحتمل)
+        crnHasData = {};
+        rawData.so04.forEach(row => {
+            let crn = row['الرقم المرجعي'];
+            let dateStr = row['تاريخ المحاضرة'];
+            if(!crn || !dateStr) return;
+
+            let dayNum = parseHijriToDays(dateStr);
+            let weekNum = Math.floor((dayNum - semesterStartDay) / 7) + 1;
+            if(weekNum < 1) weekNum = 1;
+            if(weekNum > totalWeeks) weekNum = totalWeeks;
+
+            if(!crnHasData[crn]) crnHasData[crn] = {};
+            crnHasData[crn][weekNum] = true; // المدرب قام بالتحضير في هذا الأسبوع
+        });
+
+        // 4. تجهيز بيانات المتدربين من SF01
         let traineesMap = {};
         rawData.sf01.forEach(row => {
             let id = row['رقم المتدرب'];
             if(!id) return;
             
             let regStatus = row['حالة تسجيل'] || '';
-            let traineeStatus = row['حالة المتدرب'] || '';
             
             if(!traineesMap[id]) {
                 traineesMap[id] = {
@@ -247,11 +253,9 @@
                     major: row['التخصص'],
                     phone: row['رقم الجوال'],
                     regStatus: regStatus,
-                    traineeStatus: traineeStatus,
                     crns: {}, 
                     courseCodes: new Set(), 
-                    totalWeeklyHours: 0,
-                    absencesByWeek: {}
+                    weeklyCrnAbsences: {} // weekNum -> crn -> absHours
                 };
             }
             
@@ -259,14 +263,14 @@
             let courseCode = row['المقرر'];
             let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
 
-            if(crn && courseCode) {
+            // استبعاد المقررات المنسحب منها أو المطوي قيدها من جدول المتدرب
+            let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي');
+
+            if(crn && courseCode && !isCourseExcluded) {
                 traineesMap[id].courseCodes.add(courseCode);
                 
-                // منع تكرار الشعبة لنفس المتدرب في حساب الساعات الأسبوعية
                 if (!traineesMap[id].crns[crn]) {
                     let ch = courseHours[crn] || 0;
-                    traineesMap[id].totalWeeklyHours += ch;
-                    
                     traineesMap[id].crns[crn] = {
                         code: courseCode,
                         name: courseName,
@@ -283,7 +287,7 @@
             }
         });
 
-        // 4. معالجة الغياب من SO04
+        // 5. معالجة الغياب من SO04
         rawData.so04.forEach(row => {
             let id = row['رقم المتدرب'];
             let crn = row['الرقم المرجعي'];
@@ -291,56 +295,62 @@
             let absHours = parseFloat(row['ساعات الغياب']) || 0;
             let excuse = row['نوع العذر'] || '';
             
-            if(!traineesMap[id] || absHours === 0) return;
+            if(!traineesMap[id] || !traineesMap[id].crns[crn] || absHours === 0) return;
 
             let dayNum = parseHijriToDays(dateStr);
             let weekNum = Math.floor((dayNum - semesterStartDay) / 7) + 1;
             if(weekNum < 1) weekNum = 1;
             if(weekNum > totalWeeks) weekNum = totalWeeks;
 
-            // تسجيل الغياب للشعبة
-            if(excuse.includes('بدون عذر') && traineesMap[id].crns[crn]) {
+            // تسجيل الغياب للشعبة (لحساب النسبة)
+            if(excuse.includes('بدون عذر')) {
                 traineesMap[id].crns[crn].absHours += absHours;
             }
 
-            // تسجيل الغياب للأسبوع
-            if(!traineesMap[id].absencesByWeek[weekNum]) {
-                traineesMap[id].absencesByWeek[weekNum] = { hours: 0, hasUnexcused: false };
+            // تسجيل الغياب الأسبوعي لكل شعبة
+            if(!traineesMap[id].weeklyCrnAbsences[weekNum]) {
+                traineesMap[id].weeklyCrnAbsences[weekNum] = {};
+            }
+            if(!traineesMap[id].weeklyCrnAbsences[weekNum][crn]) {
+                traineesMap[id].weeklyCrnAbsences[weekNum][crn] = { hours: 0, isExcusedOnly: true };
             }
             
-            traineesMap[id].absencesByWeek[weekNum].hours += absHours;
+            traineesMap[id].weeklyCrnAbsences[weekNum][crn].hours += absHours;
             if(excuse.includes('بدون عذر')) {
-                traineesMap[id].absencesByWeek[weekNum].hasUnexcused = true;
+                traineesMap[id].weeklyCrnAbsences[weekNum][crn].isExcusedOnly = false;
             }
         });
 
-        // 5. تصنيف المتدربين وحساب الحرمان
+        // 6. تصنيف المتدربين وحساب الحرمان
         processedData.active = [];
         processedData.excluded = [];
         processedData.percentages = [];
 
         Object.values(traineesMap).forEach(t => {
             
-            // فلترة المنسحبين والمطوي قيدهم بناءً على العمودين
-            let isExcluded = t.regStatus.includes('انسحاب') || t.regStatus.includes('مطوي') || 
-                             t.traineeStatus.includes('انسحاب') || t.traineeStatus.includes('مطوي');
+            // إذا كان المتدرب منسحب أو مطوي قيده بالكامل (لا يوجد لديه مقررات نشطة)
+            let isFullyExcluded = t.regStatus.includes('انسحاب') || t.regStatus.includes('مطوي');
+
+            if(isFullyExcluded || t.courseCodes.size === 0) {
+                processedData.excluded.push(t);
+                return; // تخطي باقي الحسابات للمنسحبين
+            }
 
             t.deprivedCourseCodes = new Set(); 
 
             Object.keys(t.crns).forEach(crn => {
                 let crnData = t.crns[crn];
                 let totalCrnHours = crnData.hours * totalWeeks;
-                let limit = totalCrnHours * 0.20; 
                 
-                // الحرمان إما رسمي من النظام أو رياضي
-                crnData.isDeprived = crnData.isOfficiallyDeprived || (limit > 0 && crnData.absHours >= limit);
-                crnData.absPercentage = totalCrnHours > 0 ? (crnData.absHours / totalCrnHours) * 100 : 0;
-
-                if (crnData.isDeprived) {
+                // الحرمان يعتمد حصرياً على حالة رايات الرسمية
+                if (crnData.isOfficiallyDeprived) {
                     t.deprivedCourseCodes.add(crnData.code);
                 }
 
-                if(!isExcluded && crnData.absPercentage > 0) {
+                // حساب النسبة الرياضية لصفحة الإنذارات
+                crnData.absPercentage = totalCrnHours > 0 ? (crnData.absHours / totalCrnHours) * 100 : 0;
+
+                if(crnData.absPercentage > 0) {
                     processedData.percentages.push({
                         traineeName: t.name,
                         traineeId: t.id,
@@ -349,7 +359,7 @@
                         courseName: crnData.name,
                         crn: crn,
                         absPercentage: crnData.absPercentage,
-                        isDeprived: crnData.isDeprived
+                        isDeprived: crnData.isOfficiallyDeprived
                     });
                 }
             });
@@ -357,31 +367,52 @@
             t.totalUniqueCourses = t.courseCodes.size;
             t.totalDeprivedCourses = t.deprivedCourseCodes.size;
 
-            // حساب أسابيع الغياب
+            // حساب حالة الأسابيع (المنطق الذكي)
             t.weeksAbsentCount = 0;
             t.weekStatuses = {}; 
             
+            let activeCrns = Object.keys(t.crns);
+            let totalCoursesCount = activeCrns.length;
+
             for(let w=1; w<=totalWeeks; w++) {
-                let wData = t.absencesByWeek[w];
-                if(!wData || !wData.hasUnexcused) {
-                    t.weekStatuses[w] = "محتمل"; 
-                } else {
-                    t.weeksAbsentCount++;
-                    if(wData.hours >= t.totalWeeklyHours && t.totalWeeklyHours > 0) {
-                        t.weekStatuses[w] = "كامل";
+                let absentCount = 0;
+                let presentCount = 0;
+                let probableCount = 0;
+
+                activeCrns.forEach(crn => {
+                    let wData = t.weeklyCrnAbsences[w] ? t.weeklyCrnAbsences[w][crn] : null;
+                    let trainerTookAttendance = crnHasData[crn] && crnHasData[crn][w];
+
+                    if (wData && wData.hours > 0 && !wData.isExcusedOnly) {
+                        absentCount++; // غاب بدون عذر
+                    } else if (trainerTookAttendance) {
+                        presentCount++; // المدرب حضّر، والمتدرب لم يغب = حاضر
                     } else {
-                        t.weekStatuses[w] = "جزئي";
+                        probableCount++; // المدرب لم يحضّر = محتمل
                     }
+                });
+
+                if (totalCoursesCount === 0) {
+                    t.weekStatuses[w] = "-";
+                } else if (absentCount === totalCoursesCount) {
+                    t.weekStatuses[w] = "كامل";
+                    t.weeksAbsentCount++;
+                } else if (absentCount > 0) {
+                    t.weekStatuses[w] = "جزئي";
+                    t.weeksAbsentCount++;
+                } else if (presentCount > 0) {
+                    t.weekStatuses[w] = "-"; // حاضر في بعضها ومحتمل في الباقي
+                } else if (probableCount === totalCoursesCount) {
+                    t.weekStatuses[w] = "محتمل";
+                } else {
+                    t.weekStatuses[w] = "محتمل";
                 }
             }
 
-            if(isExcluded) {
-                processedData.excluded.push(t);
-            } else {
-                processedData.active.push(t);
-            }
+            processedData.active.push(t);
         });
 
+        // ترتيب صفحة النسب تنازلياً حسب نسبة الغياب
         processedData.percentages.sort((a, b) => b.absPercentage - a.absPercentage);
 
         renderTables(totalWeeks);
@@ -423,7 +454,7 @@
                 if(st === 'كامل') badge = '<span class="badge badge-danger">كامل</span>';
                 else if(st === 'محتمل') badge = '<span class="badge badge-info">محتمل</span>';
                 else if(st === 'جزئي') badge = '<span class="badge badge-warning">جزئي</span>';
-                else badge = '-';
+                else badge = '<span style="color:var(--text-muted)">-</span>';
                 html += `<td class="text-center">${badge}</td>`;
             }
             html += `</tr>`;
@@ -464,9 +495,8 @@
         let htmlPerc = `<table><thead><tr>
             <th>رقم المتدرب</th>
             <th>اسم المتدرب</th>
-            <th>رمز المقرر</th>
-            <th>اسم المقرر</th>
-            <th>الشعبة (CRN)</th>
+            <th>المقرر</th>
+            <th>الشعبة</th>
             <th>نسبة الغياب</th>
             <th>الحالة</th>
             <th>إجراء</th>
@@ -477,16 +507,28 @@
             let msg = `عزيزي ${p.traineeName}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n${p.courseName}\n هي ${p.absPercentage.toFixed(1)}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب`;
             let waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(msg)}`;
             
+            // تحديد الحالة (محروم رسمي، إنذار >= 15%، أو طبيعي)
+            let statusBadge = '';
+            if (p.isDeprived) {
+                statusBadge = '<span class="badge badge-danger">محروم</span>';
+            } else if (p.absPercentage >= 15) {
+                statusBadge = '<span class="badge badge-warning">إنذار</span>';
+            } else {
+                statusBadge = '<span class="badge badge-success">طبيعي</span>';
+            }
+
             htmlPerc += `<tr>
                 <td class="mono">${p.traineeId}</td>
                 <td>${p.traineeName}</td>
-                <td class="mono">${p.courseCode}</td>
                 <td>${p.courseName}</td>
                 <td class="mono">${p.crn}</td>
-                <td class="mono text-center" style="color: ${p.isDeprived ? 'var(--danger)' : 'var(--warning)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td>
-                <td class="text-center"><span class="badge ${p.isDeprived ? 'badge-danger' : 'badge-warning'}">${p.isDeprived ? 'محروم' : 'إنذار'}</span></td>
+                <td class="mono text-center" style="color: ${p.absPercentage >= 15 ? 'var(--danger)' : 'var(--text-primary)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td>
+                <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
-                    <a href="${waUrl}" target="_blank" class="btn-whatsapp">إرسال واتساب</a>
+                    <a href="${waUrl}" target="_blank" class="btn-whatsapp">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        إرسال واتساب
+                    </a>
                 </td>
             </tr>`;
         });
