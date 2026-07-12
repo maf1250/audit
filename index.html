@@ -46,7 +46,7 @@
         
         ._tableWrapper { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; background: var(--bg-surface); max-height: calc(100vh - 150px); }
         
-        /* تعديل الجداول لحل مشكلة تداخل الأعمدة */
+        /* تعديل الجداول لحل مشكلة تداخل الأعمدة وتوسيع عمود الاسم */
         table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); text-align: right; }
         th, td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); vertical-align: middle; }
         th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 700; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
@@ -65,6 +65,9 @@
         
         .mono { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: embed; white-space: nowrap; }
         .nowrap { white-space: nowrap; }
+        
+        /* كلاس مخصص لعمود اسم المتدرب لزيادة عرضه */
+        .name-cell { min-width: 230px !important; white-space: nowrap; }
         
         /* حقوق الإعداد */
         .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
@@ -127,19 +130,19 @@
                     <ul>
                         <li>
                             <div class="info-badge-wrapper"><span class="badge badge-danger">كامل</span></div>
-                            <div>تعني أن المتدرب انقطع وغاب غياباً تاماً وبنسبة 100% عن <strong>جميع</strong> مقرراته المسجلة في ذلك الأسبوع.</div>
+                            <div id="legend-full">تعني أن المتدرب انقطع وغاب غياباً تاماً وبنسبة 100% عن <strong>جميع</strong> مقرراته المسجلة في ذلك الأسبوع.</div>
                         </li>
                         <li>
                             <div class="info-badge-wrapper"><span class="badge badge-warning">جزئي</span></div>
-                            <div>تعني أن المتدرب غاب عن بعض المقررات أو المحاضرات، ولكنه <strong>حضر</strong> في مقررات أخرى خلال نفس الأسبوع.</div>
+                            <div id="legend-partial">تعني أن المتدرب غاب عن بعض المقررات أو المحاضرات، ولكنه <strong>حضر</strong> في مقررات أخرى خلال نفس الأسبوع.</div>
                         </li>
                         <li>
                             <div class="info-badge-wrapper"><span class="badge badge-info">محتمل</span></div>
-                            <div>تعني أنه لم يُسجل للمتدرب أي غياب، وفي نفس الوقت <strong>لم يقم أي مدرب بالتحضير</strong> في نظامه، لذا يحتمل حضوره أو غيابه.</div>
+                            <div id="legend-prob">تعني أنه لم يُسجل للمتدرب أي غياب، وفي نفس الوقت <strong>لم يقم أي مدرب بالتحضير</strong> في نظامه، لذا يحتمل حضوره أو غيابه.</div>
                         </li>
                         <li>
                             <div class="info-badge-wrapper"><span style="color:var(--text-muted); font-weight:bold; font-size: 16px;">-</span></div>
-                            <div>تعني أن المتدرب <strong>حاضر</strong> (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).</div>
+                            <div id="legend-present">تعني أن المتدرب <strong>حاضر</strong> (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).</div>
                         </li>
                     </ul>
                 </div>
@@ -156,7 +159,6 @@
 </div>
 
 <script>
-    // استخدام var لضمان عدم حدوث خطأ عند الاستضافة على بعض المنصات
     var rawData = { sf01: [], ss01: [], so04: [] };
     var processedData = { active: [], excluded: [], percentages: [] };
     var courseHours = {}; 
@@ -223,6 +225,23 @@
         document.getElementById('nav-main').innerText = isFemale ? 'المتدربات (الرئيسي)' : 'المتدربون (الرئيسي)';
         document.getElementById('nav-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبين والمطوي قيدهم';
         
+        // تحديث الصندوق التوضيحي بناءً على الجنس
+        document.getElementById('legend-full').innerHTML = isFemale 
+            ? 'تعني أن المتدربة انقطعت وغابت غياباً تاماً وبنسبة 100% عن جميع مقرراتها المسجلة في ذلك الأسبوع.'
+            : 'تعني أن المتدرب انقطع وغاب غياباً تاماً وبنسبة 100% عن جميع مقرراته المسجلة في ذلك الأسبوع.';
+            
+        document.getElementById('legend-partial').innerHTML = isFemale
+            ? 'تعني أن المتدربة غابت عن بعض المقررات أو المحاضرات، ولكنها حضرت في مقررات أخرى خلال نفس الأسبوع.'
+            : 'تعني أن المتدرب غاب عن بعض المقررات أو المحاضرات، ولكنه حضر في مقررات أخرى خلال نفس الأسبوع.';
+            
+        document.getElementById('legend-prob').innerHTML = isFemale
+            ? 'تعني أنه لم يُسجل للمتدربة أي غياب، وفي نفس الوقت لم تقم أي مدربة بالتحضير في نظامها، لذا يحتمل حضورها أو غيابها.'
+            : 'تعني أنه لم يُسجل للمتدرب أي غياب، وفي نفس الوقت لم يقم أي مدرب بالتحضير في نظامه، لذا يحتمل حضوره أو غيابه.';
+            
+        document.getElementById('legend-present').innerHTML = isFemale
+            ? 'تعني أن المتدربة حاضرة (تم تحضيرها في محاضرة واحدة على الأقل ولم يسجل لها أي غياب).'
+            : 'تعني أن المتدرب حاضر (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).';
+
         let activeTab = document.querySelector('._navItem.active');
         if (activeTab && activeTab.id !== 'nav-main' && activeTab.id !== 'nav-excluded') {
             // تجاهل العناوين الثابتة
@@ -471,78 +490,93 @@
     };
 
     window.renderTables = function(totalWeeks) {
-        const createThead = () => {
+        // ميزة إخفاء بعض الأعمدة لتبويبة المنسحبين
+        const createThead = (isExcluded = false) => {
             let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب';
             let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
             
             let html = `<thead><tr>
                 <th class="nowrap">${colId}</th>
-                <th class="nowrap">${colName}</th>
+                <th class="nowrap name-cell">${colName}</th>
                 <th class="nowrap">التخصص</th>
                 <th class="nowrap">رقم الجوال</th>
-                <th class="nowrap text-center">عدد المقررات</th>
+                <th class="nowrap text-center">عدد المقررات</th>`;
+            
+            if(!isExcluded) {
+                html += `
                 <th class="nowrap text-center">مقررات الحرمان</th>
                 <th class="nowrap text-center">أسابيع الغياب</th>`;
-            for(let w=1; w<=totalWeeks; w++) html += `<th class="text-center">أ ${w}</th>`;
+                for(let w=1; w<=totalWeeks; w++) html += `<th class="text-center">أ ${w}</th>`;
+            }
             html += `</tr></thead>`;
             return html;
         };
 
-        const createRow = (t) => {
+        const createRow = (t, isExcluded = false) => {
             let html = `<tr>
                 <td class="mono">${t.id}</td>
-                <td>${t.name}</td>
+                <td class="name-cell">${t.name}</td>
                 <td>${t.major || '-'}</td>
                 <td class="mono">${t.phone || '-'}</td>
-                <td class="text-center">${t.totalUniqueCourses || 0}</td>
+                <td class="text-center">${t.totalUniqueCourses || 0}</td>`;
+            
+            if(!isExcluded) {
+                html += `
                 <td class="text-center">
                     <span class="badge ${t.totalDeprivedCourses > 0 ? 'badge-danger' : 'badge-success'}">${t.totalDeprivedCourses || 0}</span>
                 </td>
                 <td class="text-center">
                     <span class="badge badge-warning">${t.weeksAbsentCount || 0}</span>
                 </td>`;
-            
-            for(let w=1; w<=totalWeeks; w++) {
-                let st = t.weekStatuses ? t.weekStatuses[w] : null;
-                let badge = '';
-                if(st === 'كامل') badge = '<span class="badge badge-danger">كامل</span>';
-                else if(st === 'محتمل') badge = '<span class="badge badge-info">محتمل</span>';
-                else if(st === 'جزئي') badge = '<span class="badge badge-warning">جزئي</span>';
-                else badge = '<span style="color:var(--text-muted); font-weight:bold;">-</span>';
-                html += `<td class="text-center">${badge}</td>`;
+                
+                for(let w=1; w<=totalWeeks; w++) {
+                    let st = t.weekStatuses ? t.weekStatuses[w] : null;
+                    let badge = '';
+                    if(st === 'كامل') badge = '<span class="badge badge-danger">كامل</span>';
+                    else if(st === 'محتمل') badge = '<span class="badge badge-info">محتمل</span>';
+                    else if(st === 'جزئي') badge = '<span class="badge badge-warning">جزئي</span>';
+                    else badge = '<span style="color:var(--text-muted); font-weight:bold;">-</span>';
+                    html += `<td class="text-center">${badge}</td>`;
+                }
             }
             html += `</tr>`;
             return html;
         };
 
-        let htmlMain = `<table>${createThead()}<tbody>`;
-        processedData.active.forEach(t => htmlMain += createRow(t));
+        // 1. الرئيسي
+        let htmlMain = `<table>${createThead(false)}<tbody>`;
+        processedData.active.forEach(t => htmlMain += createRow(t, false));
         htmlMain += `</tbody></table>`;
         document.getElementById('table-main').innerHTML = htmlMain;
 
-        let htmlFull = `<table>${createThead()}<tbody>`;
-        processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).forEach(t => htmlFull += createRow(t));
+        // 2. غياب أسبوع كامل فأكثر
+        let htmlFull = `<table>${createThead(false)}<tbody>`;
+        processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).forEach(t => htmlFull += createRow(t, false));
         htmlFull += `</tbody></table>`;
         document.getElementById('table-fullweek').innerHTML = htmlFull;
 
-        let htmlDepAll = `<table>${createThead()}<tbody>`;
-        processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).forEach(t => htmlDepAll += createRow(t));
+        // 3. محروم بكل المقررات
+        let htmlDepAll = `<table>${createThead(false)}<tbody>`;
+        processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).forEach(t => htmlDepAll += createRow(t, false));
         htmlDepAll += `</tbody></table>`;
         document.getElementById('table-deprived-all').innerHTML = htmlDepAll;
 
-        let htmlDepExc = `<table>${createThead()}<tbody>`;
-        processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).forEach(t => htmlDepExc += createRow(t));
+        // 4. محروم ماعدا مقرر
+        let htmlDepExc = `<table>${createThead(false)}<tbody>`;
+        processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).forEach(t => htmlDepExc += createRow(t, false));
         htmlDepExc += `</tbody></table>`;
         document.getElementById('table-deprived-except').innerHTML = htmlDepExc;
 
-        let htmlExc = `<table>${createThead()}<tbody>`;
-        processedData.excluded.forEach(t => htmlExc += createRow(t));
+        // 5. المنسحبين والمطوي قيدهم (بدون أعمدة الأسابيع والحرمان)
+        let htmlExc = `<table>${createThead(true)}<tbody>`;
+        processedData.excluded.forEach(t => htmlExc += createRow(t, true));
         htmlExc += `</tbody></table>`;
         document.getElementById('table-excluded').innerHTML = htmlExc;
 
+        // 6. صفحة النسبة
         let htmlPerc = `<table><thead><tr>
             <th class="nowrap">${isFemale ? 'رقم المتدربة' : 'رقم المتدرب'}</th>
-            <th class="nowrap">${isFemale ? 'اسم المتدربة' : 'اسم المتدرب'}</th>
+            <th class="nowrap name-cell">${isFemale ? 'اسم المتدربة' : 'اسم المتدرب'}</th>
             <th class="nowrap">رمز المقرر</th>
             <th>اسم المقرر</th>
             <th class="nowrap">الشعبة (CRN)</th>
@@ -572,26 +606,3 @@
             } else {
                 statusBadge = '<span class="badge badge-success">طبيعي</span>';
             }
-
-            htmlPerc += `<tr>
-                <td class="mono">${p.traineeId}</td>
-                <td>${p.traineeName}</td>
-                <td class="mono">${p.courseCode}</td>
-                <td>${p.courseName}</td>
-                <td class="mono">${p.crn}</td>
-                <td class="mono text-center" style="color: ${p.absPercentage >= 15 ? 'var(--danger)' : 'var(--text-primary)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td>
-                <td class="text-center">${statusBadge}</td>
-                <td class="text-center nowrap">
-                    <a href="${waUrl}" target="_blank" class="btn-whatsapp">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                        إرسال واتساب
-                    </a>
-                </td>
-            </tr>`;
-        });
-        htmlPerc += `</tbody></table>`;
-        document.getElementById('table-percentages').innerHTML = htmlPerc;
-    };
-</script>
-</body>
-</html>
