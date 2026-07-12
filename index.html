@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام متابعة غياب المتدربين</title>
-    <!-- مكتبة قراءة ملفات الإكسل -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* --- تم تضمين ملف الستايل المرفق من قبلك بالكامل هنا --- */
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         
         :root,[data-theme=dark]{--bg-base:#131a1d;--bg-surface:#1a2226;--bg-elevated:#222c31;--bg-hover:#2a363c;--bg-inset:#0e1416;--border:#2c383e;--border-strong:#3a474e;--text-primary:#e8eeef;--text-secondary:#9fb0b5;--text-muted:#6d7e84;--primary:#34c2b4;--primary-hover:#4ed2c5;--primary-subtle:#2bb5a824;--primary-border:#2bb5a866;--on-primary:#07211e;--success:#5cb86c;--success-subtle:#5cb86c26;--warning:#d9a93e;--warning-subtle:#d9a93e26;--danger:#d96868;--danger-subtle:#d9686826;--info:#5da4c4;--info-subtle:#5da4c426;--font-family:"Cairo", sans-serif;--fs-xs:.6875rem;--fs-sm:.75rem;--fs-base:.8125rem;--fs-md:.875rem;--fs-lg:1rem;--fs-xl:1.25rem;--fs-2xl:1.5rem;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:999px;--ease:cubic-bezier(.4, 0, .2, 1);--dur:.15s;--header-h:56px;}
@@ -16,19 +14,16 @@
         body { font-family: var(--font-family); font-size: var(--fs-base); color: var(--text-primary); background: var(--bg-base); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         * { box-sizing: border-box; }
         
-        /* Layout */
         ._shell { display: flex; height: 100%; width: 100%; }
-        ._sidebar { width: 220px; background: var(--bg-elevated); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--sp-3) 0; flex-shrink: 0; }
+        ._sidebar { width: 240px; background: var(--bg-elevated); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--sp-3) 0; flex-shrink: 0; overflow-y: auto;}
         ._main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-base); }
         ._header { height: var(--header-h); background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 var(--sp-4); justify-content: space-between; }
         ._content { flex: 1; overflow: auto; padding: var(--sp-4); }
         
-        /* Sidebar Items */
         ._navItem { padding: var(--sp-3) var(--sp-4); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: var(--sp-2); font-weight: 600; transition: all var(--dur) var(--ease); border-right: 3px solid transparent; }
         ._navItem:hover { background: var(--bg-hover); color: var(--text-primary); }
         ._navItem.active { background: var(--primary-subtle); color: var(--primary); border-right-color: var(--primary); }
         
-        /* Upload Zone */
         ._uploadGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-4); }
         ._dropZone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--bg-surface); padding: var(--sp-6) var(--sp-4); text-align: center; cursor: pointer; transition: all var(--dur) var(--ease); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; }
         ._dropZone:hover { border-color: var(--primary); background: var(--primary-subtle); }
@@ -37,49 +32,49 @@
         ._dropZone p { margin: 0; color: var(--text-muted); font-size: var(--fs-sm); }
         input[type="file"] { display: none; }
         
-        /* Buttons & Inputs */
         .btn-primary { background: var(--primary); color: #fff; border: none; padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; cursor: pointer; transition: all var(--dur) var(--ease); }
         .btn-primary:hover { background: var(--primary-hover); }
+        
+        .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 4px 12px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; transition: all var(--dur) var(--ease); }
+        .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
+
         .input-number { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius-sm); width: 60px; text-align: center; font-family: inherit; }
         
-        /* Tables */
         ._tableWrapper { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; background: var(--bg-surface); max-height: calc(100vh - 150px); }
         table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); text-align: right; white-space: nowrap; }
         th, td { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); }
         th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 700; position: sticky; top: 0; z-index: 10; }
         tbody tr:hover { background: var(--bg-hover); }
         
-        /* Badges */
         .badge { padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; display: inline-block; }
         .badge-danger { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger); }
         .badge-warning { background: var(--warning-subtle); color: var(--warning); border: 1px solid var(--warning); }
         .badge-success { background: var(--success-subtle); color: var(--success); border: 1px solid var(--success); }
         .badge-info { background: var(--info-subtle); color: var(--info); border: 1px solid var(--info); }
         
-        /* Utilities */
         .hidden { display: none !important; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         .gap-2 { display: flex; gap: var(--sp-2); align-items: center; }
         .text-center { text-align: center; }
+        .mono { font-variant-numeric: tabular-nums; direction: ltr; display: inline-block;}
     </style>
 </head>
 <body data-theme="dark">
 
 <div class="_shell">
-    <!-- القائمة الجانبية -->
     <div class="_sidebar">
         <div style="padding: 0 var(--sp-4) var(--sp-4); border-bottom: 1px solid var(--border); margin-bottom: var(--sp-2);">
             <h2 style="margin: 0; color: var(--primary); font-size: var(--fs-lg);">نظام الغياب الذكي</h2>
         </div>
         <div class="_navItem active" onclick="switchTab('upload')">رفع البيانات</div>
         <div class="_navItem" onclick="switchTab('report-main')">المتدربون (الرئيسي)</div>
+        <div class="_navItem" onclick="switchTab('report-percentages')">نسبة الغياب والإنذارات</div>
         <div class="_navItem" onclick="switchTab('report-fullweek')">غياب أسبوع كامل فأكثر</div>
         <div class="_navItem" onclick="switchTab('report-deprived-all')">محروم بكل المقررات</div>
         <div class="_navItem" onclick="switchTab('report-deprived-except')">محروم ماعدا مقرر</div>
         <div class="_navItem" onclick="switchTab('report-excluded')">المنسحبين والمطوي قيدهم</div>
     </div>
 
-    <!-- المحتوى الرئيسي -->
     <div class="_main">
         <div class="_header">
             <h3 id="pageTitle" style="margin: 0;">رفع البيانات</h3>
@@ -91,7 +86,6 @@
         </div>
 
         <div class="_content">
-            <!-- شاشة الرفع -->
             <div id="upload" class="tab-content">
                 <div class="_uploadGrid">
                     <div class="_dropZone" id="drop-sf01" onclick="document.getElementById('file-sf01').click()">
@@ -110,56 +104,35 @@
                         <input type="file" id="file-so04" accept=".xls,.xlsx,.csv" onchange="handleFile(event, 'so04')">
                     </div>
                 </div>
-                <div class="text-center">
-                    <p style="color: var(--warning);">يرجى رفع الملفات الثلاثة ثم الضغط على "تحديث ومعالجة البيانات" في الأعلى.</p>
-                </div>
             </div>
 
-            <!-- شاشات التقارير (سيتم تعبئتها برمجياً) -->
-            <div id="report-main" class="tab-content hidden">
-                <div class="_tableWrapper" id="table-main"></div>
-            </div>
-            <div id="report-fullweek" class="tab-content hidden">
-                <div class="_tableWrapper" id="table-fullweek"></div>
-            </div>
-            <div id="report-deprived-all" class="tab-content hidden">
-                <div class="_tableWrapper" id="table-deprived-all"></div>
-            </div>
-            <div id="report-deprived-except" class="tab-content hidden">
-                <div class="_tableWrapper" id="table-deprived-except"></div>
-            </div>
-            <div id="report-excluded" class="tab-content hidden">
-                <div class="_tableWrapper" id="table-excluded"></div>
-            </div>
-
+            <div id="report-main" class="tab-content hidden"><div class="_tableWrapper" id="table-main"></div></div>
+            <div id="report-percentages" class="tab-content hidden"><div class="_tableWrapper" id="table-percentages"></div></div>
+            <div id="report-fullweek" class="tab-content hidden"><div class="_tableWrapper" id="table-fullweek"></div></div>
+            <div id="report-deprived-all" class="tab-content hidden"><div class="_tableWrapper" id="table-deprived-all"></div></div>
+            <div id="report-deprived-except" class="tab-content hidden"><div class="_tableWrapper" id="table-deprived-except"></div></div>
+            <div id="report-excluded" class="tab-content hidden"><div class="_tableWrapper" id="table-excluded"></div></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- المتغيرات العامة ---
     let rawData = { sf01: [], ss01: [], so04: [] };
-    let processedData = { active: [], excluded: [] };
-    let courseHours = {}; // CRN -> Contact Hours
-    let semesterStartDay = 0; // لحساب الأسابيع
+    let processedData = { active: [], excluded: [], percentages: [] };
+    let courseHours = {}; 
+    let semesterStartDay = 0; 
 
-    // --- التنقل بين الشاشات ---
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.getElementById(tabId).classList.remove('hidden');
-        
         document.querySelectorAll('._navItem').forEach(el => el.classList.remove('active'));
         event.currentTarget.classList.add('active');
-        
         document.getElementById('pageTitle').innerText = event.currentTarget.innerText;
     }
 
-    // --- قراءة الملفات ---
     function handleFile(e, type) {
         const file = e.target.files[0];
         if (!file) return;
-        
-        // تغيير شكل المربع ليدل على الرفع
         document.getElementById(`drop-${type}`).classList.add('has-file');
         document.getElementById(`drop-${type}`).querySelector('p').innerText = file.name;
 
@@ -168,23 +141,19 @@
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            // تحويل الإكسل إلى مصفوفة كائنات (JSON)
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
         };
         reader.readAsArrayBuffer(file);
     }
 
-    // --- دوال مساعدة ---
-    
-    // 1. حساب الساعات من الوقت (مثال: 1240 - 1100)
     function calculateContactHours(timeStr) {
         if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes('-')) return 0;
         let parts = timeStr.split('-');
-        let t1 = parts[0].trim(); // 1240
-        let t2 = parts[1].trim(); // 1100
+        let t1 = parts[0].trim(); 
+        let t2 = parts[1].trim(); 
         
         function toMins(t) {
-            t = t.replace(/\D/g,''); // إزالة أي نصوص
+            t = t.replace(/\D/g,''); 
             if(t.length < 3) return 0;
             let h = parseInt(t.substring(0, t.length - 2));
             let m = parseInt(t.substring(t.length - 2));
@@ -192,10 +161,9 @@
         }
         
         let diff = Math.abs(toMins(t1) - toMins(t2));
-        return Math.round(diff / 50); // القسمة على 50 دقيقة
+        return Math.round(diff / 50); 
     }
 
-    // 2. تحويل التاريخ الهجري إلى رقم مطلق للترتيب وحساب الأسابيع
     function parseHijriToDays(dateStr) {
         if(!dateStr) return 99999999;
         let parts = dateStr.split('/');
@@ -206,7 +174,14 @@
         return Math.floor(y * 354.36 + m * 29.53 + d);
     }
 
-    // --- المعالجة الرئيسية ---
+    function formatPhone(phone) {
+        if(!phone) return "";
+        let p = phone.toString().trim().replace(/\s+/g, '');
+        if(p.startsWith('05')) return '966' + p.substring(1);
+        if(p.startsWith('5')) return '966' + p;
+        return p;
+    }
+
     function processData() {
         if (rawData.sf01.length === 0 || rawData.ss01.length === 0 || rawData.so04.length === 0) {
             alert("الرجاء رفع الملفات الثلاثة أولاً!");
@@ -223,13 +198,12 @@
             if (crn && time) {
                 let hours = calculateContactHours(time);
                 if(hours > 0) {
-                    // نجمع الساعات إذا كان المقرر له أكثر من وقت (نظري + عملي)
                     courseHours[crn] = (courseHours[crn] || 0) + hours;
                 }
             }
         });
 
-        // 2. تحديد بداية الفصل من SO04 (أقدم تاريخ)
+        // 2. تحديد بداية الفصل من SO04
         let minDay = 99999999;
         rawData.so04.forEach(row => {
             let dateStr = row['تاريخ المحاضرة'] || row['تاريخ العملية'];
@@ -250,20 +224,29 @@
                     name: row['إسم المتدرب'] || row['اسم المتدرب'],
                     major: row['التخصص'],
                     phone: row['رقم الجوال'],
-                    status: row['حالة المتدرب'] || row['حالة تسجيل'],
-                    courses: new Set(),
+                    status: row['حالة المتدرب'] || row['حالة تسجيل'] || '',
+                    crns: {}, // crn -> { code, name, hours, absHours }
+                    courseCodes: new Set(), // لحساب المقررات الفريدة (نظري+عملي = 1)
                     totalWeeklyHours: 0,
-                    absencesByWeek: {}, // weekNum -> { totalHours, isExcusedOnly }
-                    deprivedCourses: 0,
-                    courseAbsences: {} // crn -> hours
+                    absencesByWeek: {}
                 };
             }
+            
             let crn = row['الرقم المرجعي'];
-            if(crn) {
-                traineesMap[id].courses.add(crn);
+            let courseCode = row['المقرر'];
+            let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
+
+            if(crn && courseCode) {
+                traineesMap[id].courseCodes.add(courseCode);
                 let ch = courseHours[crn] || 0;
                 traineesMap[id].totalWeeklyHours += ch;
-                traineesMap[id].courseAbsences[crn] = 0;
+                
+                traineesMap[id].crns[crn] = {
+                    code: courseCode,
+                    name: courseName,
+                    hours: ch,
+                    absHours: 0
+                };
             }
         });
 
@@ -277,18 +260,17 @@
             
             if(!traineesMap[id] || absHours === 0) return;
 
-            // حساب رقم الأسبوع
             let dayNum = parseHijriToDays(dateStr);
             let weekNum = Math.floor((dayNum - semesterStartDay) / 7) + 1;
             if(weekNum < 1) weekNum = 1;
             if(weekNum > totalWeeks) weekNum = totalWeeks;
 
-            // تسجيل الغياب للمقرر (لحساب الحرمان)
-            if(excuse.includes('بدون عذر')) {
-                traineesMap[id].courseAbsences[crn] = (traineesMap[id].courseAbsences[crn] || 0) + absHours;
+            // تسجيل الغياب للشعبة
+            if(excuse.includes('بدون عذر') && traineesMap[id].crns[crn]) {
+                traineesMap[id].crns[crn].absHours += absHours;
             }
 
-            // تسجيل الغياب للأسبوع (لحساب غياب الأسبوع الكامل)
+            // تسجيل الغياب للأسبوع
             if(!traineesMap[id].absencesByWeek[weekNum]) {
                 traineesMap[id].absencesByWeek[weekNum] = { hours: 0, hasUnexcused: false };
             }
@@ -302,32 +284,55 @@
         // 5. تصنيف المتدربين وحساب الحرمان
         processedData.active = [];
         processedData.excluded = [];
+        processedData.percentages = [];
 
         Object.values(traineesMap).forEach(t => {
-            // حساب الحرمان
-            t.deprivedCourses = 0;
-            t.courses.forEach(crn => {
-                let ch = courseHours[crn] || 0;
-                let limit = ch * totalWeeks * 0.20; // 20%
-                if(limit > 0 && t.courseAbsences[crn] >= limit) {
-                    t.deprivedCourses++;
+            
+            // فلترة المنسحبين والمطوي قيدهم
+            let isExcluded = t.status.includes('انسحاب') || t.status.includes('مطوي');
+
+            t.deprivedCourseCodes = new Set(); // المقررات التي حُرم فيها (سواء نظري أو عملي)
+
+            Object.keys(t.crns).forEach(crn => {
+                let crnData = t.crns[crn];
+                let totalCrnHours = crnData.hours * totalWeeks;
+                let limit = totalCrnHours * 0.20; // 20%
+                
+                crnData.isDeprived = (limit > 0 && crnData.absHours >= limit);
+                crnData.absPercentage = totalCrnHours > 0 ? (crnData.absHours / totalCrnHours) * 100 : 0;
+
+                if (crnData.isDeprived) {
+                    t.deprivedCourseCodes.add(crnData.code);
+                }
+
+                // إضافة لصفحة النسب (للمتدربين النشطين فقط، والذين لديهم غياب > 0)
+                if(!isExcluded && crnData.absPercentage > 0) {
+                    processedData.percentages.push({
+                        traineeName: t.name,
+                        traineeId: t.id,
+                        phone: t.phone,
+                        courseCode: crnData.code,
+                        courseName: crnData.name,
+                        crn: crn,
+                        absPercentage: crnData.absPercentage,
+                        isDeprived: crnData.isDeprived
+                    });
                 }
             });
 
+            t.totalUniqueCourses = t.courseCodes.size;
+            t.totalDeprivedCourses = t.deprivedCourseCodes.size;
+
             // حساب أسابيع الغياب
             t.weeksAbsentCount = 0;
-            t.weekStatuses = {}; // 1 to totalWeeks
+            t.weekStatuses = {}; 
             
             for(let w=1; w<=totalWeeks; w++) {
                 let wData = t.absencesByWeek[w];
-                if(!wData) {
-                    t.weekStatuses[w] = "محتمل"; // لا يوجد بيانات
-                } else if (!wData.hasUnexcused) {
-                    t.weekStatuses[w] = "محتمل"; // غياب بعذر أو جلسة ملغاة
+                if(!wData || !wData.hasUnexcused) {
+                    t.weekStatuses[w] = "محتمل"; 
                 } else {
-                    // غياب بدون عذر
                     t.weeksAbsentCount++;
-                    // هل غاب كل ساعاته الأسبوعية؟
                     if(wData.hours >= t.totalWeeklyHours && t.totalWeeklyHours > 0) {
                         t.weekStatuses[w] = "كامل";
                     } else {
@@ -336,46 +341,44 @@
                 }
             }
 
-            // الفرز حسب الحالة
-            if(t.status && (t.status.includes('انسحاب') || t.status.includes('طي قيد'))) {
+            if(isExcluded) {
                 processedData.excluded.push(t);
             } else {
                 processedData.active.push(t);
             }
         });
 
-        // 6. رسم الجداول
+        // ترتيب صفحة النسب تنازلياً حسب نسبة الغياب
+        processedData.percentages.sort((a, b) => b.absPercentage - a.absPercentage);
+
         renderTables(totalWeeks);
         alert("تمت معالجة البيانات بنجاح!");
     }
 
-    // --- رسم الجداول ---
     function renderTables(totalWeeks) {
-        // دالة مساعدة لإنشاء رأس الجدول
         const createThead = () => {
             let html = `<thead><tr>
                 <th>رقم المتدرب</th>
                 <th>اسم المتدرب</th>
                 <th>التخصص</th>
                 <th>رقم الجوال</th>
-                <th>المقررات</th>
-                <th>الحرمان</th>
+                <th>عدد المقررات</th>
+                <th>مقررات الحرمان</th>
                 <th>أسابيع الغياب</th>`;
             for(let w=1; w<=totalWeeks; w++) html += `<th>أ ${w}</th>`;
             html += `</tr></thead>`;
             return html;
         };
 
-        // دالة مساعدة لإنشاء صف متدرب
         const createRow = (t) => {
             let html = `<tr>
                 <td class="mono">${t.id}</td>
                 <td>${t.name}</td>
                 <td>${t.major || '-'}</td>
                 <td class="mono">${t.phone || '-'}</td>
-                <td class="text-center">${t.courses.size}</td>
+                <td class="text-center">${t.totalUniqueCourses}</td>
                 <td class="text-center">
-                    <span class="badge ${t.deprivedCourses > 0 ? 'badge-danger' : 'badge-success'}">${t.deprivedCourses}</span>
+                    <span class="badge ${t.totalDeprivedCourses > 0 ? 'badge-danger' : 'badge-success'}">${t.totalDeprivedCourses}</span>
                 </td>
                 <td class="text-center">
                     <span class="badge badge-warning">${t.weeksAbsentCount}</span>
@@ -408,13 +411,13 @@
 
         // 3. محروم بكل المقررات
         let htmlDepAll = `<table>${createThead()}<tbody>`;
-        processedData.active.filter(t => t.courses.size > 0 && t.deprivedCourses === t.courses.size).forEach(t => htmlDepAll += createRow(t));
+        processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).forEach(t => htmlDepAll += createRow(t));
         htmlDepAll += `</tbody></table>`;
         document.getElementById('table-deprived-all').innerHTML = htmlDepAll;
 
         // 4. محروم ماعدا مقرر
         let htmlDepExc = `<table>${createThead()}<tbody>`;
-        processedData.active.filter(t => t.courses.size > 1 && t.deprivedCourses === (t.courses.size - 1)).forEach(t => htmlDepExc += createRow(t));
+        processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).forEach(t => htmlDepExc += createRow(t));
         htmlDepExc += `</tbody></table>`;
         document.getElementById('table-deprived-except').innerHTML = htmlDepExc;
 
@@ -423,6 +426,39 @@
         processedData.excluded.forEach(t => htmlExc += createRow(t));
         htmlExc += `</tbody></table>`;
         document.getElementById('table-excluded').innerHTML = htmlExc;
+
+        // 6. صفحة نسبة الغياب والواتساب
+        let htmlPerc = `<table><thead><tr>
+            <th>رقم المتدرب</th>
+            <th>اسم المتدرب</th>
+            <th>رمز المقرر</th>
+            <th>اسم المقرر</th>
+            <th>الشعبة (CRN)</th>
+            <th>نسبة الغياب</th>
+            <th>الحالة</th>
+            <th>إجراء</th>
+        </tr></thead><tbody>`;
+        
+        processedData.percentages.forEach(p => {
+            let formattedPhone = formatPhone(p.phone);
+            let msg = `عزيزي ${p.traineeName}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر\n${p.courseName}\nهي ${p.absPercentage.toFixed(1)}%\nلذا نأمل منك الانتباه والحرص على عدم الغياب`;
+            let waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(msg)}`;
+            
+            htmlPerc += `<tr>
+                <td class="mono">${p.traineeId}</td>
+                <td>${p.traineeName}</td>
+                <td class="mono">${p.courseCode}</td>
+                <td>${p.courseName}</td>
+                <td class="mono">${p.crn}</td>
+                <td class="mono text-center" style="color: ${p.isDeprived ? 'var(--danger)' : 'var(--warning)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td>
+                <td class="text-center"><span class="badge ${p.isDeprived ? 'badge-danger' : 'badge-warning'}">${p.isDeprived ? 'محروم' : 'إنذار'}</span></td>
+                <td class="text-center">
+                    <a href="${waUrl}" target="_blank" class="btn-whatsapp">إرسال واتساب</a>
+                </td>
+            </tr>`;
+        });
+        htmlPerc += `</tbody></table>`;
+        document.getElementById('table-percentages').innerHTML = htmlPerc;
     }
 
 </script>
