@@ -32,21 +32,26 @@
         ._dropZone p { margin: 0; color: var(--text-muted); font-size: var(--fs-sm); }
         input[type="file"] { display: none; }
         
-        .btn-primary { background: var(--primary); color: #fff; border: none; padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; cursor: pointer; transition: all var(--dur) var(--ease); }
-        .btn-primary:hover { background: var(--primary-hover); }
-        
-        .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 6px 16px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
+        .info-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-4); margin-top: var(--sp-4); }
+        .info-card h4 { margin: 0 0 var(--sp-3) 0; color: var(--info); font-size: var(--fs-md); }
+        .info-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--sp-3); color: var(--text-secondary); }
+        .info-card li { display: flex; align-items: center; gap: var(--sp-3); line-height: 1.5; }
+        .info-badge-wrapper { flex-shrink: 0; width: 60px; text-align: center; }
+
+        .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 6px 16px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all var(--dur) var(--ease); white-space: nowrap; }
         .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
 
         .input-number { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius-sm); width: 60px; text-align: center; font-family: inherit; }
         
         ._tableWrapper { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; background: var(--bg-surface); max-height: calc(100vh - 150px); }
-        table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); text-align: right; white-space: nowrap; }
-        th, td { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); }
-        th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 700; position: sticky; top: 0; z-index: 10; }
+        
+        /* تعديل الجدول ليسمح بتنسيق أفضل للأعمدة والنصوص الطويلة */
+        table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); text-align: right; }
+        th, td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); vertical-align: middle; }
+        th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 700; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
         tbody tr:hover { background: var(--bg-hover); }
         
-        .badge { padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; display: inline-block; }
+        .badge { padding: 4px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; display: inline-block; white-space: nowrap; }
         .badge-danger { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger); }
         .badge-warning { background: var(--warning-subtle); color: var(--warning); border: 1px solid var(--warning); }
         .badge-success { background: var(--success-subtle); color: var(--success); border: 1px solid var(--success); }
@@ -56,7 +61,12 @@
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         .gap-2 { display: flex; gap: var(--sp-2); align-items: center; }
         .text-center { text-align: center; }
-        .mono { font-variant-numeric: tabular-nums; direction: ltr; display: inline-block;}
+        
+        /* تعديل mono ليمنع تشوه الأعمدة */
+        .mono { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: embed; white-space: nowrap; }
+        .nowrap { white-space: nowrap; }
+        
+        .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
     </style>
 </head>
 <body data-theme="dark">
@@ -65,6 +75,11 @@
     <div class="_sidebar">
         <div style="padding: 0 var(--sp-4) var(--sp-4); border-bottom: 1px solid var(--border); margin-bottom: var(--sp-2);">
             <h2 style="margin: 0; color: var(--primary); font-size: var(--fs-lg);">نظام الغياب الذكي</h2>
+            <div class="credits">
+                <b>إعداد وتطوير:</b><br>
+                أ. منصور عبدالعزيز الفايز<br>
+                م. محمد يوسف الشبيلي
+            </div>
         </div>
         <div class="_navItem active" onclick="switchTab('upload', this)">رفع البيانات</div>
         <div class="_navItem" id="nav-main" onclick="switchTab('report-main', this)">المتدربون (الرئيسي)</div>
@@ -104,6 +119,29 @@
                         <input type="file" id="file-so04" accept=".xls,.xlsx,.csv" onchange="handleFile(event, 'so04')">
                     </div>
                 </div>
+
+                <!-- صندوق الإرشادات الجديد -->
+                <div class="info-card">
+                    <h4>دليل وقراءة حالات الغياب الأسبوعي:</h4>
+                    <ul>
+                        <li>
+                            <div class="info-badge-wrapper"><span class="badge badge-danger">كامل</span></div>
+                            <div>تعني أن المتدرب انقطع وغاب غياباً تاماً وبنسبة 100% عن <strong>جميع</strong> مقرراته المسجلة في ذلك الأسبوع.</div>
+                        </li>
+                        <li>
+                            <div class="info-badge-wrapper"><span class="badge badge-warning">جزئي</span></div>
+                            <div>تعني أن المتدرب غاب عن بعض المقررات أو المحاضرات، ولكنه <strong>حضر</strong> في مقررات أخرى خلال نفس الأسبوع.</div>
+                        </li>
+                        <li>
+                            <div class="info-badge-wrapper"><span class="badge badge-info">محتمل</span></div>
+                            <div>تعني أنه لم يُسجل للمتدرب أي غياب، وفي نفس الوقت <strong>لم يقم أي مدرب بالتحضير</strong> في نظامه، لذا يحتمل حضوره أو غيابه.</div>
+                        </li>
+                        <li>
+                            <div class="info-badge-wrapper"><span style="color:var(--text-muted); font-weight:bold; font-size: 16px;">-</span></div>
+                            <div>تعني أن المتدرب <strong>حاضر</strong> (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).</div>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
             <div id="report-main" class="tab-content hidden"><div class="_tableWrapper" id="table-main"></div></div>
@@ -120,7 +158,7 @@
     let rawData = { sf01: [], ss01: [], so04: [] };
     let processedData = { active: [], excluded: [], percentages: [] };
     let courseHours = {}; 
-    let isFemale = false; // متغير لتحديد نوع الوحدة (بنات/بنين)
+    let isFemale = false; 
 
     function switchTab(tabId, el) {
         document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
@@ -138,8 +176,6 @@
         
         let dropZone = document.getElementById(`drop-${type}`);
         dropZone.classList.add('has-file');
-        
-        // الحفاظ على النص الخاص بالوصف عند عرض اسم الملف
         let pEl = dropZone.querySelector('p');
         pEl.innerText = file.name;
 
@@ -150,7 +186,6 @@
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
             
-            // معالجة البيانات تلقائياً بعد كل ملف مرفوع
             processData();
         };
         reader.readAsArrayBuffer(file);
@@ -183,23 +218,22 @@
     }
     
     function updateUIText() {
-        // تحديث النصوص بناءً على نوع الوحدة (بنات أو بنين)
         document.getElementById('nav-main').innerText = isFemale ? 'المتدربات (الرئيسي)' : 'المتدربون (الرئيسي)';
         document.getElementById('nav-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبين والمطوي قيدهم';
         
         let activeTab = document.querySelector('._navItem.active');
-        if (activeTab) {
+        if (activeTab && activeTab.id !== 'nav-main' && activeTab.id !== 'nav-excluded') {
+            // Do nothing for static titles
+        } else if (activeTab) {
             document.getElementById('pageTitle').innerText = activeTab.innerText;
         }
     }
 
     function processData() {
-        // إيقاف المعالجة بصمت إذا لم يتم رفع جميع الملفات بعد
         if (rawData.sf01.length === 0 || rawData.ss01.length === 0 || rawData.so04.length === 0) {
             return;
         }
 
-        // الكشف عن جنس الوحدة (بنات أم لا) من جدول SS01
         isFemale = false;
         for (let i = 0; i < rawData.ss01.length; i++) {
             let unitName = rawData.ss01[i]['الوحدة التدريبية'] || rawData.ss01[i]['الوحدة'] || '';
@@ -272,7 +306,6 @@
 
         let traineesMap = {};
         rawData.sf01.forEach(row => {
-            // دعم لقراءة الأعمدة سواء كانت مسماة للمذكر أو المؤنث
             let id = row['رقم المتدرب'] || row['رقم المتدربة'];
             if(!id) return;
             
@@ -441,14 +474,14 @@
             let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
             
             let html = `<thead><tr>
-                <th>${colId}</th>
-                <th>${colName}</th>
-                <th>التخصص</th>
-                <th>رقم الجوال</th>
-                <th>عدد المقررات</th>
-                <th>مقررات الحرمان</th>
-                <th>أسابيع الغياب</th>`;
-            for(let w=1; w<=totalWeeks; w++) html += `<th>أ ${w}</th>`;
+                <th class="nowrap">${colId}</th>
+                <th class="nowrap">${colName}</th>
+                <th class="nowrap">التخصص</th>
+                <th class="nowrap">رقم الجوال</th>
+                <th class="nowrap text-center">عدد المقررات</th>
+                <th class="nowrap text-center">مقررات الحرمان</th>
+                <th class="nowrap text-center">أسابيع الغياب</th>`;
+            for(let w=1; w<=totalWeeks; w++) html += `<th class="text-center">أ ${w}</th>`;
             html += `</tr></thead>`;
             return html;
         };
@@ -473,7 +506,7 @@
                 if(st === 'كامل') badge = '<span class="badge badge-danger">كامل</span>';
                 else if(st === 'محتمل') badge = '<span class="badge badge-info">محتمل</span>';
                 else if(st === 'جزئي') badge = '<span class="badge badge-warning">جزئي</span>';
-                else badge = '<span style="color:var(--text-muted)">-</span>';
+                else badge = '<span style="color:var(--text-muted); font-weight:bold;">-</span>';
                 html += `<td class="text-center">${badge}</td>`;
             }
             html += `</tr>`;
@@ -506,20 +539,19 @@
         document.getElementById('table-excluded').innerHTML = htmlExc;
 
         let htmlPerc = `<table><thead><tr>
-            <th>${isFemale ? 'رقم المتدربة' : 'رقم المتدرب'}</th>
-            <th>${isFemale ? 'اسم المتدربة' : 'اسم المتدرب'}</th>
-            <th>رمز المقرر</th>
+            <th class="nowrap">${isFemale ? 'رقم المتدربة' : 'رقم المتدرب'}</th>
+            <th class="nowrap">${isFemale ? 'اسم المتدربة' : 'اسم المتدرب'}</th>
+            <th class="nowrap">رمز المقرر</th>
             <th>اسم المقرر</th>
-            <th>الشعبة (CRN)</th>
-            <th>نسبة الغياب</th>
-            <th>الحالة</th>
-            <th>إجراء</th>
+            <th class="nowrap">الشعبة (CRN)</th>
+            <th class="nowrap text-center">نسبة الغياب</th>
+            <th class="nowrap text-center">الحالة</th>
+            <th class="nowrap text-center">إجراء</th>
         </tr></thead><tbody>`;
         
         processedData.percentages.forEach(p => {
             let formattedPhone = formatPhone(p.phone);
             
-            // تخصيص رسالة الواتساب حسب نوع الوحدة
             let msg = isFemale 
                 ? `عزيزتي ${p.traineeName}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n${p.courseName}\n هي ${p.absPercentage.toFixed(1)}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب`
                 : `عزيزي ${p.traineeName}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n${p.courseName}\n هي ${p.absPercentage.toFixed(1)}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب`;
@@ -547,17 +579,6 @@
                 <td class="mono">${p.crn}</td>
                 <td class="mono text-center" style="color: ${p.absPercentage >= 15 ? 'var(--danger)' : 'var(--text-primary)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td>
                 <td class="text-center">${statusBadge}</td>
-                <td class="text-center">
+                <td class="text-center nowrap">
                     <a href="${waUrl}" target="_blank" class="btn-whatsapp">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                        إرسال واتساب
-                    </a>
-                </td>
-            </tr>`;
-        });
-        htmlPerc += `</tbody></table>`;
-        document.getElementById('table-percentages').innerHTML = htmlPerc;
-    }
-</script>
-</body>
-</html>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill
