@@ -32,9 +32,6 @@
         ._dropZone p { margin: 0; color: var(--text-muted); font-size: var(--fs-sm); }
         input[type="file"] { display: none; }
         
-        .btn-primary { background: var(--primary); color: #fff; border: none; padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; cursor: pointer; transition: all var(--dur) var(--ease); }
-        .btn-primary:hover { background: var(--primary-hover); }
-        
         .btn-whatsapp { background: #25D366; color: #fff; border: none; padding: 6px 16px; border-radius: var(--radius-full); font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
         .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
 
@@ -80,8 +77,8 @@
             <h3 id="pageTitle" style="margin: 0;">رفع البيانات</h3>
             <div class="gap-2">
                 <label>عدد أسابيع الفصل:</label>
+                <!-- يتم التحديث التلقائي عند تغيير الرقم -->
                 <input type="number" id="totalWeeks" class="input-number" value="18" onchange="processData()">
-                <button class="btn-primary" onclick="processData()">تحديث ومعالجة البيانات</button>
             </div>
         </div>
 
@@ -141,6 +138,9 @@
             const workbook = XLSX.read(data, {type: 'array'});
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
+            
+            // معالجة البيانات تلقائياً بعد كل ملف مرفوع
+            processData();
         };
         reader.readAsArrayBuffer(file);
     }
@@ -172,18 +172,16 @@
     }
 
     function processData() {
+        // إيقاف المعالجة بصمت إذا لم يتم رفع جميع الملفات بعد
         if (rawData.sf01.length === 0 || rawData.ss01.length === 0 || rawData.so04.length === 0) {
-            alert("الرجاء رفع الملفات الثلاثة أولاً!");
             return;
         }
 
         const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
 
-        // 1. حساب الساعات المجدولة بشكل دقيق جداً (بالاعتماد على الأيام والأوقات لجمع المحاضرات المتعددة)
         courseHours = {};
         let crnUniqueSessions = {}; 
         
-        // المرور الأول: جمع الأوقات الفعلية (يحل مشكلة الشعب التي تدرس في يومين مثل 567)
         rawData.ss01.forEach(row => {
             let crn = row['الرقم المرجعي'] || row['CRN'];
             let time = row['الوقت'] || row['فترة المحاضرة'];
@@ -201,7 +199,6 @@
             }
         });
 
-        // المرور الثاني: إذا لم يكن هناك أوقات (جدول غير مكتمل)، نعتمد على عمود ساعات الاتصال كحل بديل
         rawData.ss01.forEach(row => {
             let crn = row['الرقم المرجعي'] || row['CRN'];
             let contactHoursCol = row['ساعات الاتصال'];
@@ -210,7 +207,6 @@
             }
         });
 
-        // 2. حساب الساعات الفعلية المنفذة (TTH) لكل شعبة للاحتياط
         let crnWeekSessions = {}; 
         rawData.so04.forEach(row => {
             let crn = row['الرقم المرجعي'];
@@ -241,7 +237,6 @@
             }
         }
 
-        // 3. بناء هيكل المتدربين
         let traineesMap = {};
         rawData.sf01.forEach(row => {
             let id = row['رقم المتدرب'];
@@ -293,7 +288,6 @@
             }
         });
 
-        // 4. معالجة بيانات الغياب والجلسات الملغاة
         rawData.so04.forEach(row => {
             let id = row['رقم المتدرب'];
             let crn = row['الرقم المرجعي'];
@@ -311,14 +305,13 @@
             }
 
             if(excuse.includes('بدون عذر')) {
-                traineesMap[id].crns[crn].absHours += absHours; // للنسب الإجمالية
+                traineesMap[id].crns[crn].absHours += absHours; 
                 traineesMap[id].weeklyCrnAbsences[weekNum][crn].unexcusedAbs += absHours;
             } else if (excuse.includes('جلسة ملغاة')) {
                 traineesMap[id].weeklyCrnAbsences[weekNum][crn].canceledAbs += absHours;
             }
         });
 
-        // 5. التصنيف النهائي
         processedData.active = [];
         processedData.excluded = [];
         processedData.percentages = [];
@@ -370,7 +363,6 @@
                     let unexcusedAbs = wData ? wData.unexcusedAbs : 0;
                     let canceledAbs = wData ? wData.canceledAbs : 0;
 
-                    // تحديد الساعات المطلوبة من المتدرب (تعتمد على الجدول أولاً، ونخصم منها الملغى)
                     let baseHours = scheduleHours > 0 ? scheduleHours : taughtHours;
                     let expectedHours = Math.max(0, baseHours - canceledAbs);
 
@@ -379,7 +371,6 @@
 
                     if (unexcusedAbs > 0) {
                         absentCrnsCount++;
-                        // يعتبر غائباً كلياً عن هذا المقرر إذا كانت ساعات غيابه تساوي أو تتجاوز الساعات المطلوبة فعلياً
                         if (expectedHours === 0 || unexcusedAbs >= expectedHours) {
                             fullyAbsentCrnsCount++;
                         }
@@ -389,7 +380,6 @@
                 if (expectedCrnsCount === 0) {
                     t.weekStatuses[w] = "-";
                 } else if (absentCrnsCount > 0) {
-                    // يجب أن يغيب كلياً عن *جميع* المقررات المطلوبة منه في هذا الأسبوع ليحصل على "كامل"
                     if (fullyAbsentCrnsCount > 0 && fullyAbsentCrnsCount === expectedCrnsCount) {
                         t.weekStatuses[w] = "كامل";
                         t.weeksAbsentCount++;
@@ -408,7 +398,6 @@
 
         processedData.percentages.sort((a, b) => b.absPercentage - a.absPercentage);
         renderTables(totalWeeks);
-        alert("تمت معالجة البيانات بنجاح!");
     }
 
     function renderTables(totalWeeks) {
