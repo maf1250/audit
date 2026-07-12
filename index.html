@@ -210,7 +210,7 @@
             }
         });
 
-        // 2. بناء سجل تحضير المدربين (بالاعتماد على عمود رقم الأسبوع مباشرة)
+        // 2. بناء سجل تحضير المدربين
         crnHasData = {};
         rawData.so04.forEach(row => {
             let crn = row['الرقم المرجعي'];
@@ -275,7 +275,7 @@
             }
         });
 
-        // 4. معالجة الغياب من SO04 (بالاعتماد على عمود رقم الأسبوع مباشرة)
+        // 4. معالجة الغياب من SO04
         rawData.so04.forEach(row => {
             let id = row['رقم المتدرب'];
             let crn = row['الرقم المرجعي'];
@@ -296,6 +296,7 @@
                 traineesMap[id].weeklyCrnAbsences[weekNum][crn] = { absHours: 0, hasUnexcused: false };
             }
             
+            // نجمع الساعات (بعذر أو بدون) لمعرفة التغيب الكلي، لكن نصنف بدون عذر للاعتماد
             traineesMap[id].weeklyCrnAbsences[weekNum][crn].absHours += absHours;
             if(excuse.includes('بدون عذر')) {
                 traineesMap[id].weeklyCrnAbsences[weekNum][crn].hasUnexcused = true;
@@ -349,43 +350,56 @@
 
             t.weeksAbsentCount = 0;
             
-            // حساب حالة الأسابيع (المنطق الذكي المعتمد على إجمالي الشُعب المسجلة)
+            // حساب حالة الأسابيع (المنطق الذكي والمحسن)
             let activeCrns = Object.keys(t.crns);
-            let totalCoursesCount = activeCrns.length; // إجمالي الشُعب المسجلة للمتدرب
+            let totalCoursesCount = activeCrns.length; 
 
             for(let w=1; w<=totalWeeks; w++) {
                 let absentCrnsCount = 0;
-                let presentCrnsCount = 0;
-                let probableCrnsCount = 0;
+                let hasPresence = false;
+                let anyTrainerTaught = false;
+                let weekHasUnexcused = false;
 
                 activeCrns.forEach(crn => {
                     let trainerTaught = crnHasData[crn] && crnHasData[crn][w];
                     let wData = t.weeklyCrnAbsences[w] && t.weeklyCrnAbsences[w][crn];
                     
-                    if (wData && wData.absHours > 0 && wData.hasUnexcused) {
-                        absentCrnsCount++; // غاب بدون عذر
+                    let totalAbs = (wData && wData.absHours > 0) ? wData.absHours : 0;
+                    let crnHours = t.crns[crn].hours || 0;
+                    
+                    if (totalAbs > 0) {
+                        absentCrnsCount++;
+                        if (wData.hasUnexcused) weekHasUnexcused = true;
+                        
+                        // إذا كانت ساعات الغياب أقل من ساعات المقرر الأسبوعية الإجمالية
+                        // فهذا إثبات قاطع بأن المتدرب "حضر" بقية المحاضرات الخاصة بالمقرر في ذلك الأسبوع
+                        if (crnHours > 0 && totalAbs < crnHours) {
+                            hasPresence = true;
+                        }
                     } else if (trainerTaught) {
-                        presentCrnsCount++; // المدرب حضّر، والمتدرب لم يغب
-                    } else {
-                        probableCrnsCount++; // المدرب لم يحضّر
+                        // المدرب قام بالتحضير، ولم يسجل غياباً للمتدرب، إذن هو حاضر 100%
+                        hasPresence = true;
+                        anyTrainerTaught = true;
                     }
                 });
 
                 if (totalCoursesCount === 0) {
                     t.weekStatuses[w] = "-";
-                } else if (absentCrnsCount === totalCoursesCount) {
-                    // غاب في جميع الشُعب المسجلة له (حتى لو بعضها لم يُدرس)
-                    t.weekStatuses[w] = "كامل";
-                    t.weeksAbsentCount++;
-                } else if (absentCrnsCount > 0) {
-                    // غاب في بعض الشُعب وليس كلها
-                    t.weekStatuses[w] = "جزئي";
-                    t.weeksAbsentCount++;
-                } else if (presentCrnsCount > 0) {
-                    // لم يغب، وهناك مدرب واحد على الأقل قام بالتحضير
+                } else if (absentCrnsCount > 0 && weekHasUnexcused) {
+                    if (!hasPresence) {
+                        // لم يحضر ولا أي ساعة في جميع المقررات التي تم تحضيرها (انقطاع كامل)
+                        t.weekStatuses[w] = "كامل";
+                        t.weeksAbsentCount++;
+                    } else {
+                        // غاب بعض المحاضرات وحضر البعض الآخر
+                        t.weekStatuses[w] = "جزئي";
+                        t.weeksAbsentCount++; // يحسب ضمن أسابيع المخالفات/الغيابات
+                    }
+                } else if (anyTrainerTaught) {
+                    // لم يغب أي غياب بدون عذر وحضر على الأقل محاضرة واحدة
                     t.weekStatuses[w] = "-"; 
                 } else {
-                    // لم يغب، ولم يقم أي مدرب بالتحضير
+                    // لم يغب ولم يتأكد النظام من إقامة أي من محاضراته هذا الأسبوع
                     t.weekStatuses[w] = "محتمل";
                 }
             }
