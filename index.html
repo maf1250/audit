@@ -170,6 +170,9 @@
                             <div id="legend-twenty">تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).</div>
                         </li>
                     </ul>
+                    <div style="margin-top: 10px; color: var(--danger); font-size: 12.5px; font-weight: bold;">
+                        ملاحظة هامة: النظام يقوم باحتساب النسبة بناءً على الغياب (بدون عذر) فقط، ويتجاهل الجلسات الملغاة أو الأعذار الأخرى بشكل تلقائي بالكامل.
+                    </div>
                 </div>
             </div>
 
@@ -252,7 +255,6 @@
         let input = document.getElementById('searchInput');
         let filter = input.value.trim().toLowerCase();
         
-        // الأقسام التي تحتوي على جداول يجب تصفيتها
         let tabs = ['table-main', 'table-matrix', 'table-percentages', 'table-fullweek', 'table-deprived-all', 'table-deprived-except', 'table-excluded'];
         
         tabs.forEach(tabId => {
@@ -260,7 +262,6 @@
             if (table) {
                 let trs = table.querySelectorAll('tbody tr');
                 trs.forEach(tr => {
-                    // افتراض أن العمود الأول هو الرقم والعمود الثاني هو الاسم
                     let idTd = tr.getElementsByTagName("td")[0];
                     let nameTd = tr.getElementsByTagName("td")[1];
                     if (idTd || nameTd) {
@@ -298,7 +299,6 @@
             ? 'تعني أن المتدربة حاضرة (تم تحضيرها في محاضرة واحدة على الأقل ولم يسجل لها أي غياب).'
             : 'تعني أن المتدرب حاضر (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).';
 
-        // الحرمان وتجاوز النسبة
         document.getElementById('legend-deprived').innerHTML = isFemale
             ? 'تعني أن المتدربة تجاوزت الحد المسموح للغياب وتم رصد درجة الحرمان (ح) لها رسمياً في النظام.'
             : 'تعني أن المتدرب تجاوز الحد المسموح للغياب وتم رصد درجة الحرمان (ح) له رسمياً في النظام.';
@@ -360,7 +360,8 @@
             }
         });
 
-        let crnWeekSessions = {}; 
+        // 1. حساب المحاضرات الملقاة بناء على SO04 (مع دمج التكرارات لمعالجة تحديثات رايات)
+        let globalSessionStatus = {}; 
         rawData.so04.forEach(row => {
             let crn = row['الرقم المرجعي'];
             let weekNum = parseInt(row['رقم الأسبوع']);
@@ -370,22 +371,29 @@
             let excuse = row['نوع العذر'] || '';
             
             if(!crn || isNaN(weekNum) || absHours <= 0) return;
-            if(excuse.includes('جلسة ملغاة')) return; 
 
-            if(!crnWeekSessions[weekNum]) crnWeekSessions[weekNum] = {};
-            if(!crnWeekSessions[weekNum][crn]) crnWeekSessions[weekNum][crn] = {};
-            
             let sessionKey = date + '_' + time;
-            let currentMax = crnWeekSessions[weekNum][crn][sessionKey] || 0;
-            crnWeekSessions[weekNum][crn][sessionKey] = Math.max(currentMax, absHours);
+            if(!globalSessionStatus[crn]) globalSessionStatus[crn] = {};
+            if(!globalSessionStatus[crn][weekNum]) globalSessionStatus[crn][weekNum] = {};
+            
+            // هذا السطر يضمن أخذ آخر حالة للمحاضرة (لو تغيرت من بدون عذر إلى جلسة ملغاة سيأخذ الملغاة)
+            globalSessionStatus[crn][weekNum][sessionKey] = {
+                absHours: Math.max((globalSessionStatus[crn][weekNum][sessionKey]?.absHours || 0), absHours),
+                excuse: excuse 
+            };
         });
 
         let TTH = {}; 
-        for(let w in crnWeekSessions) {
-            TTH[w] = {};
-            for(let c in crnWeekSessions[w]) {
+        for(let c in globalSessionStatus) {
+            for(let w in globalSessionStatus[c]) {
+                if(!TTH[w]) TTH[w] = {};
                 let sum = 0;
-                for(let key in crnWeekSessions[w][c]) sum += crnWeekSessions[w][c][key];
+                for(let key in globalSessionStatus[c][w]) {
+                    let s = globalSessionStatus[c][w][key];
+                    if (!s.excuse.includes('جلسة ملغاة')) {
+                        sum += s.absHours;
+                    }
+                }
                 TTH[w][c] = sum;
             }
         }
@@ -442,28 +450,52 @@
             }
         });
 
+        // 2. حساب الغياب لكل متدرب (مع دمج تكرارات تقرير SO04 بدقة)
+        let traineeSessionStatus = {}; 
         rawData.so04.forEach(row => {
             let id = row['رقم المتدرب'] || row['رقم المتدربة'];
             let crn = row['الرقم المرجعي'];
             let weekNum = parseInt(row['رقم الأسبوع']);
+            let date = row['تاريخ المحاضرة'] || '';
+            let time = row['فترة المحاضرة'] || '';
             let absHours = parseFloat(row['ساعات الغياب']) || 0;
             let excuse = row['نوع العذر'] || '';
             
-            if(!traineesMap[id] || !traineesMap[id].crns[crn] || isNaN(weekNum) || absHours === 0) return;
+            if(!id || !crn || !traineesMap[id] || !traineesMap[id].crns[crn] || isNaN(weekNum) || absHours === 0) return;
             
-            if(!traineesMap[id].weeklyCrnAbsences[weekNum]) {
-                traineesMap[id].weeklyCrnAbsences[weekNum] = {};
-            }
-            if(!traineesMap[id].weeklyCrnAbsences[weekNum][crn]) {
-                traineesMap[id].weeklyCrnAbsences[weekNum][crn] = { unexcusedAbs: 0, canceledAbs: 0 };
-            }
+            let sessionKey = weekNum + '_' + date + '_' + time;
+            
+            if(!traineeSessionStatus[id]) traineeSessionStatus[id] = {};
+            if(!traineeSessionStatus[id][crn]) traineeSessionStatus[id][crn] = {};
+            
+            traineeSessionStatus[id][crn][sessionKey] = {
+                weekNum: weekNum,
+                absHours: Math.max((traineeSessionStatus[id][crn][sessionKey]?.absHours || 0), absHours),
+                excuse: excuse // الاعتماد على حالة العذر في التحديث الأخير
+            };
+        });
 
-            if(excuse.includes('بدون عذر')) {
-                traineesMap[id].crns[crn].absHours += absHours; 
-                traineesMap[id].weeklyCrnAbsences[weekNum][crn].unexcusedAbs += absHours;
-            } else if (excuse.includes('جلسة ملغاة')) {
-                traineesMap[id].weeklyCrnAbsences[weekNum][crn].canceledAbs += absHours;
-            }
+        // 3. تفريغ وتصنيف الغياب النهائي للمتدرب
+        Object.keys(traineeSessionStatus).forEach(id => {
+            Object.keys(traineeSessionStatus[id]).forEach(crn => {
+                Object.keys(traineeSessionStatus[id][crn]).forEach(sessionKey => {
+                    let session = traineeSessionStatus[id][crn][sessionKey];
+                    
+                    if(!traineesMap[id].weeklyCrnAbsences[session.weekNum]) {
+                        traineesMap[id].weeklyCrnAbsences[session.weekNum] = {};
+                    }
+                    if(!traineesMap[id].weeklyCrnAbsences[session.weekNum][crn]) {
+                        traineesMap[id].weeklyCrnAbsences[session.weekNum][crn] = { unexcusedAbs: 0, canceledAbs: 0 };
+                    }
+
+                    if(session.excuse.includes('بدون عذر')) {
+                        traineesMap[id].crns[crn].absHours += session.absHours; 
+                        traineesMap[id].weeklyCrnAbsences[session.weekNum][crn].unexcusedAbs += session.absHours;
+                    } else if (session.excuse.includes('جلسة ملغاة')) {
+                        traineesMap[id].weeklyCrnAbsences[session.weekNum][crn].canceledAbs += session.absHours;
+                    }
+                });
+            });
         });
 
         processedData.active = [];
@@ -613,7 +645,7 @@
         htmlMain += `</tbody></table>`;
         document.getElementById('table-main').innerHTML = htmlMain;
 
-        // 2. مصفوفة الغياب (مع دمج النسبة للحرمان)
+        // 2. مصفوفة الغياب
         let htmlMatrix = `<table><thead><tr>
             <th class="nowrap">${colId}</th>
             <th class="nowrap name-cell">${colName}</th>
@@ -730,7 +762,6 @@
         htmlPerc += `</tbody></table>`;
         document.getElementById('table-percentages').innerHTML = htmlPerc;
 
-        // تطبيق فلتر البحث فور انتهاء بناء الجداول (للحفاظ على البحث إذا تم رفع ملف جديد)
         window.filterTables();
     };
 </script>
