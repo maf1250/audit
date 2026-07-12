@@ -46,7 +46,7 @@
         
         ._tableWrapper { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; background: var(--bg-surface); max-height: calc(100vh - 150px); }
         
-        /* تعديل الجداول لحل مشكلة تداخل الأعمدة */
+        /* الجداول */
         table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); text-align: right; }
         th, td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); vertical-align: middle; }
         th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 700; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
@@ -65,10 +65,17 @@
         
         .mono { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: embed; white-space: nowrap; }
         .nowrap { white-space: nowrap; }
-        
-        /* كلاس مخصص لعمود اسم المتدرب لزيادة عرضه */
         .name-cell { min-width: 250px !important; white-space: nowrap; }
         
+        /* تنسيقات مصفوفة المقررات */
+        .course-card-wrapper { display: flex; flex-wrap: wrap; gap: 8px; min-width: 400px; }
+        .course-card { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-inset); border: 1px solid var(--border); padding: 4px 10px; border-radius: var(--radius-md); font-size: 11.5px; transition: all var(--dur) var(--ease); }
+        .course-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .course-card .pct { font-weight: 800; font-family: Tahoma, monospace; direction: ltr; display: inline-block; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.2); }
+        .course-card.c-danger { border-color: var(--danger); background: var(--danger-subtle); color: #fff; }
+        .course-card.c-warning { border-color: var(--warning); background: var(--warning-subtle); color: #fff; }
+        .course-card.c-success { border-color: var(--success); background: var(--success-subtle); color: #fff; }
+
         /* حقوق الإعداد */
         .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
     </style>
@@ -87,6 +94,7 @@
         </div>
         <div class="_navItem active" onclick="switchTab('upload', this)">رفع البيانات</div>
         <div class="_navItem" id="nav-main" onclick="switchTab('report-main', this)">المتدربون (الرئيسي)</div>
+        <div class="_navItem" onclick="switchTab('report-matrix', this)">مصفوفة الغياب</div>
         <div class="_navItem" onclick="switchTab('report-percentages', this)">نسبة الغياب والإنذارات</div>
         <div class="_navItem" onclick="switchTab('report-fullweek', this)">غياب أسبوع كامل فأكثر</div>
         <div class="_navItem" onclick="switchTab('report-deprived-all', this)">محروم بكل المقررات</div>
@@ -99,7 +107,6 @@
             <h3 id="pageTitle" style="margin: 0;">رفع البيانات</h3>
             <div class="gap-2">
                 <label>عدد أسابيع الفصل:</label>
-                <!-- التحديث التلقائي يعمل فور تغيير الرقم بدون أزرار -->
                 <input type="number" id="totalWeeks" class="input-number" value="18" onchange="processData()">
             </div>
         </div>
@@ -124,7 +131,6 @@
                     </div>
                 </div>
 
-                <!-- صندوق الإرشادات والشرح -->
                 <div class="info-card">
                     <h4>دليل وقراءة حالات الغياب الأسبوعي:</h4>
                     <ul>
@@ -149,6 +155,7 @@
             </div>
 
             <div id="report-main" class="tab-content hidden"><div class="_tableWrapper" id="table-main"></div></div>
+            <div id="report-matrix" class="tab-content hidden"><div class="_tableWrapper" id="table-matrix"></div></div>
             <div id="report-percentages" class="tab-content hidden"><div class="_tableWrapper" id="table-percentages"></div></div>
             <div id="report-fullweek" class="tab-content hidden"><div class="_tableWrapper" id="table-fullweek"></div></div>
             <div id="report-deprived-all" class="tab-content hidden"><div class="_tableWrapper" id="table-deprived-all"></div></div>
@@ -164,7 +171,7 @@
     var courseHours = {}; 
     var isFemale = false; 
 
-    function switchTab(tabId, el) {
+    window.switchTab = function(tabId, el) {
         document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
         document.getElementById(tabId).classList.remove('hidden');
         document.querySelectorAll('._navItem').forEach(e => e.classList.remove('active'));
@@ -172,9 +179,9 @@
             el.classList.add('active');
             document.getElementById('pageTitle').innerText = el.innerText;
         }
-    }
+    };
 
-    function handleFile(e, type) {
+    window.handleFile = function(e, type) {
         const file = e.target.files[0];
         if (!file) return;
         
@@ -190,12 +197,12 @@
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
             
-            processData();
+            window.processData();
         };
         reader.readAsArrayBuffer(file);
-    }
+    };
 
-    function calculateContactHours(timeStr) {
+    window.calculateContactHours = function(timeStr) {
         if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes('-')) return 0;
         let parts = timeStr.split('-');
         let t1 = parts[0].trim(); 
@@ -211,17 +218,17 @@
         
         let diff = Math.abs(toMins(t1) - toMins(t2));
         return Math.round(diff / 50); 
-    }
+    };
 
-    function formatPhone(phone) {
+    window.formatPhone = function(phone) {
         if(!phone) return "";
         let p = phone.toString().trim().replace(/\s+/g, '');
         if(p.startsWith('05')) return '966' + p.substring(1);
         if(p.startsWith('5')) return '966' + p;
         return p;
-    }
+    };
     
-    function updateUIText() {
+    window.updateUIText = function() {
         document.getElementById('nav-main').innerText = isFemale ? 'المتدربات (الرئيسي)' : 'المتدربون (الرئيسي)';
         document.getElementById('nav-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبين والمطوي قيدهم';
         
@@ -247,9 +254,9 @@
         } else if (activeTab) {
             document.getElementById('pageTitle').innerText = activeTab.innerText;
         }
-    }
+    };
 
-    function processData() {
+    window.processData = function() {
         if (rawData.sf01.length === 0 || rawData.ss01.length === 0 || rawData.so04.length === 0) {
             return;
         }
@@ -262,7 +269,7 @@
                 break;
             }
         }
-        updateUIText();
+        window.updateUIText();
 
         const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
 
@@ -280,7 +287,7 @@
                 
                 if (!crnUniqueSessions[crn].has(uniqueKey)) {
                     crnUniqueSessions[crn].add(uniqueKey);
-                    let h = calculateContactHours(time);
+                    let h = window.calculateContactHours(time);
                     courseHours[crn] = (courseHours[crn] || 0) + h;
                 }
             }
@@ -485,14 +492,14 @@
         });
 
         processedData.percentages.sort((a, b) => b.absPercentage - a.absPercentage);
-        renderTables(totalWeeks);
-    }
+        window.renderTables(totalWeeks);
+    };
 
-    function renderTables(totalWeeks) {
+    window.renderTables = function(totalWeeks) {
+        let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب';
+        let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
+
         const createThead = (isExcluded = false) => {
-            let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب';
-            let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
-            
             let html = `<thead><tr>
                 <th class="nowrap">${colId}</th>
                 <th class="nowrap name-cell">${colName}</th>
@@ -541,34 +548,79 @@
             return html;
         };
 
+        // 1. الرئيسي
         let htmlMain = `<table>${createThead(false)}<tbody>`;
         processedData.active.forEach(t => htmlMain += createRow(t, false));
         htmlMain += `</tbody></table>`;
         document.getElementById('table-main').innerHTML = htmlMain;
 
+        // 2. مصفوفة الغياب (الجديدة)
+        let htmlMatrix = `<table><thead><tr>
+            <th class="nowrap">${colId}</th>
+            <th class="nowrap name-cell">${colName}</th>
+            <th class="nowrap">التخصص</th>
+            <th>مقررات المتدرب ونسبة غياب كل مقرر</th>
+        </tr></thead><tbody>`;
+
+        processedData.active.forEach(t => {
+            htmlMatrix += `<tr>
+                <td class="mono">${t.id}</td>
+                <td class="name-cell">${t.name}</td>
+                <td>${t.major || '-'}</td>
+                <td><div class="course-card-wrapper">`;
+            
+            Object.values(t.crns).forEach(c => {
+                let cardClass = 'c-success';
+                let pctText = c.absPercentage.toFixed(1) + '%';
+                
+                if (c.isOfficiallyDeprived) {
+                    cardClass = 'c-danger';
+                    pctText = isFemale ? 'محرومة (ح)' : 'محروم (ح)';
+                } else if (c.absPercentage >= 20) {
+                    cardClass = 'c-danger';
+                } else if (c.absPercentage >= 15) {
+                    cardClass = 'c-warning';
+                }
+                
+                htmlMatrix += `<div class="course-card ${cardClass}">
+                    <span>${c.name} <span style="opacity:0.7; font-size:10px;">(${c.code})</span></span>
+                    <span class="pct">${pctText}</span>
+                </div>`;
+            });
+            
+            htmlMatrix += `</div></td></tr>`;
+        });
+        htmlMatrix += `</tbody></table>`;
+        document.getElementById('table-matrix').innerHTML = htmlMatrix;
+
+        // 3. غياب أسبوع كامل فأكثر
         let htmlFull = `<table>${createThead(false)}<tbody>`;
         processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).forEach(t => htmlFull += createRow(t, false));
         htmlFull += `</tbody></table>`;
         document.getElementById('table-fullweek').innerHTML = htmlFull;
 
+        // 4. محروم بكل المقررات
         let htmlDepAll = `<table>${createThead(false)}<tbody>`;
         processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).forEach(t => htmlDepAll += createRow(t, false));
         htmlDepAll += `</tbody></table>`;
         document.getElementById('table-deprived-all').innerHTML = htmlDepAll;
 
+        // 5. محروم ماعدا مقرر
         let htmlDepExc = `<table>${createThead(false)}<tbody>`;
         processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).forEach(t => htmlDepExc += createRow(t, false));
         htmlDepExc += `</tbody></table>`;
         document.getElementById('table-deprived-except').innerHTML = htmlDepExc;
 
+        // 6. المنسحبين والمطوي قيدهم 
         let htmlExc = `<table>${createThead(true)}<tbody>`;
         processedData.excluded.forEach(t => htmlExc += createRow(t, true));
         htmlExc += `</tbody></table>`;
         document.getElementById('table-excluded').innerHTML = htmlExc;
 
+        // 7. صفحة النسبة
         let htmlPerc = `<table><thead><tr>
-            <th class="nowrap">${isFemale ? 'رقم المتدربة' : 'رقم المتدرب'}</th>
-            <th class="nowrap name-cell">${isFemale ? 'اسم المتدربة' : 'اسم المتدرب'}</th>
+            <th class="nowrap">${colId}</th>
+            <th class="nowrap name-cell">${colName}</th>
             <th class="nowrap">رمز المقرر</th>
             <th>اسم المقرر</th>
             <th class="nowrap">الشعبة (CRN)</th>
@@ -578,7 +630,7 @@
         </tr></thead><tbody>`;
         
         processedData.percentages.forEach(p => {
-            let formattedPhone = formatPhone(p.phone);
+            let formattedPhone = window.formatPhone(p.phone);
             
             let msg = isFemale 
                 ? `عزيزتي ${p.traineeName}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n${p.courseName}\n هي ${p.absPercentage.toFixed(1)}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب`
@@ -617,7 +669,7 @@
         });
         htmlPerc += `</tbody></table>`;
         document.getElementById('table-percentages').innerHTML = htmlPerc;
-    }
+    };
 </script>
 </body>
 </html>
