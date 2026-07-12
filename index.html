@@ -13,15 +13,15 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         
-        /* الوضع النهاري (الأساسي) */
+        /* الوضع النهاري (ألوان هادئة مستوحاة من هوية المؤسسة) */
         :root {
-            --bg-base: #f4f6f8;
-            --bg-surface: #ffffff;
-            --bg-elevated: #ffffff;
-            --bg-hover: #eef1f4;
-            --bg-inset: #eef1f4;
-            --border: #d5dce2;
-            --border-strong: #b8c4ce;
+            --bg-base: #eef4f5;      /* خلفية الصفحة: لون بارد وهادئ بدلاً من الساطع */
+            --bg-surface: #f7fafb;   /* خلفية الجداول والصناديق */
+            --bg-elevated: #f7fafb;  /* خلفية القائمة الجانبية */
+            --bg-hover: #e2ebed;
+            --bg-inset: #e2ebed;
+            --border: #cddbe0;
+            --border-strong: #a9bec6;
             --text-primary: #1e293b;
             --text-secondary: #475569;
             --text-muted: #64748b;
@@ -161,7 +161,7 @@
         /* حقوق الإعداد */
         .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
 
-        /* عداد الزوار - تم دفعه للأسفل */
+        /* عداد الزوار */
         .visitor-counter { margin-top: auto; display: flex; justify-content: center; padding-top: var(--sp-4); padding-bottom: var(--sp-4); }
     </style>
 </head>
@@ -185,7 +185,6 @@
         <div class="_navItem" onclick="switchTab('report-deprived-except', this)">الحرمان ماعدا مقرر</div>
         <div class="_navItem" id="nav-excluded" onclick="switchTab('report-excluded', this)">المنسحبين والمطوي قيدهم</div>
         
-        <!-- تم دفع عداد الزوار للأسفل وتوسيطه باستخدام margin-top: auto -->
         <div class="visitor-counter">
             <img src="https://visitor-badge.laobi.icu/badge?page_id=https%3A%2F%2Fmaf1250.github.io%2Faudi&radius=8" alt="visitor badge"/>
         </div>
@@ -208,7 +207,6 @@
                     رفع البيانات
                 </button>
 
-                <!-- زر الوضع الليلي/النهاري أعلى اليسار -->
                 <button class="btn-theme" id="themeToggle" title="تبديل المظهر">
                     <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                     <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -283,11 +281,9 @@
 </div>
 
 <script>
-    // --- تفعيل الوضع الليلي/النهاري وحفظ الخيار ---
     const themeBtn = document.getElementById('themeToggle');
     const body = document.body;
 
-    // استرجاع المظهر المحفوظ إن وُجد
     const savedTheme = localStorage.getItem('appTheme') || 'dark';
     body.setAttribute('data-theme', savedTheme);
 
@@ -297,10 +293,9 @@
         body.setAttribute('data-theme', newTheme);
         localStorage.setItem('appTheme', newTheme);
         
-        // تحديث لون شريط المتصفح العلوي (للهواتف)
-        document.querySelector('meta[name="theme-color"]').setAttribute("content", newTheme === 'dark' ? "#14191c" : "#f4f6f8");
+        // تعديل لون الهواتف حسب اللون الهادئ الجديد للوضع النهاري
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", newTheme === 'dark' ? "#14191c" : "#eef4f5");
     });
-    // ----------------------------------------------
 
     var rawData = { sf01: [], ss01: [], so04: [] };
     var processedData = { active: [], excluded: [], percentages: [] };
@@ -703,16 +698,17 @@
         let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب';
         let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
 
+        // دالة إنشاء الهيدر - تمت إزالة عمود "عدد المقررات" إذا كانت القائمة للمنسحبين
         const createThead = (isExcluded = false) => {
             let html = `<thead><tr>
                 <th class="nowrap">${colId}</th>
                 <th class="nowrap name-cell">${colName}</th>
                 <th class="nowrap">التخصص</th>
-                <th class="nowrap">رقم الجوال</th>
-                <th class="nowrap text-center">عدد المقررات</th>`;
+                <th class="nowrap">رقم الجوال</th>`;
             
             if(!isExcluded) {
                 html += `
+                <th class="nowrap text-center">عدد المقررات</th>
                 <th class="nowrap text-center">مقررات الحرمان</th>
                 <th class="nowrap text-center">أسابيع الغياب</th>`;
                 for(let w=1; w<=totalWeeks; w++) html += `<th class="text-center">أ ${w}</th>`;
@@ -721,16 +717,17 @@
             return html;
         };
 
+        // دالة إنشاء الصفوف - تمت إزالة قيمة "عدد المقررات" إذا كانت القائمة للمنسحبين
         const createRow = (t, isExcluded = false) => {
             let html = `<tr>
                 <td class="mono">${t.id}</td>
                 <td class="name-cell">${t.name}</td>
                 <td>${t.major || '-'}</td>
-                <td class="mono">${t.phone || '-'}</td>
-                <td class="text-center">${t.totalUniqueCourses || 0}</td>`;
+                <td class="mono">${t.phone || '-'}</td>`;
             
             if(!isExcluded) {
                 html += `
+                <td class="text-center">${t.totalUniqueCourses || 0}</td>
                 <td class="text-center">
                     <span class="badge ${t.totalDeprivedCourses > 0 ? 'badge-danger' : 'badge-success'}">${t.totalDeprivedCourses || 0}</span>
                 </td>
