@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#14191c" />
     <title>نظام متابعة غياب المتدربين</title>
     
     <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334c2b4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'/%3E%3Cpath d='M9 14l2 2 4-4'/%3E%3C/svg%3E" type="image/svg+xml">
@@ -12,15 +13,72 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         
-        :root,[data-theme=dark]{--bg-base:#131a1d;--bg-surface:#1a2226;--bg-elevated:#222c31;--bg-hover:#2a363c;--bg-inset:#0e1416;--border:#2c383e;--border-strong:#3a474e;--text-primary:#e8eeef;--text-secondary:#9fb0b5;--text-muted:#6d7e84;--primary:#34c2b4;--primary-hover:#4ed2c5;--primary-subtle:#2bb5a824;--primary-border:#2bb5a866;--on-primary:#07211e;--success:#5cb86c;--success-subtle:#5cb86c26;--warning:#d9a93e;--warning-subtle:#d9a93e26;--danger:#d96868;--danger-subtle:#d9686826;--info:#5da4c4;--info-subtle:#5da4c426;--font-family:"Cairo", sans-serif;--fs-xs:.6875rem;--fs-sm:.75rem;--fs-base:.8125rem;--fs-md:.875rem;--fs-lg:1rem;--fs-xl:1.25rem;--fs-2xl:1.5rem;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:999px;--ease:cubic-bezier(.4, 0, .2, 1);--dur:.15s;--header-h:65px;}
+        /* الوضع النهاري (الأساسي) */
+        :root {
+            --bg-base: #f4f6f8;
+            --bg-surface: #ffffff;
+            --bg-elevated: #ffffff;
+            --bg-hover: #eef1f4;
+            --bg-inset: #eef1f4;
+            --border: #d5dce2;
+            --border-strong: #b8c4ce;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --primary: #34c2b4;
+            --primary-hover: #2ba599;
+            --primary-subtle: #34c2b426;
+            --primary-border: #34c2b466;
+            --on-primary: #ffffff;
+            --success: #10b981;
+            --success-subtle: #10b98126;
+            --warning: #f59e0b;
+            --warning-subtle: #f59e0b26;
+            --danger: #ef4444;
+            --danger-subtle: #ef444426;
+            --info: #3b82f6;
+            --info-subtle: #3b82f626;
+            --font-family: "Cairo", sans-serif;
+            --fs-xs: .6875rem; --fs-sm: .75rem; --fs-base: .8125rem; --fs-md: .875rem; --fs-lg: 1rem; --fs-xl: 1.25rem; --fs-2xl: 1.5rem;
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;
+            --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-full: 999px;
+            --ease: cubic-bezier(.4, 0, .2, 1); --dur: .2s; --header-h: 65px;
+        }
+
+        /* الوضع الليلي */
+        [data-theme="dark"] {
+            --bg-base: #14191c;
+            --bg-surface: #1a2226;
+            --bg-elevated: #222c31;
+            --bg-hover: #2a363c;
+            --bg-inset: #0e1416;
+            --border: #2c383e;
+            --border-strong: #3a474e;
+            --text-primary: #e8eeef;
+            --text-secondary: #9fb0b5;
+            --text-muted: #6d7e84;
+            --primary: #34c2b4;
+            --primary-hover: #4ed2c5;
+            --primary-subtle: #2bb5a824;
+            --primary-border: #2bb5a866;
+            --on-primary: #07211e;
+            --success: #5cb86c;
+            --success-subtle: #5cb86c26;
+            --warning: #d9a93e;
+            --warning-subtle: #d9a93e26;
+            --danger: #d96868;
+            --danger-subtle: #d9686826;
+            --info: #5da4c4;
+            --info-subtle: #5da4c426;
+        }
         
-        body { font-family: var(--font-family); font-size: var(--fs-base); color: var(--text-primary); background: var(--bg-base); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { font-family: var(--font-family); font-size: var(--fs-base); color: var(--text-primary); background: var(--bg-base); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
         * { box-sizing: border-box; }
         
         ._shell { display: flex; height: 100%; width: 100%; }
-        ._sidebar { width: 240px; background: var(--bg-elevated); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--sp-3) 0; flex-shrink: 0; overflow-y: auto;}
+        ._sidebar { width: 240px; background: var(--bg-elevated); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--sp-3) 0; flex-shrink: 0; overflow-y: auto; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);}
         ._main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-base); }
-        ._header { height: var(--header-h); background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 var(--sp-4); justify-content: space-between; }
+        ._header { height: var(--header-h); background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 var(--sp-4); justify-content: space-between; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);}
         ._content { flex: 1; overflow: auto; padding: var(--sp-4); }
         
         ._navItem { padding: var(--sp-3) var(--sp-4); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: var(--sp-2); font-weight: 600; transition: all var(--dur) var(--ease); border-right: 3px solid transparent; }
@@ -46,13 +104,21 @@
         .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
 
         /* الأزرار العلوية */
-        .btn-upload { background: var(--primary); color: var(--on-primary); border: none; padding: 8px 16px; border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all var(--dur) var(--ease); margin-right: 15px; }
+        .btn-upload { background: var(--primary); color: var(--on-primary); border: none; padding: 8px 16px; border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all var(--dur) var(--ease); }
         .btn-upload:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px var(--primary-subtle); }
         
-        .input-number { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius-sm); width: 60px; text-align: center; font-family: inherit; }
+        /* زر الوضع الليلي/النهاري */
+        .btn-theme { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); width: 36px; height: 36px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--dur) var(--ease); margin-right: 15px; }
+        .btn-theme:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--text-secondary); }
+        [data-theme="dark"] .icon-sun { display: block; }
+        [data-theme="dark"] .icon-moon { display: none; }
+        :root:not([data-theme="dark"]) .icon-sun { display: none; }
+        :root:not([data-theme="dark"]) .icon-moon { display: block; }
+
+        .input-number { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: var(--sp-1) var(--sp-2); border-radius: var(--radius-sm); width: 60px; text-align: center; font-family: inherit; margin-left: 15px;}
         
         /* حقل البحث */
-        .search-box { position: relative; display: flex; align-items: center; }
+        .search-box { position: relative; display: flex; align-items: center; margin-left: 15px;}
         .input-text { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px 8px 32px; border-radius: var(--radius-sm); width: 250px; font-family: inherit; font-size: 13px; transition: all var(--dur) var(--ease); }
         .input-text:focus { outline: none; border-color: var(--primary); background: var(--bg-elevated); box-shadow: 0 0 0 2px var(--primary-subtle); }
         .search-icon { position: absolute; left: 10px; color: var(--text-muted); width: 16px; height: 16px; }
@@ -83,14 +149,20 @@
         /* تنسيقات مصفوفة المقررات */
         .course-card-wrapper { display: flex; flex-wrap: wrap; gap: 8px; min-width: 400px; }
         .course-card { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-inset); border: 1px solid var(--border); padding: 4px 10px; border-radius: var(--radius-md); font-size: 11.5px; transition: all var(--dur) var(--ease); }
-        .course-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .course-card .pct { font-weight: 800; font-family: Tahoma, monospace; direction: ltr; display: inline-block; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.2); }
-        .course-card.c-danger { border-color: var(--danger); background: var(--danger-subtle); color: #fff; }
-        .course-card.c-warning { border-color: var(--warning); background: var(--warning-subtle); color: #fff; }
-        .course-card.c-success { border-color: var(--success); background: var(--success-subtle); color: #fff; }
+        .course-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        [data-theme="dark"] .course-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .course-card .pct { font-weight: 800; font-family: Tahoma, monospace; direction: ltr; display: inline-block; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.15); }
+        .course-card.c-danger { border-color: var(--danger); background: var(--danger-subtle); color: var(--danger); }
+        .course-card.c-warning { border-color: var(--warning); background: var(--warning-subtle); color: var(--warning); }
+        .course-card.c-success { border-color: var(--success); background: var(--success-subtle); color: var(--success); }
+
+        [data-theme="dark"] .course-card.c-danger, [data-theme="dark"] .course-card.c-warning, [data-theme="dark"] .course-card.c-success { color: #fff; }
 
         /* حقوق الإعداد */
         .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
+
+        /* عداد الزوار - تم دفعه للأسفل */
+        .visitor-counter { margin-top: auto; display: flex; justify-content: center; padding-top: var(--sp-4); padding-bottom: var(--sp-4); }
     </style>
 </head>
 <body data-theme="dark">
@@ -112,9 +184,11 @@
         <div class="_navItem" onclick="switchTab('report-deprived-all', this)">الحرمان بكل المقررات</div>
         <div class="_navItem" onclick="switchTab('report-deprived-except', this)">الحرمان ماعدا مقرر</div>
         <div class="_navItem" id="nav-excluded" onclick="switchTab('report-excluded', this)">المنسحبين والمطوي قيدهم</div>
-          <div class="visitor-counter">
-<img src="https://visitor-badge.laobi.icu/badge?page_id=https%3A%2F%2Fmaf1250.github.io%2Faudi&radius=8" alt="visitor badge"/>
-    </div>
+        
+        <!-- تم دفع عداد الزوار للأسفل وتوسيطه باستخدام margin-top: auto -->
+        <div class="visitor-counter">
+            <img src="https://visitor-badge.laobi.icu/badge?page_id=https%3A%2F%2Fmaf1250.github.io%2Faudi&radius=8" alt="visitor badge"/>
+        </div>
     </div>
 
     <div class="_main">
@@ -123,15 +197,21 @@
             <div class="gap-2">
                 <div class="search-box">
                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" class="input-text" placeholder="بحث بالاسم أو الرقم الجامعي..." onkeyup="filterTables()">
+                    <input type="text" id="searchInput" class="input-text" placeholder="بحث بالاسم أو الرقم..." onkeyup="filterTables()">
                 </div>
                 
-                <label style="margin-right: 15px;">عدد أسابيع الفصل:</label>
+                <label>عدد أسابيع الفصل:</label>
                 <input type="number" id="totalWeeks" class="input-number" value="18" onchange="processData()">
                 
                 <button class="btn-upload" onclick="switchTab('upload', null, 'رفع البيانات')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M12 10v6"/><path d="m9 13 3-3 3 3"/></svg>
                     رفع البيانات
+                </button>
+
+                <!-- زر الوضع الليلي/النهاري أعلى اليسار -->
+                <button class="btn-theme" id="themeToggle" title="تبديل المظهر">
+                    <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                 </button>
             </div>
         </div>
@@ -203,6 +283,25 @@
 </div>
 
 <script>
+    // --- تفعيل الوضع الليلي/النهاري وحفظ الخيار ---
+    const themeBtn = document.getElementById('themeToggle');
+    const body = document.body;
+
+    // استرجاع المظهر المحفوظ إن وُجد
+    const savedTheme = localStorage.getItem('appTheme') || 'dark';
+    body.setAttribute('data-theme', savedTheme);
+
+    themeBtn.addEventListener('click', () => {
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', newTheme);
+        localStorage.setItem('appTheme', newTheme);
+        
+        // تحديث لون شريط المتصفح العلوي (للهواتف)
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", newTheme === 'dark' ? "#14191c" : "#f4f6f8");
+    });
+    // ----------------------------------------------
+
     var rawData = { sf01: [], ss01: [], so04: [] };
     var processedData = { active: [], excluded: [], percentages: [] };
     var courseHours = {}; 
