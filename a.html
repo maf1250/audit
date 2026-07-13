@@ -94,8 +94,30 @@
         ._navItem:hover { background: var(--bg-hover); color: var(--text-primary); }
         ._navItem.active { background: var(--primary-subtle); color: var(--primary); border-right-color: var(--primary); }
         
-        .tab-badge { margin-right: auto; background: var(--primary-subtle); color: var(--primary); font-size: 10.5px; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 800; font-family: Tahoma, monospace; border: 1px solid var(--primary-border); }
+        /* التنسيق الافتراضي لعدادات التبويبات */
+        .tab-badge { margin-right: auto; background: var(--primary-subtle); color: var(--primary); font-size: 10.5px; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 800; font-family: Tahoma, monospace; border: 1px solid var(--primary-border); transition: all var(--dur) var(--ease); }
         [data-theme="dark"] .tab-badge { background: #1a3c39; border-color: var(--primary-border); }
+
+        /* تخصيص ألوان عدادات تبويبات الحرمان والمنسحبين */
+        #badge-fullweek, #badge-deprived-all, #badge-deprived-except {
+            background: var(--danger-subtle);
+            color: var(--danger);
+            border-color: #ef444440;
+        }
+        [data-theme="dark"] #badge-fullweek, [data-theme="dark"] #badge-deprived-all, [data-theme="dark"] #badge-deprived-except {
+            background: rgba(217, 104, 104, 0.15);
+            border-color: #d9686840;
+        }
+        #badge-excluded {
+            background: var(--bg-hover);
+            color: var(--text-muted);
+            border-color: var(--border-strong);
+        }
+        [data-theme="dark"] #badge-excluded {
+            background: #2a363c;
+            color: var(--text-secondary);
+            border-color: #3a474e;
+        }
 
         ._uploadGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-4); }
         ._dropZone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--bg-surface); padding: var(--sp-6) var(--sp-4); text-align: center; cursor: pointer; transition: all var(--dur) var(--ease); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; position: relative;}
@@ -393,19 +415,59 @@
         document.querySelector('meta[name="theme-color"]').setAttribute("content", newTheme === 'dark' ? "#14191c" : "#eef4f5");
     });
 
+    // دوال IndexedDB لتخزين البيانات الكبيرة (SO04) بسلاسة
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            let request = indexedDB.open('AbsenceReportsDB', 1);
+            request.onupgradeneeded = function(e) {
+                let db = e.target.result;
+                if (!db.objectStoreNames.contains('store')) {
+                    db.createObjectStore('store');
+                }
+            };
+            request.onsuccess = function(e) { resolve(e.target.result); };
+            request.onerror = function(e) { reject(e.target.error); };
+        });
+    }
+    async function saveToDB(key, data) {
+        try {
+            let db = await openDB();
+            return new Promise((resolve, reject) => {
+                let transaction = db.transaction(['store'], 'readwrite');
+                let store = transaction.objectStore('store');
+                let request = store.put(data, key);
+                request.onsuccess = () => resolve(true);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (e) { console.error("Error saving to IndexedDB:", e); }
+    }
+    async function loadFromDB(key) {
+        try {
+            let db = await openDB();
+            return new Promise((resolve, reject) => {
+                let transaction = db.transaction(['store'], 'readonly');
+                let store = transaction.objectStore('store');
+                let request = store.get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (e) {
+            console.error("Error loading from IndexedDB:", e); return null;
+        }
+    }
+
     var rawData = { sf01: [], ss01: [], so04: [] };
-    var fileDates = { sf01: null, ss01: null, so04: null }; // التخزين المحلي لتواريخ الملفات
+    var fileDates = { sf01: null, ss01: null, so04: null };
     var processedData = { active: [], excluded: [], percentages: [] };
     var courseHours = {}; 
     var isFemale = false; 
 
-    // دوال التخزين المحلي
-    function saveDataLocally() {
+    async function saveDataLocally() {
         try {
-            localStorage.setItem('abs_reports_data', JSON.stringify(rawData));
             localStorage.setItem('abs_reports_dates', JSON.stringify(fileDates));
+            await saveToDB('rawData', rawData);
         } catch (e) {
-            console.warn("حجم البيانات كبير جداً على التخزين المحلي، لن يتم تخزين الملفات تلقائياً.", e);
+            console.warn("حدث خطأ أثناء حفظ البيانات محلياً", e);
         }
     }
 
@@ -468,19 +530,18 @@
         let pEl = dropZone.querySelector('p');
         pEl.innerText = file.name;
 
-        // قراءة تاريخ آخر تعديل للملف وحفظه
         let fDate = new Date(file.lastModified);
         fileDates[type] = fDate.getTime();
         renderFileDate(type, fDate);
 
         const reader = new FileReader();
-        reader.onload = function(evt) {
+        reader.onload = async function(evt) {
             const data = new Uint8Array(evt.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
             
-            saveDataLocally(); // حفظ محلي بعد القراءة
+            await saveDataLocally(); 
             window.processData();
         };
         reader.readAsArrayBuffer(file);
@@ -502,7 +563,6 @@
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('التقرير', { views: [{ rightToLeft: true }] });
 
-        // استخراج العناوين
         let theadRows = table.querySelectorAll('thead tr');
         let headerRow = [];
         let headerTr = theadRows[0]; 
@@ -512,7 +572,6 @@
         });
         worksheet.addRow(headerRow);
         
-        // استخراج البيانات المرئية فقط
         let tbody = table.querySelector('tbody');
         if (tbody) {
             let trs = tbody.querySelectorAll('tr');
@@ -529,7 +588,6 @@
             });
         }
 
-        // تنسيق رؤوس الأعمدة
         worksheet.getRow(1).font = { bold: true, size: 12 };
         worksheet.getRow(1).alignment = { horizontal: 'center' };
         worksheet.columns.forEach(column => {
@@ -707,7 +765,7 @@
     };
 
     window.processData = function() {
-        saveSettingsLocally(); // حفظ عدد الأسابيع والاختيارات
+        saveSettingsLocally(); 
         if (rawData.sf01.length === 0 || rawData.ss01.length === 0 || rawData.so04.length === 0) {
             return;
         }
@@ -1017,7 +1075,6 @@
     };
 
     window.renderDashboard = function() {
-        // تأنيث النصوص 
         let lblTotalActive = isFemale ? "إجمالي المتدربات (نشط)" : "إجمالي المتدربين (نشط)";
         let lblDeprived = isFemale ? "متدربات لديهن حرمان" : "متدربون لديهم حرمان";
         let lblOver20 = isFemale ? "متدربات فوق 20%" : "متدربون فوق 20%";
@@ -1304,7 +1361,6 @@
         htmlPerc += `</tbody></table>`;
         document.getElementById('table-percentages').innerHTML = htmlPerc;
 
-        // تطبيق الفلاتر التي تم استرجاعها بعد المعالجة
         if (window.savedFilters) {
             if(document.getElementById('filterMajor')) document.getElementById('filterMajor').value = window.savedFilters.major || '';
             if(document.getElementById('filterStatus')) document.getElementById('filterStatus').value = window.savedFilters.status || '';
@@ -1315,31 +1371,40 @@
         window.filterTables();
     };
 
-    // التشغيل التلقائي عند تحميل الصفحة لاسترجاع البيانات المخزنة محلياً
-    window.addEventListener('DOMContentLoaded', () => {
+    // الاسترجاع التلقائي من التخزين المحلي عند تحديث الصفحة
+    window.addEventListener('DOMContentLoaded', async () => {
         let settings = JSON.parse(localStorage.getItem('abs_reports_settings'));
         if (settings) {
             document.getElementById('totalWeeks').value = settings.weeks || 18;
             window.savedFilters = settings;
         }
 
-        let storedData = localStorage.getItem('abs_reports_data');
         let storedDates = localStorage.getItem('abs_reports_dates');
-        if (storedData) {
+        let dbData = await loadFromDB('rawData');
+        
+        if (!dbData) {
+            let oldLocal = localStorage.getItem('abs_reports_data');
+            if (oldLocal) { try { dbData = JSON.parse(oldLocal); } catch(e){} }
+        }
+
+        if (dbData) {
             try {
-                rawData = JSON.parse(storedData);
+                rawData = dbData;
                 if (storedDates) {
                     fileDates = JSON.parse(storedDates);
                     Object.keys(fileDates).forEach(type => {
                         if (fileDates[type]) {
                             renderFileDate(type, new Date(fileDates[type]));
-                            document.getElementById(`drop-${type}`).classList.add('has-file');
-                            document.getElementById(`drop-${type}`).querySelector('p').innerText = "تم استرجاع الملف من التخزين المحلي";
+                            let dropz = document.getElementById(`drop-${type}`);
+                            if(dropz) {
+                                dropz.classList.add('has-file');
+                                dropz.querySelector('p').innerText = "تم استرجاع الملف من التخزين";
+                            }
                         }
                     });
                 }
                 
-                if (rawData.sf01.length > 0 && rawData.ss01.length > 0 && rawData.so04.length > 0) {
+                if (rawData.sf01 && rawData.sf01.length > 0 && rawData.ss01 && rawData.ss01.length > 0 && rawData.so04 && rawData.so04.length > 0) {
                     processData(); 
                     switchTab('report-dashboard', document.getElementById('nav-dashboard'));
                 } else {
