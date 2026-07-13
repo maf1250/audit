@@ -119,6 +119,17 @@
             border-color: #3a474e;
         }
 
+        /* تخصيص ألوان عدادات تبويبات المصفوفة ونسبة الغياب (برتقالي) */
+        #badge-matrix, #badge-percentages {
+            background: var(--warning-subtle);
+            color: var(--warning);
+            border-color: #f59e0b40;
+        }
+        [data-theme="dark"] #badge-matrix, [data-theme="dark"] #badge-percentages {
+            background: rgba(217, 169, 62, 0.15);
+            border-color: #d9a93e40;
+        }
+
         ._uploadGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-4); }
         ._dropZone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--bg-surface); padding: var(--sp-6) var(--sp-4); text-align: center; cursor: pointer; transition: all var(--dur) var(--ease); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; position: relative;}
         ._dropZone:hover { border-color: var(--primary); background: var(--primary-subtle); }
