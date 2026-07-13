@@ -8,7 +8,10 @@
     
     <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334c2b4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'/%3E%3Cpath d='M9 14l2 2 4-4'/%3E%3C/svg%3E" type="image/svg+xml">
     
+    <!-- مكتبات معالجة الإكسل والملفات -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
@@ -76,23 +79,44 @@
         * { box-sizing: border-box; }
         
         ._shell { display: flex; height: 100%; width: 100%; }
-        ._sidebar { width: 240px; background: var(--bg-elevated); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--sp-3) 0; flex-shrink: 0; overflow-y: auto; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);}
+        ._sidebar { width: 250px; background: var(--bg-elevated); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--sp-3) 0; flex-shrink: 0; overflow-y: auto; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);}
         ._main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-base); }
         ._header { height: var(--header-h); background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 var(--sp-4); justify-content: space-between; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);}
+        
+        /* شريط التصفية العلوية */
+        ._filtersBar { background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 8px var(--sp-4); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+        .input-select { background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: 6px 10px; border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; cursor: pointer; outline: none; transition: all var(--dur) var(--ease); }
+        .input-select:focus { border-color: var(--primary); background: var(--bg-elevated); }
+        
         ._content { flex: 1; overflow: auto; padding: var(--sp-4); }
         
         ._navItem { padding: var(--sp-3) var(--sp-4); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: var(--sp-2); font-weight: 600; transition: all var(--dur) var(--ease); border-right: 3px solid transparent; }
         ._navItem:hover { background: var(--bg-hover); color: var(--text-primary); }
         ._navItem.active { background: var(--primary-subtle); color: var(--primary); border-right-color: var(--primary); }
         
+        /* التنسيق الافتراضي لعدادات التبويبات */
+        .tab-badge { margin-right: auto; background: var(--primary-subtle); color: var(--primary); font-size: 10.5px; padding: 2px 8px; border-radius: var(--radius-full); font-weight: 800; font-family: Tahoma, monospace; border: 1px solid var(--primary-border); transition: all var(--dur) var(--ease); }
+        [data-theme="dark"] .tab-badge { background: #1a3c39; border-color: var(--primary-border); }
+
+        /* تخصيص ألوان عدادات تبويبات الحرمان والمنسحبين */
+        #badge-fullweek, #badge-deprived-all, #badge-deprived-except { background: var(--danger-subtle); color: var(--danger); border-color: #ef444440; }
+        [data-theme="dark"] #badge-fullweek, [data-theme="dark"] #badge-deprived-all, [data-theme="dark"] #badge-deprived-except { background: rgba(217, 104, 104, 0.15); border-color: #d9686840; }
+        #badge-excluded { background: var(--bg-hover); color: var(--text-muted); border-color: var(--border-strong); }
+        [data-theme="dark"] #badge-excluded { background: #2a363c; color: var(--text-secondary); border-color: #3a474e; }
+        #badge-matrix, #badge-percentages { background: var(--warning-subtle); color: var(--warning); border-color: #f59e0b40; }
+        [data-theme="dark"] #badge-matrix, [data-theme="dark"] #badge-percentages { background: rgba(217, 169, 62, 0.15); border-color: #d9a93e40; }
+
         ._uploadGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-4); }
-        ._dropZone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--bg-surface); padding: var(--sp-6) var(--sp-4); text-align: center; cursor: pointer; transition: all var(--dur) var(--ease); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; }
+        ._dropZone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--bg-surface); padding: var(--sp-6) var(--sp-4); text-align: center; cursor: pointer; transition: all var(--dur) var(--ease); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; position: relative;}
         ._dropZone:hover { border-color: var(--primary); background: var(--primary-subtle); }
         ._dropZone.has-file { border-style: solid; border-color: var(--success); background: var(--success-subtle); }
         ._dropZone h3 { margin: 0 0 var(--sp-2) 0; color: var(--text-primary); font-size: var(--fs-md); }
         ._dropZone p { margin: 0; color: var(--text-muted); font-size: var(--fs-sm); }
         input[type="file"] { display: none; }
         
+        .file-metadata { margin-top: 10px; font-size: 11.5px; font-weight: bold; color: var(--text-primary); display: none; width: 100%; }
+        ._dropZone.has-file .file-metadata { display: block; }
+
         /* الصندوق التوضيحي */
         .info-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-4); margin-top: var(--sp-4); }
         .info-card h4 { margin: 0 0 var(--sp-3) 0; color: var(--info); font-size: var(--fs-md); }
@@ -104,9 +128,9 @@
         .btn-whatsapp:hover { background: #1ebe57; transform: scale(1.05); }
 
         /* الأزرار العلوية */
-        .btn-upload { background: var(--primary); color: var(--on-primary); border: none; padding: 8px 16px; border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all var(--dur) var(--ease); }
-        .btn-upload:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px var(--primary-subtle); }
-        
+        .btn-action { background: var(--bg-inset); color: var(--text-primary); border: 1px solid var(--border); padding: 7px 14px; border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
+        .btn-action:hover { background: var(--bg-hover); border-color: var(--primary); color: var(--primary); }
+
         /* زر الوضع الليلي/النهاري */
         .btn-theme { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); width: 36px; height: 36px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--dur) var(--ease); margin-right: 15px; }
         .btn-theme:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--text-secondary); }
@@ -123,13 +147,20 @@
         .input-text:focus { outline: none; border-color: var(--primary); background: var(--bg-elevated); box-shadow: 0 0 0 2px var(--primary-subtle); }
         .search-icon { position: absolute; left: 10px; color: var(--text-muted); width: 16px; height: 16px; }
 
-        ._tableWrapper { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; background: var(--bg-surface); max-height: calc(100vh - 150px); }
+        ._tableWrapper { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: auto; background: var(--bg-surface); max-height: calc(100vh - 200px); }
         
-        /* الجداول */
+        /* الجداول والفرز */
         table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); text-align: right; }
         th, td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); vertical-align: middle; }
         th { background: var(--bg-elevated); color: var(--text-secondary); font-weight: 700; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
         tbody tr:hover { background: var(--bg-hover); }
+        
+        /* تثبيت الصف الثاني (صف التصفية) في الأعلى */
+        thead tr:nth-child(2) th { top: 43px; background: var(--bg-surface); z-index: 11; border-top: 1px solid var(--border); }
+        
+        .sortable { cursor: pointer; user-select: none; transition: background-color var(--dur) var(--ease); }
+        .sortable:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .sort-icon { font-size: 10px; margin-right: 5px; opacity: 0.6; }
         
         .badge { padding: 4px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; display: inline-block; white-space: nowrap; }
         .badge-danger { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger); }
@@ -155,14 +186,53 @@
         .course-card.c-danger { border-color: var(--danger); background: var(--danger-subtle); color: var(--danger); }
         .course-card.c-warning { border-color: var(--warning); background: var(--warning-subtle); color: var(--warning); }
         .course-card.c-success { border-color: var(--success); background: var(--success-subtle); color: var(--success); }
-
         [data-theme="dark"] .course-card.c-danger, [data-theme="dark"] .course-card.c-warning, [data-theme="dark"] .course-card.c-success { color: #fff; }
+
+        /* الداشبورد (الإحصائيات) */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-6); }
+        .dash-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-4); text-align: center; }
+        .dash-card h4 { margin: 0 0 var(--sp-2) 0; color: var(--text-secondary); font-size: var(--fs-md); }
+        .dash-card .val { font-size: var(--fs-2xl); font-weight: 800; }
 
         /* حقوق الإعداد */
         .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
 
         /* عداد الزوار */
         .visitor-counter { margin-top: auto; display: flex; justify-content: center; padding-top: var(--sp-4); padding-bottom: var(--sp-4); }
+
+        /* Modal النافذة المنبثقة للواتساب */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--bg-surface); padding: var(--sp-6); border-radius: var(--radius-lg); width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); transform: translateY(-20px); transition: all 0.3s; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-content h3 { margin-top: 0; color: var(--primary); }
+        .modal-content textarea { width: 100%; height: 130px; background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: 10px; border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; resize: vertical; margin-bottom: 15px; }
+        .modal-content textarea:focus { outline: none; border-color: var(--primary); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-btn { padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: bold; border: none; font-family: inherit; transition: background-color 0.2s; }
+        .modal-btn-save { background: var(--primary); color: white; }
+        .modal-btn-save:hover { background: var(--primary-hover); }
+        .modal-btn-cancel { background: var(--bg-inset); color: var(--text-primary); border: 1px solid var(--border); }
+        .modal-btn-cancel:hover { background: var(--bg-hover); }
+        .wa-vars { font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; background: var(--bg-inset); padding: 10px; border-radius: 6px; border: 1px dashed var(--border); line-height: 1.8; }
+        .wa-vars span { display: inline-block; background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-strong); cursor: pointer; color: var(--primary); font-weight: bold; margin-left: 5px; transition: all 0.2s; direction: ltr; }
+        .wa-vars span:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* تنسيقات الطباعة (PDF) */
+        @media print {
+            ._sidebar, ._header, ._filtersBar, ._uploadGrid, .info-card, .btn-action, .visitor-counter, .filter-row { display: none !important; }
+            ._shell { display: block; height: auto; }
+            ._main { display: block; height: auto; overflow: visible; background: #fff; }
+            ._content { padding: 0; overflow: visible; }
+            ._tableWrapper { max-height: none !important; border: none !important; overflow: visible !important; background: transparent; }
+            body { background: #fff; color: #000; font-size: 12px; }
+            table { border: 1px solid #ccc; }
+            th, td { border: 1px solid #ccc !important; padding: 6px !important; color: #000; }
+            th { background: #f5f5f5 !important; color: #000 !important; }
+            .badge { border: 1px solid #000 !important; color: #000 !important; background: transparent !important; }
+            .course-card { background: #fff !important; border: 1px solid #999 !important; color: #000 !important; page-break-inside: avoid; }
+            .btn-whatsapp { display: none !important; }
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -177,13 +247,34 @@
                 م. محمد يوسف الشبيلي
             </div>
         </div>
-        <div class="_navItem" id="nav-main" onclick="switchTab('report-main', this)">المتدربون</div>
-        <div class="_navItem" onclick="switchTab('report-matrix', this)">مصفوفة الغياب</div>
-        <div class="_navItem" onclick="switchTab('report-percentages', this)">نسبة الغياب والإنذارات</div>
-        <div class="_navItem" onclick="switchTab('report-fullweek', this)">غياب أسبوع كامل فأكثر</div>
-        <div class="_navItem" onclick="switchTab('report-deprived-all', this)">الحرمان بكل المقررات</div>
-        <div class="_navItem" onclick="switchTab('report-deprived-except', this)">الحرمان ماعدا مقرر</div>
-        <div class="_navItem" id="nav-excluded" onclick="switchTab('report-excluded', this)">المنسحبين والمطوي قيدهم</div>
+        
+        <div class="_navItem active" id="nav-upload" onclick="switchTab('upload', this)">
+            <span>رفع البيانات</span>
+        </div>
+        <div class="_navItem" id="nav-dashboard" onclick="switchTab('report-dashboard', this)">
+            <span>لوحة الإحصائيات</span>
+        </div>
+        <div class="_navItem" id="nav-main" onclick="switchTab('report-main', this)">
+            <span id="label-main">المتدربون</span><span class="tab-badge" id="badge-main">0</span>
+        </div>
+        <div class="_navItem" onclick="switchTab('report-matrix', this)">
+            <span>مصفوفة الغياب</span><span class="tab-badge" id="badge-matrix">0</span>
+        </div>
+        <div class="_navItem" onclick="switchTab('report-percentages', this)">
+            <span>نسبة الغياب والإنذارات</span><span class="tab-badge" id="badge-percentages">0</span>
+        </div>
+        <div class="_navItem" onclick="switchTab('report-fullweek', this)">
+            <span>غياب أسبوع كامل فأكثر</span><span class="tab-badge" id="badge-fullweek">0</span>
+        </div>
+        <div class="_navItem" onclick="switchTab('report-deprived-all', this)">
+            <span>الحرمان بكل المقررات</span><span class="tab-badge" id="badge-deprived-all">0</span>
+        </div>
+        <div class="_navItem" onclick="switchTab('report-deprived-except', this)">
+            <span>الحرمان ماعدا مقرر</span><span class="tab-badge" id="badge-deprived-except">0</span>
+        </div>
+        <div class="_navItem" id="nav-excluded" onclick="switchTab('report-excluded', this)">
+            <span id="label-excluded">المنسحبين والمطوي قيدهم</span><span class="tab-badge" id="badge-excluded">0</span>
+        </div>
         
         <div class="visitor-counter">
             <img src="https://visitor-badge.laobi.icu/badge?page_id=https%3A%2F%2Fmaf1250.github.io%2Faudit&radius=8" alt="visitor badge"/>
@@ -196,15 +287,20 @@
             <div class="gap-2">
                 <div class="search-box">
                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" class="input-text" placeholder="بحث بالاسم أو الرقم..." onkeyup="filterTables()">
+                    <input type="text" id="searchInput" class="input-text" placeholder="بحث بالاسم أو الرقم..." onkeyup="filterTables(); saveSettingsLocally();">
                 </div>
                 
                 <label>عدد أسابيع الفصل:</label>
                 <input type="number" id="totalWeeks" class="input-number" value="18" onchange="processData()">
                 
-                <button class="btn-upload" onclick="switchTab('upload', null, 'رفع البيانات')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M12 10v6"/><path d="m9 13 3-3 3 3"/></svg>
-                    رفع البيانات
+                <!-- أزرار الطباعة والتصدير -->
+                <button class="btn-action" onclick="exportExcel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    تصدير إكسل
+                </button>
+                <button class="btn-action" onclick="window.print()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    طباعة PDF
                 </button>
 
                 <button class="btn-theme" id="themeToggle" title="تبديل المظهر">
@@ -214,22 +310,40 @@
             </div>
         </div>
 
+        <!-- شريط التصفية العلوي -->
+        <div id="filtersBar" class="_filtersBar hidden">
+            <span style="font-weight: 700; color: var(--text-secondary); font-size: 13px;">تصفية سريعة:</span>
+            <select id="filterMajor" class="input-select" onchange="filterTables(); saveSettingsLocally();">
+                <option value="">كل التخصصات / الأقسام</option>
+            </select>
+            <select id="filterStatus" class="input-select" onchange="filterTables(); saveSettingsLocally();">
+                <option value="">كل حالات المتدرب</option>
+            </select>
+            <select id="filterAbsence" class="input-select" onchange="filterTables(); saveSettingsLocally();">
+                <option value="">الجميع (غائبون ومنتظمون)</option>
+                <option value="absent">التركيز على الغائبين فقط</option>
+            </select>
+        </div>
+
         <div class="_content">
             <div id="upload" class="tab-content">
                 <div class="_uploadGrid">
                     <div class="_dropZone" id="drop-sf01" onclick="document.getElementById('file-sf01').click()">
                         <h3>تقرير SF01</h3>
                         <p id="desc-sf01">قائمة المتدربين المسجلين</p>
+                        <div id="date-sf01" class="file-metadata"></div>
                         <input type="file" id="file-sf01" accept=".xls,.xlsx,.csv" onchange="handleFile(event, 'sf01')">
                     </div>
                     <div class="_dropZone" id="drop-ss01" onclick="document.getElementById('file-ss01').click()">
                         <h3>تقرير SS01</h3>
                         <p>جداول الوحدة التدريبية</p>
+                        <div id="date-ss01" class="file-metadata"></div>
                         <input type="file" id="file-ss01" accept=".xls,.xlsx,.csv" onchange="handleFile(event, 'ss01')">
                     </div>
                     <div class="_dropZone" id="drop-so04" onclick="document.getElementById('file-so04').click()">
                         <h3>تقرير SO04</h3>
                         <p>التقرير التاريخي للغياب</p>
+                        <div id="date-so04" class="file-metadata"></div>
                         <input type="file" id="file-so04" accept=".xls,.xlsx,.csv" onchange="handleFile(event, 'so04')">
                     </div>
                 </div>
@@ -273,6 +387,11 @@
                 </div>
             </div>
 
+            <!-- تبويب الإحصائيات -->
+            <div id="report-dashboard" class="tab-content hidden">
+                <div class="_tableWrapper" id="dashboard-content" style="padding: var(--sp-4); border:none; background:transparent;"></div>
+            </div>
+
             <div id="report-main" class="tab-content hidden"><div class="_tableWrapper" id="table-main"></div></div>
             <div id="report-matrix" class="tab-content hidden"><div class="_tableWrapper" id="table-matrix"></div></div>
             <div id="report-percentages" class="tab-content hidden"><div class="_tableWrapper" id="table-percentages"></div></div>
@@ -280,6 +399,24 @@
             <div id="report-deprived-all" class="tab-content hidden"><div class="_tableWrapper" id="table-deprived-all"></div></div>
             <div id="report-deprived-except" class="tab-content hidden"><div class="_tableWrapper" id="table-deprived-except"></div></div>
             <div id="report-excluded" class="tab-content hidden"><div class="_tableWrapper" id="table-excluded"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تعديل عبارة الواتساب -->
+<div id="waModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>تخصيص عبارة الواتساب</h3>
+        <div class="wa-vars">
+            <b>متغيرات يمكن إضافتها بالنقر عليها:</b><br>
+            <span onclick="insertWaVar('{name}')">{name}</span> للاسم
+            <span onclick="insertWaVar('{course}')">{course}</span> للمقرر
+            <span onclick="insertWaVar('{pct}')">{pct}</span> للنسبة
+        </div>
+        <textarea id="waTemplateInput" placeholder="اكتب رسالتك هنا..."></textarea>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeWaModal()">إلغاء</button>
+            <button class="modal-btn modal-btn-save" onclick="saveWaTemplate()">حفظ واعتماد</button>
         </div>
     </div>
 </div>
@@ -297,14 +434,75 @@
         body.setAttribute('data-theme', newTheme);
         localStorage.setItem('appTheme', newTheme);
         
-        // تعديل لون الهواتف حسب اللون الهادئ الجديد للوضع النهاري
         document.querySelector('meta[name="theme-color"]').setAttribute("content", newTheme === 'dark' ? "#14191c" : "#eef4f5");
     });
 
+    // دوال IndexedDB لتخزين البيانات الكبيرة (SO04) بسلاسة
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            let request = indexedDB.open('AbsenceReportsDB', 1);
+            request.onupgradeneeded = function(e) {
+                let db = e.target.result;
+                if (!db.objectStoreNames.contains('store')) {
+                    db.createObjectStore('store');
+                }
+            };
+            request.onsuccess = function(e) { resolve(e.target.result); };
+            request.onerror = function(e) { reject(e.target.error); };
+        });
+    }
+    async function saveToDB(key, data) {
+        try {
+            let db = await openDB();
+            return new Promise((resolve, reject) => {
+                let transaction = db.transaction(['store'], 'readwrite');
+                let store = transaction.objectStore('store');
+                let request = store.put(data, key);
+                request.onsuccess = () => resolve(true);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (e) { console.error("Error saving to IndexedDB:", e); }
+    }
+    async function loadFromDB(key) {
+        try {
+            let db = await openDB();
+            return new Promise((resolve, reject) => {
+                let transaction = db.transaction(['store'], 'readonly');
+                let store = transaction.objectStore('store');
+                let request = store.get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (e) {
+            console.error("Error loading from IndexedDB:", e); return null;
+        }
+    }
+
     var rawData = { sf01: [], ss01: [], so04: [] };
+    var fileDates = { sf01: null, ss01: null, so04: null };
     var processedData = { active: [], excluded: [], percentages: [] };
     var courseHours = {}; 
     var isFemale = false; 
+
+    async function saveDataLocally() {
+        try {
+            localStorage.setItem('abs_reports_dates', JSON.stringify(fileDates));
+            await saveToDB('rawData', rawData);
+        } catch (e) {
+            console.warn("حدث خطأ أثناء حفظ البيانات محلياً", e);
+        }
+    }
+
+    function saveSettingsLocally() {
+        let settings = {
+            weeks: document.getElementById('totalWeeks').value,
+            major: document.getElementById('filterMajor') ? document.getElementById('filterMajor').value : '',
+            status: document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '',
+            absence: document.getElementById('filterAbsence') ? document.getElementById('filterAbsence').value : '',
+            search: document.getElementById('searchInput') ? document.getElementById('searchInput').value : ''
+        };
+        localStorage.setItem('abs_reports_settings', JSON.stringify(settings));
+    }
 
     window.switchTab = function(tabId, el, titleOverride) {
         document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
@@ -314,9 +512,58 @@
         
         if (el) {
             el.classList.add('active');
-            document.getElementById('pageTitle').innerText = el.innerText;
+            let spanTitle = el.querySelector('span:first-child');
+            document.getElementById('pageTitle').innerText = spanTitle ? spanTitle.innerText : el.innerText;
         } else if (titleOverride) {
             document.getElementById('pageTitle').innerText = titleOverride;
+        }
+    };
+
+    window.renderFileDate = function(type, fDate) {
+        let dateEl = document.getElementById(`date-${type}`);
+        if(!dateEl) return;
+
+        let now = new Date();
+        let diffMs = Math.abs(now - fDate);
+        let diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        let days = Math.floor(diffHrs / 24);
+        let hours = diffHrs % 24;
+        
+        let ageText = '';
+        if (days > 0) ageText += days + ' يوم ';
+        if (days > 0 && hours > 0) ageText += 'و ';
+        if (hours > 0) ageText += hours + ' ساعة';
+        if (days === 0 && hours === 0) ageText = 'أقل من ساعة';
+
+        let dateStr = fDate.toLocaleDateString('en-GB') + ' ' + fDate.toLocaleTimeString('en-US');
+        let color = days >= 3 ? 'var(--danger)' : (days >= 1 ? 'var(--warning)' : 'var(--success)');
+        
+        dateEl.innerHTML = `<div style="background:var(--bg-elevated); padding:6px 12px; border-radius:6px; border:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; width:100%; font-weight:normal;">
+            <div style="text-align:right;">
+                تاريخ الملف: <span dir="ltr" style="display:inline-block; font-weight:bold;">${dateStr}</span><br>
+                <span style="color:${color}; font-weight:bold; font-size:11px;">(العمر: ${ageText})</span>
+            </div>
+            <button onclick="event.stopPropagation(); deleteReport('${type}');" style="background:var(--danger-subtle); color:var(--danger); border:1px solid var(--danger); border-radius:4px; padding:2px 8px; cursor:pointer; font-weight:bold; font-size:12px; transition:all 0.2s;" title="حذف هذا التقرير">✖</button>
+        </div>`;
+    };
+
+    window.deleteReport = async function(type) {
+        if(confirm("هل أنت متأكد من حذف هذا التقرير؟")) {
+            rawData[type] = [];
+            fileDates[type] = null;
+            
+            let dropZone = document.getElementById(`drop-${type}`);
+            dropZone.classList.remove('has-file');
+            let pEl = dropZone.querySelector('p');
+            if(type === 'sf01') pEl.innerText = "قائمة المتدربين المسجلين";
+            if(type === 'ss01') pEl.innerText = "جداول الوحدة التدريبية";
+            if(type === 'so04') pEl.innerText = "التقرير التاريخي للغياب";
+            
+            let dateEl = document.getElementById(`date-${type}`);
+            if(dateEl) dateEl.innerHTML = '';
+            
+            await saveDataLocally();
+            processData();
         }
     };
 
@@ -329,16 +576,76 @@
         let pEl = dropZone.querySelector('p');
         pEl.innerText = file.name;
 
+        let fDate = new Date(file.lastModified);
+        fileDates[type] = fDate.getTime();
+        renderFileDate(type, fDate);
+
         const reader = new FileReader();
-        reader.onload = function(evt) {
+        reader.onload = async function(evt) {
             const data = new Uint8Array(evt.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
             
+            await saveDataLocally(); 
             window.processData();
         };
         reader.readAsArrayBuffer(file);
+        
+        // تفريغ الحقل لتتمكن من رفع نفس الملف مرة أخرى إذا أردت
+        e.target.value = null; 
+    };
+
+    window.exportExcel = async function() {
+        let activeTab = document.querySelector('.tab-content:not(.hidden)');
+        if (!activeTab || activeTab.id === 'upload' || activeTab.id === 'report-dashboard') {
+            alert('يرجى اختيار أحد جداول التقارير أولاً لتصديره');
+            return;
+        }
+
+        let table = activeTab.querySelector('table');
+        if (!table) {
+            alert('لا يوجد جدول لتصديره');
+            return;
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('التقرير', { views: [{ rightToLeft: true }] });
+
+        let theadRows = table.querySelectorAll('thead tr');
+        let headerRow = [];
+        let headerTr = theadRows[0]; 
+        let ths = headerTr.querySelectorAll('th');
+        ths.forEach(th => {
+            headerRow.push(th.innerText.replace(/▲|▼/g, '').trim());
+        });
+        worksheet.addRow(headerRow);
+        
+        let tbody = table.querySelector('tbody');
+        if (tbody) {
+            let trs = tbody.querySelectorAll('tr');
+            trs.forEach(tr => {
+                if (tr.style.display !== 'none') {
+                    let rowData = [];
+                    let tds = tr.querySelectorAll('td');
+                    tds.forEach(td => {
+                        let text = td.innerText.trim().replace(/\n+/g, ' | ');
+                        rowData.push(text);
+                    });
+                    worksheet.addRow(rowData);
+                }
+            });
+        }
+
+        worksheet.getRow(1).font = { bold: true, size: 12 };
+        worksheet.getRow(1).alignment = { horizontal: 'center' };
+        worksheet.columns.forEach(column => {
+            column.width = 22; 
+            column.alignment = { wrapText: true, vertical: 'middle' };
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), 'report.xlsx');
     };
 
     window.calculateContactHours = function(timeStr) {
@@ -367,37 +674,111 @@
         return p;
     };
     
+    window.sortTable = function(th, colIndex, isNumeric) {
+        const table = th.closest('table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const isAscending = th.classList.contains('asc');
+
+        table.querySelectorAll('th').forEach(h => {
+            h.classList.remove('asc', 'desc');
+            h.innerHTML = h.innerHTML.replace(/ <span class="sort-icon">.*?<\/span>/g, '');
+        });
+
+        rows.sort((a, b) => {
+            let aText = a.cells[colIndex].innerText.trim();
+            let bText = b.cells[colIndex].innerText.trim();
+            
+            if (aText === '-') aText = '0';
+            if (bText === '-') bText = '0';
+
+            if (isNumeric) {
+                let aNum = parseFloat(aText.replace(/[^0-9.-]+/g,"")) || 0;
+                let bNum = parseFloat(bText.replace(/[^0-9.-]+/g,"")) || 0;
+                return isAscending ? bNum - aNum : aNum - bNum;
+            } else {
+                return isAscending ? bText.localeCompare(aText, 'ar') : aText.localeCompare(bText, 'ar');
+            }
+        });
+
+        th.classList.toggle('asc', !isAscending);
+        th.classList.toggle('desc', isAscending);
+        th.innerHTML += !isAscending ? ' <span class="sort-icon">▲</span>' : ' <span class="sort-icon">▼</span>';
+
+        tbody.append(...rows);
+    };
+
     window.filterTables = function() {
         let input = document.getElementById('searchInput');
-        let filter = input.value.trim().toLowerCase();
+        let globalTextFilter = input.value.trim().toLowerCase();
         
-        let tabs = ['table-main', 'table-matrix', 'table-percentages', 'table-fullweek', 'table-deprived-all', 'table-deprived-except', 'table-excluded'];
+        let majorFilter = document.getElementById('filterMajor') ? document.getElementById('filterMajor').value : "";
+        let statusFilter = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : "";
+        let absenceFilter = document.getElementById('filterAbsence') ? document.getElementById('filterAbsence').value : "";
+        
+        let tabs = ['dashboard-content', 'table-main', 'table-matrix', 'table-percentages', 'table-fullweek', 'table-deprived-all', 'table-deprived-except', 'table-excluded'];
         
         tabs.forEach(tabId => {
-            let table = document.querySelector(`#${tabId} table`);
+            let container = document.getElementById(tabId);
+            if (!container) return;
+            let table = container.querySelector('table');
             if (table) {
-                let trs = table.querySelectorAll('tbody tr');
+                let tbody = table.querySelector('tbody');
+                if (!tbody) return;
+                
+                let trs = tbody.querySelectorAll('tr');
+                let colFilters = table.querySelectorAll('.col-filter');
+                
                 trs.forEach(tr => {
                     let idTd = tr.getElementsByTagName("td")[0];
                     let nameTd = tr.getElementsByTagName("td")[1];
-                    if (idTd || nameTd) {
-                        let idVal = idTd.textContent || idTd.innerText;
-                        let nameVal = nameTd.textContent || nameTd.innerText;
-                        
-                        if (idVal.toLowerCase().indexOf(filter) > -1 || nameVal.toLowerCase().indexOf(filter) > -1) {
-                            tr.style.display = "";
-                        } else {
-                            tr.style.display = "none";
+                    let idVal = idTd ? (idTd.textContent || idTd.innerText) : "";
+                    let nameVal = nameTd ? (nameTd.textContent || nameTd.innerText) : "";
+                    
+                    let matchGlobalText = false;
+                    if (idTd && nameTd) {
+                        matchGlobalText = (idVal.toLowerCase().indexOf(globalTextFilter) > -1 || nameVal.toLowerCase().indexOf(globalTextFilter) > -1);
+                    } else {
+                        matchGlobalText = (tr.textContent || tr.innerText).toLowerCase().indexOf(globalTextFilter) > -1;
+                    }
+                    
+                    let rowMajor = tr.getAttribute('data-major') || "";
+                    let rowStatus = tr.getAttribute('data-status') || "";
+                    let rowAbsent = tr.getAttribute('data-absent') === 'true';
+                    
+                    let matchMajor = majorFilter === "" || (tr.hasAttribute('data-major') ? rowMajor === majorFilter : true);
+                    let matchStatus = statusFilter === "" || (tr.hasAttribute('data-status') ? rowStatus === statusFilter : true);
+                    let matchAbsence = absenceFilter === "" || (absenceFilter === "absent" ? rowAbsent : true);
+                    
+                    let show = matchGlobalText && matchMajor && matchStatus && matchAbsence;
+
+                    if (show && colFilters.length > 0) {
+                        for (let i = 0; i < colFilters.length; i++) {
+                            let filterVal = colFilters[i].value.trim().toLowerCase();
+                            if (filterVal !== "") {
+                                let th = colFilters[i].closest('th');
+                                let colIdx = Array.from(th.parentNode.children).indexOf(th);
+                                let td = tr.cells[colIdx];
+                                if (td) {
+                                    let cellText = td.textContent || td.innerText;
+                                    if (cellText.toLowerCase().indexOf(filterVal) === -1) {
+                                        show = false;
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
+                    
+                    tr.style.display = show ? "" : "none";
                 });
             }
         });
     };
 
     window.updateUIText = function() {
-        document.getElementById('nav-main').innerText = isFemale ? 'المتدربات' : 'المتدربون';
-        document.getElementById('nav-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبين والمطوي قيدهم';
+        document.getElementById('label-main').innerText = isFemale ? 'المتدربات' : 'المتدربون';
+        document.getElementById('label-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبين والمطوي قيدهم';
         
         document.getElementById('legend-full').innerHTML = isFemale 
             ? 'تعني أن المتدربة انقطعت وغابت غياباً تاماً وبنسبة 100% عن جميع مقرراتها المسجلة في ذلك الأسبوع.'
@@ -424,15 +805,29 @@
             : 'تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).';
 
         let activeTab = document.querySelector('._navItem.active');
-        if (activeTab && activeTab.id !== 'nav-main' && activeTab.id !== 'nav-excluded') {
+        if (activeTab && activeTab.id !== 'nav-main' && activeTab.id !== 'nav-excluded' && activeTab.id !== 'nav-dashboard' && activeTab.id !== 'nav-upload') {
             
         } else if (activeTab) {
-            document.getElementById('pageTitle').innerText = activeTab.innerText;
+            let spanTitle = activeTab.querySelector('span:first-child');
+            document.getElementById('pageTitle').innerText = spanTitle ? spanTitle.innerText : activeTab.innerText;
         }
     };
 
     window.processData = function() {
-        if (rawData.sf01.length === 0 || rawData.ss01.length === 0 || rawData.so04.length === 0) {
+        saveSettingsLocally(); 
+        
+        // تفريغ البيانات إذا كانت إحدى الملفات مفقودة
+        if (!rawData.sf01 || rawData.sf01.length === 0 || !rawData.ss01 || rawData.ss01.length === 0 || !rawData.so04 || rawData.so04.length === 0) {
+            processedData.active = [];
+            processedData.excluded = [];
+            processedData.percentages = [];
+            let tw = parseInt(document.getElementById('totalWeeks').value) || 18;
+            window.renderTables(tw);
+            window.renderDashboard();
+            ['badge-main', 'badge-matrix', 'badge-percentages', 'badge-fullweek', 'badge-deprived-all', 'badge-deprived-except', 'badge-excluded'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) el.innerText = "0";
+            });
             return;
         }
 
@@ -450,6 +845,9 @@
 
         courseHours = {};
         let crnUniqueSessions = {}; 
+        
+        let majorsSet = new Set();
+        let statusesSet = new Set();
         
         rawData.ss01.forEach(row => {
             let crn = row['الرقم المرجعي'] || row['CRN'];
@@ -518,15 +916,19 @@
             if(!id) return;
             
             let name = row['إسم المتدرب'] || row['اسم المتدرب'] || row['إسم المتدربة'] || row['اسم المتدربة'];
+            let major = row['التخصص'] || '';
             let regStatus = row['حالة تسجيل'] || '';
             let traineeStatus = row['حالة المتدرب'] || row['حالة المتدربة'] || '';
             let grade = row['الدرجة'] ? row['الدرجة'].toString().trim() : ''; 
             
+            if(major && major.trim() !== '') majorsSet.add(major.trim());
+            if(traineeStatus && traineeStatus.trim() !== '') statusesSet.add(traineeStatus.trim());
+
             if(!traineesMap[id]) {
                 traineesMap[id] = {
                     id: id,
                     name: name,
-                    major: row['التخصص'],
+                    major: major,
                     phone: row['رقم الجوال'],
                     regStatus: regStatus,
                     traineeStatus: traineeStatus,
@@ -563,6 +965,16 @@
                 }
             }
         });
+
+        const majorSelect = document.getElementById('filterMajor');
+        majorSelect.innerHTML = '<option value="">كل التخصصات / الأقسام</option>';
+        [...majorsSet].sort().forEach(m => majorSelect.innerHTML += `<option value="${m}">${m}</option>`);
+
+        const statusSelect = document.getElementById('filterStatus');
+        statusSelect.innerHTML = '<option value="">كل حالات المتدرب</option>';
+        [...statusesSet].sort().forEach(s => statusSelect.innerHTML += `<option value="${s}">${s}</option>`);
+
+        document.getElementById('filtersBar').classList.remove('hidden');
 
         let traineeSessionStatus = {}; 
         rawData.so04.forEach(row => {
@@ -635,6 +1047,7 @@
                 if(crnData.absPercentage > 0) {
                     processedData.percentages.push({
                         traineeName: t.name, traineeId: t.id, phone: t.phone,
+                        major: t.major, traineeStatus: t.traineeStatus,
                         courseCode: crnData.code, courseName: crnData.name, crn: crn,
                         absPercentage: crnData.absPercentage, isDeprived: crnData.isOfficiallyDeprived
                     });
@@ -695,7 +1108,153 @@
         });
 
         processedData.percentages.sort((a, b) => b.absPercentage - a.absPercentage);
+        
+        // تحديث العدادات (Badges) في القائمة الجانبية
+        document.getElementById('badge-main').innerText = processedData.active.length;
+        document.getElementById('badge-matrix').innerText = processedData.active.length;
+        document.getElementById('badge-percentages').innerText = processedData.percentages.length;
+        document.getElementById('badge-fullweek').innerText = processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).length;
+        document.getElementById('badge-deprived-all').innerText = processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).length;
+        document.getElementById('badge-deprived-except').innerText = processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).length;
+        document.getElementById('badge-excluded').innerText = processedData.excluded.length;
+
         window.renderTables(totalWeeks);
+        window.renderDashboard(); 
+    };
+
+    const createFilterRow = (numCols, disabledIndexes = [], customHTML = {}) => {
+        let r = `<tr class="filter-row">`;
+        for(let i=0; i<numCols; i++) {
+            if (disabledIndexes.includes(i)) {
+                if(customHTML[i]) {
+                    r += `<th style="padding: 4px; text-align: center;">${customHTML[i]}</th>`;
+                } else {
+                    r += `<th style="padding: 4px;"></th>`;
+                }
+            } else {
+                r += `<th style="padding: 4px;"><input type="text" class="col-filter input-select" style="width:100%; padding:4px 6px; font-size:11.5px; min-width:40px; border-radius:4px;" placeholder="تصفية..." onkeyup="filterTables()"></th>`;
+            }
+        }
+        r += `</tr>`;
+        return r;
+    };
+
+    window.renderDashboard = function() {
+        let lblTotalActive = isFemale ? "إجمالي المتدربات (نشط)" : "إجمالي المتدربين (نشط)";
+        let lblDeprived = isFemale ? "متدربات لديهن حرمان" : "متدربون لديهم حرمان";
+        let lblOver20 = isFemale ? "متدربات فوق 20%" : "متدربون فوق 20%";
+        let lblOver15 = isFemale ? "متدربات فوق 15%" : "متدربون فوق 15%";
+        let lblExcluded = isFemale ? "المنسحبات والمطوي قيدهن" : "المنسحبين والمطوي قيدهم";
+
+        let lblThActive = isFemale ? "المتدربات (النشطات)" : "المتدربين (النشطين)";
+        let lblThExcluded = isFemale ? "إجمالي المنسحبات" : "إجمالي المنسحبين";
+
+        let totalActive = processedData.active.length;
+        let totalExcluded = processedData.excluded.length;
+        let totalDeprivedTrainees = processedData.active.filter(t => t.totalDeprivedCourses > 0).length;
+        let totalOver20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 20).map(p => p.traineeId)).size;
+        let totalWarnedTrainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId)).size;
+
+        let dashHtml = `
+            <div class="dash-grid">
+                <div class="dash-card" style="border-bottom: 3px solid var(--primary);">
+                    <h4>${lblTotalActive}</h4>
+                    <div class="val" style="color: var(--primary);">${totalActive}</div>
+                </div>
+                <div class="dash-card" style="border-bottom: 3px solid var(--danger);">
+                    <h4>${lblDeprived}</h4>
+                    <div class="val" style="color: var(--danger);">${totalDeprivedTrainees}</div>
+                </div>
+                <div class="dash-card" style="border-bottom: 3px solid #ea580c;">
+                    <h4>${lblOver20}</h4>
+                    <div class="val" style="color: #ea580c;">${totalOver20Trainees}</div>
+                </div>
+                <div class="dash-card" style="border-bottom: 3px solid var(--warning);">
+                    <h4>${lblOver15}</h4>
+                    <div class="val" style="color: var(--warning);">${totalWarnedTrainees}</div>
+                </div>
+                <div class="dash-card" style="border-bottom: 3px solid var(--text-muted);">
+                    <h4>${lblExcluded}</h4>
+                    <div class="val" style="color: var(--text-muted);">${totalExcluded}</div>
+                </div>
+            </div>
+        `;
+
+        dashHtml += `<h3 style="margin-bottom: var(--sp-3); color: var(--primary);">تفصيل الإحصائيات حسب التخصص/القسم</h3>`;
+        dashHtml += `<div class="_tableWrapper" style="max-height: none; background: transparent; border: none;">
+            <table style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--bg-surface);">
+            <thead>
+                <tr>
+                    <th class="sortable" onclick="sortTable(this, 0, false)">التخصص</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 1, true)">${lblThActive}</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 2, true)">فوق 15%</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 3, true)">فوق 20%</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 4, true)">لديهم حرمان</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 5, true)">${lblThExcluded}</th>
+                </tr>
+                ${createFilterRow(6)}
+            </thead>
+            <tbody>
+        `;
+
+        let majorsSet = new Set(processedData.active.map(t => t.major).concat(processedData.excluded.map(t => t.major)));
+        
+        [...majorsSet].filter(Boolean).sort().forEach(m => {
+            let activeMajors = processedData.active.filter(t => t.major === m);
+            let excludedMajors = processedData.excluded.filter(t => t.major === m);
+            
+            let countActive = activeMajors.length;
+            let countExcluded = excludedMajors.length;
+            let countDeprived = activeMajors.filter(t => t.totalDeprivedCourses > 0).length;
+            
+            let warnedIds = new Set(processedData.percentages.filter(p => p.major === m && p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId));
+            let countWarned = warnedIds.size;
+
+            let over20Ids = new Set(processedData.percentages.filter(p => p.major === m && p.absPercentage >= 20).map(p => p.traineeId));
+            let countOver20 = over20Ids.size;
+
+            if (countActive > 0 || countExcluded > 0) {
+                dashHtml += `<tr>
+                    <td>${m}</td>
+                    <td class="text-center mono">${countActive}</td>
+                    <td class="text-center mono" style="color:${countWarned > 0 ? 'var(--warning)' : 'inherit'}; font-weight:bold;">${countWarned}</td>
+                    <td class="text-center mono" style="color:${countOver20 > 0 ? '#ea580c' : 'inherit'}; font-weight:bold;">${countOver20}</td>
+                    <td class="text-center mono" style="color:${countDeprived > 0 ? 'var(--danger)' : 'inherit'}; font-weight:bold;">${countDeprived}</td>
+                    <td class="text-center mono">${countExcluded}</td>
+                </tr>`;
+            }
+        });
+
+        dashHtml += `</tbody></table></div>`;
+        document.getElementById('dashboard-content').innerHTML = dashHtml;
+    };
+
+    // دوال للنافذة المنبثقة (Modal) لرسالة الواتساب
+    window.openWaModal = function() {
+        let defaultMsg = isFemale 
+            ? "عزيزتي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n{course}\n هي {pct}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب"
+            : "عزيزي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n{course}\n هي {pct}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب";
+        let savedTemplate = localStorage.getItem(isFemale ? 'wa_template_f' : 'wa_template_m');
+        document.getElementById('waTemplateInput').value = savedTemplate || defaultMsg;
+        document.getElementById('waModal').classList.add('active');
+    };
+    window.closeWaModal = function() {
+        document.getElementById('waModal').classList.remove('active');
+    };
+    window.saveWaTemplate = function() {
+        let val = document.getElementById('waTemplateInput').value;
+        localStorage.setItem(isFemale ? 'wa_template_f' : 'wa_template_m', val);
+        closeWaModal();
+        window.renderTables(parseInt(document.getElementById('totalWeeks').value) || 18);
+    };
+    window.insertWaVar = function(v) {
+        let input = document.getElementById('waTemplateInput');
+        let start = input.selectionStart;
+        let end = input.selectionEnd;
+        let text = input.value;
+        input.value = text.substring(0, start) + v + text.substring(end);
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + v.length;
     };
 
     window.renderTables = function(totalWeeks) {
@@ -704,23 +1263,39 @@
 
         const createThead = (isExcluded = false) => {
             let html = `<thead><tr>
-                <th class="nowrap">${colId}</th>
-                <th class="nowrap name-cell">${colName}</th>
-                <th class="nowrap" style="min-width: 150px;">التخصص</th>`;              
+                <th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th>
+                <th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th>
+                <th class="nowrap sortable" style="min-width: 150px;" onclick="sortTable(this, 2, false)">التخصص</th>`;              
             
+            let numCols = 3;
             if(!isExcluded) {
                 html += `
-                <th class="nowrap text-center">عدد المقررات</th>
-                <th class="nowrap text-center">مقررات الحرمان</th>
-                <th class="nowrap text-center">أسابيع الغياب</th>`;
-                for(let w=1; w<=totalWeeks; w++) html += `<th class="text-center">أ ${w}</th>`;
+                <th class="nowrap text-center sortable" onclick="sortTable(this, 3, true)">عدد المقررات</th>
+                <th class="nowrap text-center sortable" onclick="sortTable(this, 4, true)">مقررات الحرمان</th>
+                <th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">أسابيع الغياب</th>`;
+                numCols += 3;
+                for(let w=1; w<=totalWeeks; w++) {
+                    html += `<th class="text-center nowrap">الأسبوع ${w}</th>`;
+                    numCols++;
+                }
+            } else {
+                html += `
+                <th class="nowrap sortable" onclick="sortTable(this, 3, false)">حالة التسجيل</th>
+                <th class="nowrap sortable" onclick="sortTable(this, 4, false)">حالة المتدرب</th>`;
+                numCols += 2;
             }
-            html += `</tr></thead>`;
+            html += `</tr>`;
+            html += createFilterRow(numCols);
+            html += `</thead>`;
             return html;
         };
 
         const createRow = (t, isExcluded = false) => {
-            let html = `<tr>
+            let hasAbsence = t.weeksAbsentCount > 0 || t.totalDeprivedCourses > 0;
+            let safeStatus = t.traineeStatus ? t.traineeStatus.replace(/"/g, '&quot;') : '';
+            let safeMajor = t.major ? t.major.replace(/"/g, '&quot;') : '';
+            
+            let html = `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="${hasAbsence}">
                 <td class="mono">${t.id}</td>
                 <td class="name-cell">${t.name}</td>
                 <td>${t.major || '-'}</td>`;
@@ -732,7 +1307,7 @@
                     <span class="badge ${t.totalDeprivedCourses > 0 ? 'badge-danger' : 'badge-success'}">${t.totalDeprivedCourses || 0}</span>
                 </td>
                 <td class="text-center">
-                    <span class="badge badge-warning">${t.weeksAbsentCount || 0}</span>
+                    ${t.weeksAbsentCount > 0 ? `<span class="badge badge-warning">${t.weeksAbsentCount}</span>` : '<span style="color:var(--text-muted); font-weight:bold;">-</span>'}
                 </td>`;
                 
                 for(let w=1; w<=totalWeeks; w++) {
@@ -744,6 +1319,10 @@
                     else badge = '<span style="color:var(--text-muted); font-weight:bold;">-</span>';
                     html += `<td class="text-center">${badge}</td>`;
                 }
+            } else {
+                html += `
+                <td>${t.regStatus || '-'}</td>
+                <td>${t.traineeStatus || '-'}</td>`;
             }
             html += `</tr>`;
             return html;
@@ -755,14 +1334,20 @@
         document.getElementById('table-main').innerHTML = htmlMain;
 
         let htmlMatrix = `<table><thead><tr>
-            <th class="nowrap">${colId}</th>
-            <th class="nowrap name-cell">${colName}</th>
-            <th class="nowrap" style="min-width: 150px;">التخصص</th>
+            <th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th>
+            <th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th>
+            <th class="nowrap sortable" style="min-width: 150px;" onclick="sortTable(this, 2, false)">التخصص</th>
             <th>المقررات المسجلة ونسبة غياب كل مقرر</th>
-        </tr></thead><tbody>`;
+        </tr>
+        ${createFilterRow(4)}
+        </thead><tbody>`;
 
         processedData.active.forEach(t => {
-            htmlMatrix += `<tr>
+            let hasAbsence = t.weeksAbsentCount > 0 || t.totalDeprivedCourses > 0;
+            let safeStatus = t.traineeStatus ? t.traineeStatus.replace(/"/g, '&quot;') : '';
+            let safeMajor = t.major ? t.major.replace(/"/g, '&quot;') : '';
+            
+            htmlMatrix += `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="${hasAbsence}">
                 <td class="mono">${t.id}</td>
                 <td class="name-cell">${t.name}</td>
                 <td>${t.major || '-'}</td>
@@ -813,23 +1398,38 @@
         htmlExc += `</tbody></table>`;
         document.getElementById('table-excluded').innerHTML = htmlExc;
 
-        let htmlPerc = `<table><thead><tr>
-            <th class="nowrap">${colId}</th>
-            <th class="nowrap name-cell">${colName}</th>
-            <th class="nowrap">رمز المقرر</th>
-            <th>اسم المقرر</th>
-            <th class="nowrap">الشعبة</th>
-            <th class="nowrap text-center">نسبة الغياب</th>
-            <th class="nowrap text-center">الحالة</th>
-            <th class="nowrap text-center">الإجراء</th>
-        </tr></thead><tbody>`;
+        let customActionCol = {
+            7: `<button class="btn-action" style="padding:4px 8px; font-size:10.5px; width:100%; justify-content:center; background:var(--bg-elevated);" onclick="openWaModal()">تعديل العبارة ⚙️</button>`
+        };
         
+        let htmlPerc = `<table><thead><tr>
+            <th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th>
+            <th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th>
+            <th class="nowrap sortable" onclick="sortTable(this, 2, false)">رمز المقرر</th>
+            <th class="sortable" onclick="sortTable(this, 3, false)">اسم المقرر</th>
+            <th class="nowrap sortable" onclick="sortTable(this, 4, false)">الشعبة</th>
+            <th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">نسبة الغياب</th>
+            <th class="nowrap text-center sortable" onclick="sortTable(this, 6, false)">الحالة</th>
+            <th class="nowrap text-center">الإجراء</th>
+        </tr>
+        ${createFilterRow(8, [7], customActionCol)}
+        </thead><tbody>`;
+        
+        // استدعاء الرسالة الافتراضية للواتساب لتطبيقها
+        let defaultMsg = isFemale 
+            ? "عزيزتي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n{course}\n هي {pct}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب"
+            : "عزيزي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n{course}\n هي {pct}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب";
+        let currentWaTemplate = localStorage.getItem(isFemale ? 'wa_template_f' : 'wa_template_m') || defaultMsg;
+
         processedData.percentages.forEach(p => {
             let formattedPhone = window.formatPhone(p.phone);
+            let safeStatus = p.traineeStatus ? p.traineeStatus.replace(/"/g, '&quot;') : '';
+            let safeMajor = p.major ? p.major.replace(/"/g, '&quot;') : '';
             
-            let msg = isFemale 
-                ? `عزيزتي ${p.traineeName}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n${p.courseName}\n هي ${p.absPercentage.toFixed(1)}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب`
-                : `عزيزي ${p.traineeName}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n${p.courseName}\n هي ${p.absPercentage.toFixed(1)}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب`;
+            let msg = currentWaTemplate
+                .replace(/{name}/g, p.traineeName)
+                .replace(/{course}/g, p.courseName)
+                .replace(/{pct}/g, p.absPercentage.toFixed(1));
                 
             let waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(msg)}`;
             
@@ -839,14 +1439,14 @@
             if (p.isDeprived) {
                 statusBadge = `<span class="badge badge-danger">${deprivedText}</span>`;
             } else if (p.absPercentage >= 20) {
-                statusBadge = '<span class="badge badge-danger">تجاوز 20%</span>';
+                statusBadge = '<span class="badge badge-danger" style="background:#ea580c26; color:#ea580c; border-color:#ea580c;">تجاوز 20%</span>';
             } else if (p.absPercentage >= 15) {
                 statusBadge = '<span class="badge badge-warning">إنذار</span>';
             } else {
                 statusBadge = '<span class="badge badge-success">طبيعي</span>';
             }
 
-            htmlPerc += `<tr>
+            htmlPerc += `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="true">
                 <td class="mono">${p.traineeId}</td>
                 <td class="name-cell">${p.traineeName}</td>
                 <td class="mono">${p.courseCode}</td>
@@ -865,10 +1465,64 @@
         htmlPerc += `</tbody></table>`;
         document.getElementById('table-percentages').innerHTML = htmlPerc;
 
+        if (window.savedFilters) {
+            if(document.getElementById('filterMajor')) document.getElementById('filterMajor').value = window.savedFilters.major || '';
+            if(document.getElementById('filterStatus')) document.getElementById('filterStatus').value = window.savedFilters.status || '';
+            if(document.getElementById('filterAbsence')) document.getElementById('filterAbsence').value = window.savedFilters.absence || '';
+            if(document.getElementById('searchInput')) document.getElementById('searchInput').value = window.savedFilters.search || '';
+        }
+
         window.filterTables();
     };
 
-    window.switchTab('upload', null, 'رفع البيانات');
+    // الاسترجاع التلقائي من التخزين المحلي عند تحديث الصفحة
+    window.addEventListener('DOMContentLoaded', async () => {
+        let settings = JSON.parse(localStorage.getItem('abs_reports_settings'));
+        if (settings) {
+            document.getElementById('totalWeeks').value = settings.weeks || 18;
+            window.savedFilters = settings;
+        }
+
+        let storedDates = localStorage.getItem('abs_reports_dates');
+        let dbData = await loadFromDB('rawData');
+        
+        if (!dbData) {
+            let oldLocal = localStorage.getItem('abs_reports_data');
+            if (oldLocal) { try { dbData = JSON.parse(oldLocal); } catch(e){} }
+        }
+
+        if (dbData) {
+            try {
+                rawData = dbData;
+                if (storedDates) {
+                    fileDates = JSON.parse(storedDates);
+                    Object.keys(fileDates).forEach(type => {
+                        if (fileDates[type]) {
+                            renderFileDate(type, new Date(fileDates[type]));
+                            let dropz = document.getElementById(`drop-${type}`);
+                            if(dropz) {
+                                dropz.classList.add('has-file');
+                                dropz.querySelector('p').innerText = "تم استرجاع الملف من التخزين";
+                            }
+                        }
+                    });
+                }
+                
+                if (rawData.sf01 && rawData.sf01.length > 0 && rawData.ss01 && rawData.ss01.length > 0 && rawData.so04 && rawData.so04.length > 0) {
+                    processData(); 
+                    switchTab('report-dashboard', document.getElementById('nav-dashboard'));
+                } else {
+                    switchTab('upload', document.getElementById('nav-upload'));
+                }
+            } catch(e) {
+                console.error("خطأ أثناء استرجاع البيانات المحفوظة", e);
+                switchTab('upload', document.getElementById('nav-upload'));
+            }
+        } else {
+            switchTab('upload', document.getElementById('nav-upload'));
+        }
+    });
+
 </script>
 </body>
 </html>
