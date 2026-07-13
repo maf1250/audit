@@ -181,10 +181,10 @@
         [data-theme="dark"] .course-card.c-danger, [data-theme="dark"] .course-card.c-warning, [data-theme="dark"] .course-card.c-success { color: #fff; }
 
         /* الداشبورد (الإحصائيات) */
-        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-6); }
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-6); }
         .dash-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--sp-4); text-align: center; }
         .dash-card h4 { margin: 0 0 var(--sp-2) 0; color: var(--text-secondary); font-size: var(--fs-md); }
-        .dash-card .val { font-size: var(--fs-2xl); font-weight: 800; color: var(--primary); }
+        .dash-card .val { font-size: var(--fs-2xl); font-weight: 800; }
 
         /* حقوق الإعداد */
         .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
@@ -261,7 +261,7 @@
             <div class="gap-2">
                 <div class="search-box">
                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" class="input-text" placeholder="بحث بالاسم أو الرقم..." onkeyup="filterTables()">
+                    <input type="text" id="searchInput" class="input-text" placeholder="بحث بالاسم أو الرقم..." onkeyup="filterTables(); saveSettingsLocally();">
                 </div>
                 
                 <label>عدد أسابيع الفصل:</label>
@@ -287,13 +287,13 @@
         <!-- شريط التصفية العلوي -->
         <div id="filtersBar" class="_filtersBar hidden">
             <span style="font-weight: 700; color: var(--text-secondary); font-size: 13px;">تصفية سريعة:</span>
-            <select id="filterMajor" class="input-select" onchange="filterTables()">
+            <select id="filterMajor" class="input-select" onchange="filterTables(); saveSettingsLocally();">
                 <option value="">كل التخصصات / الأقسام</option>
             </select>
-            <select id="filterStatus" class="input-select" onchange="filterTables()">
+            <select id="filterStatus" class="input-select" onchange="filterTables(); saveSettingsLocally();">
                 <option value="">كل حالات المتدرب</option>
             </select>
-            <select id="filterAbsence" class="input-select" onchange="filterTables()">
+            <select id="filterAbsence" class="input-select" onchange="filterTables(); saveSettingsLocally();">
                 <option value="">الجميع (غائبون ومنتظمون)</option>
                 <option value="absent">التركيز على الغائبين فقط</option>
             </select>
@@ -394,9 +394,31 @@
     });
 
     var rawData = { sf01: [], ss01: [], so04: [] };
+    var fileDates = { sf01: null, ss01: null, so04: null }; // التخزين المحلي لتواريخ الملفات
     var processedData = { active: [], excluded: [], percentages: [] };
     var courseHours = {}; 
     var isFemale = false; 
+
+    // دوال التخزين المحلي
+    function saveDataLocally() {
+        try {
+            localStorage.setItem('abs_reports_data', JSON.stringify(rawData));
+            localStorage.setItem('abs_reports_dates', JSON.stringify(fileDates));
+        } catch (e) {
+            console.warn("حجم البيانات كبير جداً على التخزين المحلي، لن يتم تخزين الملفات تلقائياً.", e);
+        }
+    }
+
+    function saveSettingsLocally() {
+        let settings = {
+            weeks: document.getElementById('totalWeeks').value,
+            major: document.getElementById('filterMajor') ? document.getElementById('filterMajor').value : '',
+            status: document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '',
+            absence: document.getElementById('filterAbsence') ? document.getElementById('filterAbsence').value : '',
+            search: document.getElementById('searchInput') ? document.getElementById('searchInput').value : ''
+        };
+        localStorage.setItem('abs_reports_settings', JSON.stringify(settings));
+    }
 
     window.switchTab = function(tabId, el, titleOverride) {
         document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
@@ -413,17 +435,7 @@
         }
     };
 
-    window.handleFile = function(e, type) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        let dropZone = document.getElementById(`drop-${type}`);
-        dropZone.classList.add('has-file');
-        let pEl = dropZone.querySelector('p');
-        pEl.innerText = file.name;
-
-        // قراءة تاريخ آخر تعديل للملف (Metadata) وعرضه بالأيام والساعات
-        let fDate = new Date(file.lastModified);
+    window.renderFileDate = function(type, fDate) {
         let now = new Date();
         let diffMs = Math.abs(now - fDate);
         let diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
@@ -445,6 +457,21 @@
                 <span style="color:${color}; margin-right:8px; font-weight:bold;">(العمر: ${ageText})</span>
             </div>`;
         }
+    };
+
+    window.handleFile = function(e, type) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        let dropZone = document.getElementById(`drop-${type}`);
+        dropZone.classList.add('has-file');
+        let pEl = dropZone.querySelector('p');
+        pEl.innerText = file.name;
+
+        // قراءة تاريخ آخر تعديل للملف وحفظه
+        let fDate = new Date(file.lastModified);
+        fileDates[type] = fDate.getTime();
+        renderFileDate(type, fDate);
 
         const reader = new FileReader();
         reader.onload = function(evt) {
@@ -453,6 +480,7 @@
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
             
+            saveDataLocally(); // حفظ محلي بعد القراءة
             window.processData();
         };
         reader.readAsArrayBuffer(file);
@@ -493,7 +521,6 @@
                     let rowData = [];
                     let tds = tr.querySelectorAll('td');
                     tds.forEach(td => {
-                        // تنظيف النص للعرض داخل الإكسل
                         let text = td.innerText.trim().replace(/\n+/g, ' | ');
                         rowData.push(text);
                     });
@@ -540,7 +567,6 @@
         return p;
     };
     
-    // دالة لفرز الجداول عند الضغط على الرؤوس
     window.sortTable = function(th, colIndex, isNumeric) {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
@@ -681,6 +707,7 @@
     };
 
     window.processData = function() {
+        saveSettingsLocally(); // حفظ عدد الأسابيع والاختيارات
         if (rawData.sf01.length === 0 || rawData.ss01.length === 0 || rawData.so04.length === 0) {
             return;
         }
@@ -990,27 +1017,42 @@
     };
 
     window.renderDashboard = function() {
+        // تأنيث النصوص 
+        let lblTotalActive = isFemale ? "إجمالي المتدربات (نشط)" : "إجمالي المتدربين (نشط)";
+        let lblDeprived = isFemale ? "متدربات لديهن حرمان" : "متدربون لديهم حرمان";
+        let lblOver20 = isFemale ? "متدربات فوق 20%" : "متدربون فوق 20%";
+        let lblOver15 = isFemale ? "متدربات فوق 15%" : "متدربون فوق 15%";
+        let lblExcluded = isFemale ? "المنسحبات والمطوي قيدهن" : "المنسحبين والمطوي قيدهم";
+
+        let lblThActive = isFemale ? "المتدربات (النشطات)" : "المتدربين (النشطين)";
+        let lblThExcluded = isFemale ? "إجمالي المنسحبات" : "إجمالي المنسحبين";
+
         let totalActive = processedData.active.length;
         let totalExcluded = processedData.excluded.length;
         let totalDeprivedTrainees = processedData.active.filter(t => t.totalDeprivedCourses > 0).length;
-        let totalWarnedTrainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15).map(p => p.traineeId)).size;
+        let totalOver20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 20).map(p => p.traineeId)).size;
+        let totalWarnedTrainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId)).size;
 
         let dashHtml = `
             <div class="dash-grid">
-                <div class="dash-card">
-                    <h4>إجمالي المتدربين (نشط)</h4>
-                    <div class="val">${totalActive}</div>
+                <div class="dash-card" style="border-bottom: 3px solid var(--primary);">
+                    <h4>${lblTotalActive}</h4>
+                    <div class="val" style="color: var(--primary);">${totalActive}</div>
                 </div>
                 <div class="dash-card" style="border-bottom: 3px solid var(--danger);">
-                    <h4>متدربون لديهم حرمان</h4>
+                    <h4>${lblDeprived}</h4>
                     <div class="val" style="color: var(--danger);">${totalDeprivedTrainees}</div>
                 </div>
+                <div class="dash-card" style="border-bottom: 3px solid #ea580c;">
+                    <h4>${lblOver20}</h4>
+                    <div class="val" style="color: #ea580c;">${totalOver20Trainees}</div>
+                </div>
                 <div class="dash-card" style="border-bottom: 3px solid var(--warning);">
-                    <h4>متدربون لديهم إنذار (15%+)</h4>
+                    <h4>${lblOver15}</h4>
                     <div class="val" style="color: var(--warning);">${totalWarnedTrainees}</div>
                 </div>
                 <div class="dash-card" style="border-bottom: 3px solid var(--text-muted);">
-                    <h4>المنسحبين والمطوي قيدهم</h4>
+                    <h4>${lblExcluded}</h4>
                     <div class="val" style="color: var(--text-muted);">${totalExcluded}</div>
                 </div>
             </div>
@@ -1022,12 +1064,13 @@
             <thead>
                 <tr>
                     <th class="sortable" onclick="sortTable(this, 0, false)">التخصص</th>
-                    <th class="text-center sortable" onclick="sortTable(this, 1, true)">المتدربين (النشطين)</th>
-                    <th class="text-center sortable" onclick="sortTable(this, 2, true)">غياب 15%+</th>
-                    <th class="text-center sortable" onclick="sortTable(this, 3, true)">لديهم حرمان</th>
-                    <th class="text-center sortable" onclick="sortTable(this, 4, true)">إجمالي المنسحبين</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 1, true)">${lblThActive}</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 2, true)">فوق 15%</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 3, true)">فوق 20%</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 4, true)">لديهم حرمان</th>
+                    <th class="text-center sortable" onclick="sortTable(this, 5, true)">${lblThExcluded}</th>
                 </tr>
-                ${createFilterRow(5)}
+                ${createFilterRow(6)}
             </thead>
             <tbody>
         `;
@@ -1042,14 +1085,18 @@
             let countExcluded = excludedMajors.length;
             let countDeprived = activeMajors.filter(t => t.totalDeprivedCourses > 0).length;
             
-            let warnedIds = new Set(processedData.percentages.filter(p => p.major === m && p.absPercentage >= 15).map(p => p.traineeId));
+            let warnedIds = new Set(processedData.percentages.filter(p => p.major === m && p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId));
             let countWarned = warnedIds.size;
+
+            let over20Ids = new Set(processedData.percentages.filter(p => p.major === m && p.absPercentage >= 20).map(p => p.traineeId));
+            let countOver20 = over20Ids.size;
 
             if (countActive > 0 || countExcluded > 0) {
                 dashHtml += `<tr>
                     <td>${m}</td>
                     <td class="text-center mono">${countActive}</td>
                     <td class="text-center mono" style="color:${countWarned > 0 ? 'var(--warning)' : 'inherit'}; font-weight:bold;">${countWarned}</td>
+                    <td class="text-center mono" style="color:${countOver20 > 0 ? '#ea580c' : 'inherit'}; font-weight:bold;">${countOver20}</td>
                     <td class="text-center mono" style="color:${countDeprived > 0 ? 'var(--danger)' : 'inherit'}; font-weight:bold;">${countDeprived}</td>
                     <td class="text-center mono">${countExcluded}</td>
                 </tr>`;
@@ -1231,7 +1278,7 @@
             if (p.isDeprived) {
                 statusBadge = `<span class="badge badge-danger">${deprivedText}</span>`;
             } else if (p.absPercentage >= 20) {
-                statusBadge = '<span class="badge badge-danger">تجاوز 20%</span>';
+                statusBadge = '<span class="badge badge-danger" style="background:#ea580c26; color:#ea580c; border-color:#ea580c;">تجاوز 20%</span>';
             } else if (p.absPercentage >= 15) {
                 statusBadge = '<span class="badge badge-warning">إنذار</span>';
             } else {
@@ -1257,10 +1304,56 @@
         htmlPerc += `</tbody></table>`;
         document.getElementById('table-percentages').innerHTML = htmlPerc;
 
+        // تطبيق الفلاتر التي تم استرجاعها بعد المعالجة
+        if (window.savedFilters) {
+            if(document.getElementById('filterMajor')) document.getElementById('filterMajor').value = window.savedFilters.major || '';
+            if(document.getElementById('filterStatus')) document.getElementById('filterStatus').value = window.savedFilters.status || '';
+            if(document.getElementById('filterAbsence')) document.getElementById('filterAbsence').value = window.savedFilters.absence || '';
+            if(document.getElementById('searchInput')) document.getElementById('searchInput').value = window.savedFilters.search || '';
+        }
+
         window.filterTables();
     };
 
-    window.switchTab('upload', document.getElementById('nav-upload'));
+    // التشغيل التلقائي عند تحميل الصفحة لاسترجاع البيانات المخزنة محلياً
+    window.addEventListener('DOMContentLoaded', () => {
+        let settings = JSON.parse(localStorage.getItem('abs_reports_settings'));
+        if (settings) {
+            document.getElementById('totalWeeks').value = settings.weeks || 18;
+            window.savedFilters = settings;
+        }
+
+        let storedData = localStorage.getItem('abs_reports_data');
+        let storedDates = localStorage.getItem('abs_reports_dates');
+        if (storedData) {
+            try {
+                rawData = JSON.parse(storedData);
+                if (storedDates) {
+                    fileDates = JSON.parse(storedDates);
+                    Object.keys(fileDates).forEach(type => {
+                        if (fileDates[type]) {
+                            renderFileDate(type, new Date(fileDates[type]));
+                            document.getElementById(`drop-${type}`).classList.add('has-file');
+                            document.getElementById(`drop-${type}`).querySelector('p').innerText = "تم استرجاع الملف من التخزين المحلي";
+                        }
+                    });
+                }
+                
+                if (rawData.sf01.length > 0 && rawData.ss01.length > 0 && rawData.so04.length > 0) {
+                    processData(); 
+                    switchTab('report-dashboard', document.getElementById('nav-dashboard'));
+                } else {
+                    switchTab('upload', document.getElementById('nav-upload'));
+                }
+            } catch(e) {
+                console.error("خطأ أثناء استرجاع البيانات المحفوظة", e);
+                switchTab('upload', document.getElementById('nav-upload'));
+            }
+        } else {
+            switchTab('upload', document.getElementById('nav-upload'));
+        }
+    });
+
 </script>
 </body>
 </html>
