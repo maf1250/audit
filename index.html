@@ -1317,10 +1317,32 @@
         processedData.instructors.forEach(i => { htmlInst += `<tr><td class="mono">${i.id}</td><td class="name-cell">${i.name}</td><td class="text-center mono">${i.crnCount}</td><td class="text-center mono">${i.totalEnrolled}</td><td class="text-center mono"><span class="badge ${i.totalDeprived > 0 ? 'badge-danger' : 'badge-success'}">${i.totalDeprived}</span></td><td class="text-center mono" style="color:var(--warning); font-weight:bold;">${i.avgPct.toFixed(1)}%</td><td class="text-center mono" style="color:var(--info); font-weight:bold;">${i.canceledCount}</td><td class="text-center mono">${i.lastActionDate}</td></tr>`; });
         htmlInst += `</tbody></table>`; document.getElementById('table-instructors').innerHTML = htmlInst;
 
-        let htmlSec = `<table><thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">الشعبة</th><th class="nowrap sortable" onclick="sortTable(this, 1, false)">رمز المقرر</th><th class="nowrap sortable name-cell" onclick="sortTable(this, 2, false)">اسم المقرر</th><th class="nowrap sortable" onclick="sortTable(this, 3, false)">اسم ${colInst}</th><th class="nowrap text-center sortable" onclick="sortTable(this, 4, true)">المسجلين</th><th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">المحرومين</th><th class="nowrap text-center sortable" onclick="sortTable(this, 6, true)">متوسط غياب الشعبة</th></tr>${createFilterRow(7)}</thead><tbody>`;
-        processedData.sections.forEach(s => { htmlSec += `<tr><td class="mono">${s.crn}</td><td class="mono">${s.code}</td><td>${s.name}</td><td>${s.instName}</td><td class="text-center mono">${s.enrolled}</td><td class="text-center mono"><span class="badge ${s.deprived > 0 ? 'badge-danger' : 'badge-success'}">${s.deprived}</span></td><td class="text-center mono" style="color:var(--danger); font-weight:bold;">${s.avgPct.toFixed(1)}%</td></tr>`; });
-        htmlSec += `</tbody></table>`; document.getElementById('table-sections').innerHTML = htmlSec;
-
+let htmlSec = `<table><thead><tr>
+            <th class="nowrap sortable text-center" style="width: 80px; min-width: 80px;" onclick="sortTable(this, 0, false)">الشعبة</th>
+            <th class="nowrap sortable" onclick="sortTable(this, 1, false)">رمز المقرر</th>
+            <th class="nowrap sortable" style="min-width: 250px;" onclick="sortTable(this, 2, false)">اسم المقرر</th>
+            <th class="nowrap sortable text-center" onclick="sortTable(this, 3, false)">رقم ${colInst}</th>
+            <th class="nowrap sortable" style="min-width: 200px;" onclick="sortTable(this, 4, false)">اسم ${colInst}</th>
+            <th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">المسجلين</th>
+            <th class="nowrap text-center sortable" onclick="sortTable(this, 6, true)">المحرومين</th>
+            <th class="nowrap text-center sortable" onclick="sortTable(this, 7, true)">متوسط الغياب</th>
+        </tr>${createFilterRow(8)}</thead><tbody>`;
+        
+        processedData.sections.forEach(s => { 
+            htmlSec += `<tr>
+                <td class="mono text-center" style="width: 80px; min-width: 80px;">${s.crn}</td>
+                <td class="mono">${s.code}</td>
+                <td>${s.name}</td>
+                <td class="mono text-center">${s.instId || '-'}</td>
+                <td>${s.instName}</td>
+                <td class="text-center mono">${s.enrolled}</td>
+                <td class="text-center mono"><span class="badge ${s.deprived > 0 ? 'badge-danger' : 'badge-success'}">${s.deprived}</span></td>
+                <td class="text-center mono" style="color:var(--danger); font-weight:bold;">${s.avgPct.toFixed(1)}%</td>
+            </tr>`; 
+        });
+        htmlSec += `</tbody></table>`; 
+        document.getElementById('table-sections').innerHTML = htmlSec;
+        
         let htmlMain = `<table>${createThead(false)}<tbody>`; processedData.active.forEach(t => htmlMain += createRow(t, false)); htmlMain += `</tbody></table>`; document.getElementById('table-main').innerHTML = htmlMain;
 
         let htmlMatrix = `<table><thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th><th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th><th class="nowrap sortable" style="min-width: 180px;" onclick="sortTable(this, 2, false)">التخصص</th><th>المقررات المسجلة ونسبة غياب كل مقرر</th></tr>${createFilterRow(4)}</thead><tbody>`;
