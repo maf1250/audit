@@ -264,7 +264,7 @@
         <div class="_navItem" onclick="switchTab('report-percentages', this)">
             <span>نسبة الغياب والإنذارات</span><span class="tab-badge" id="badge-percentages">0</span>
         </div>
-        <div class="_navItem" onclick="switchTab('report-fullweek', this)">
+<div class="_navItem" id="nav-fullweek" onclick="switchTab('report-fullweek', this)">
             <span>غياب أسبوع كامل فأكثر</span><span class="tab-badge" id="badge-fullweek">0</span>
         </div>
         <div class="_navItem" onclick="switchTab('report-deprived-all', this)">
@@ -1196,11 +1196,11 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
     // 3. نصوص التأنيث/التذكير
     const txt = {
         trainee: isFemale ? "المتدربة" : "المتدرب",
-        trainees: isFemale ? "المتدربات" : "المتدربون",
+        trainees: isFemale ? "المتدربات" : "المتدربين",
         withdrawn: isFemale ? "المنسحبات" : "المنسحبين",
         deprived: isFemale ? "المحرومات" : "المحرومون",
         over20: isFemale ? "تجاوزن 20%" : "تجاوزوا 20%",
-        instructors: isFemale ? "المدربات" : "المدربون",
+        instructors: isFemale ? "المدربات" : "المدربين",
         instructor: isFemale ? "المدربة" : "المدرب",
         current: isFemale ? "مستمرة" : "مستمر",
         leftOut: isFemale ? "مستبعدة" : "مستبعد", 
