@@ -203,7 +203,31 @@
     max-height: 85% !important;
             }
             .chart-container h4 { margin: 0 0 16px 0; font-size: 14px; color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
-
+.analyst-card {
+    background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+    border: 1px solid var(--primary-border);
+    border-right: 5px solid var(--primary);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-top: 24px;
+}
+.analyst-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    color: var(--primary);
+    font-weight: 800;
+}
+.insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+.insight-icon { margin-top: 4px; flex-shrink: 0; }
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 24px; }
         .admin-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
         .admin-card h4 { margin: 0 0 12px 0; font-size: 14px; color: var(--warning); display: flex; align-items: center; gap: 8px; }
@@ -1394,6 +1418,67 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
                 </table>
             </div>
         </div>`;
+    // --- المحلل الذكي آلياً ---
+    let insights = [];
+    
+    // 1. تحليل أعلى تخصص في مؤشر الخطورة
+    let sortedMajors = Object.entries(majorDataMap).sort((a, b) => {
+        let scoreA = ((a[1].deprived/Math.max(a[1].count,1))*40) + (a[1].sumPct/Math.max(a[1].pctCount,1));
+        let scoreB = ((b[1].deprived/Math.max(b[1].count,1))*40) + (b[1].sumPct/Math.max(b[1].pctCount,1));
+        return scoreB - scoreA;
+    });
+
+    if(sortedMajors.length > 0) {
+        insights.push({
+            type: 'danger',
+            text: `تنبيه حرج: تخصص <b>(${sortedMajors[0][0]})</b> هو الأكثر عرضة للفقد الأكاديمي، بمؤشر خطورة مرتفع. يتطلب تدخل الإرشاد الأكاديمي فوراً.`
+        });
+    }
+
+    // 2. تحليل المنطقة الصفراء (الإنذارات الوشيكة)
+    let borderline = processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).length;
+    if(borderline > 0) {
+        insights.push({
+            type: 'warning',
+            text: `يوجد <b>(${borderline})</b> مقرر في "المنطقة الصفراء" (15% - 19%). نوصي بإرسال رسائل تحذيرية إضافية لمنع وصولهم للحرمان.`
+        });
+    }
+
+    // 3. تحليل فجوة الرصد (المحتمل)
+    let maxProbMajor = Object.entries(majorDataMap).sort((a,b) => b[1].pctCount - a[1].pctCount)[0]; // تبسيط للفكرة
+    if(totalProbable > (totalActive * 0.1)) { // إذا تجاوز المحتمل 10%
+        insights.push({
+            type: 'info',
+            text: `ملاحظة إدارية: لوحظ وجود فجوة في رصد الحضور بنسبة مرتفعة. نوصي بالتأكيد على المدربين بضرورة إغلاق سجلات التحضير أسبوعياً.`
+        });
+    }
+
+    // 4. تحليل المنسحبين
+    if(withdrawn > (totalActive * 0.05)) {
+        insights.push({
+            type: 'warning',
+            text: `نسبة الانسحاب الرسمي بلغت <b>(${(withdrawn/(totalActive+totalExcluded)*100).toFixed(1)}%)</b>. يفضل دراسة أسباب التسرب في الأسابيع الأولى.`
+        });
+    }
+
+    // بناء قسم المحلل في الـ HTML
+    let analystHtml = `
+        <div class="analyst-card">
+            <div class="analyst-header">
+                <svg class="insight-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                توصيات المحلل الذكي للوحدة
+            </div>
+            ${insights.map(item => `
+                <div class="insight-item">
+                    <span style="color:${item.type === 'danger' ? 'var(--danger)' : (item.type === 'warning' ? 'var(--warning)' : 'var(--info)')}">●</span>
+                    <span>${item.text}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // أضف analystHtml إلى نهاية متغير html قبل عرضه
+    html += analystHtml;
     document.getElementById('dashboard-content').innerHTML = html;
 
     // 5. رسم المخططات البيانية
