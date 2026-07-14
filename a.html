@@ -395,7 +395,7 @@
                         </li>
                         <li>
                             <div class="info-badge-wrapper"><span class="badge badge-danger">تجاوز 20%</span></div>
-                            <div id="legend-twenty">تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).</div>
+                            <div id="legend-twenty">تعني أن نسبة غياب المتدرب في المقرر تجاوز 20% (مؤهل للحرمان إذا لم يُقبل عذره).</div>
                         </li>
                     </ul>
                    <div style="margin-top: 10px; color: var(--danger); font-size: 12.5px; font-weight: bold;">
@@ -827,8 +827,8 @@ themeBtn.addEventListener('click', () => {
             : 'تعني أن المتدرب تجاوز الحد المسموح للغياب وتم رصد درجة الحرمان (ح) له في تقرير SF01.';
 
         document.getElementById('legend-twenty').innerHTML = isFemale
-            ? 'تعني أن نسبة غياب المتدربة في المقرر بلغت 20% فأكثر (مؤهلة للحرمان إذا لم تُقبل أعذارها).'
-            : 'تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).';
+            ? 'تعني أن نسبة غياب المتدربة في المقرر تجاوزت 20% (مؤهلة للحرمان إذا لم تُقبل أعذارها).'
+            : 'تعني أن نسبة غياب المتدرب في المقرر تجاوز 20% (مؤهل للحرمان إذا لم يُقبل عذره).';
 
         let activeTab = document.querySelector('._navItem.active');
         if (activeTab && activeTab.id !== 'nav-main' && activeTab.id !== 'nav-excluded' && activeTab.id !== 'nav-dashboard' && activeTab.id !== 'nav-upload') {
@@ -1179,9 +1179,7 @@ themeBtn.addEventListener('click', () => {
     };
 
 window.renderDashboard = function() {
-            // حساب المتدربين في المنطقة الصفراء (15% - 19.9%)
 let borderlineCount = new Set(processedData.percentages.filter(p => p.absPercentage >= 18 && p.absPercentage <= 20).map(p => p.traineeId)).size;
-// حساب إجمالي حالات "المحتمل" في الأسبوع الحالي
 let currentWeek = Math.max(...Object.keys(TTH || {1:0}).map(Number)); 
 let totalProbable = processedData.active.filter(t => t.weekStatuses[currentWeek] === 'محتمل').length;
     const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
@@ -1244,6 +1242,9 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         warned: isFemale ? "بلغن نسبة الإنذار" : "بلغوا نسبة الإنذار", 
         borderline: isFemale ? "على وشك الحرمان" : "على وشك الحرمان",
         probableDesc: isFemale ? "غياب لم يُحضر" : "غياب لم يُحضر",
+        topAbsentTrainees: isFemale ? "أكثر المتدربات غياباً" : "أكثر المتدربين غياباً",
+        leastAbsenceInstructors: isFemale ? "أقل المدربات تسجيلاً للغياب" : "أقل المدربين تسجيلاً للغياب",
+        absHoursLabel: "ساعة غياب",
         terminated: isFemale ? "المطوي قيدهن" : "المطوي قيدهم"
     };
 
@@ -1347,14 +1348,14 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
     processedData.percentages.forEach(p => {
         // حسابات التخصصات
         if (majorDataMap[p.major]) {
-            if (p.absPercentage >= 20) majorDataMap[p.major].over20++;
+            if (p.absPercentage > 20) majorDataMap[p.major].over20++;
             majorDataMap[p.major].sumPct += p.absPercentage;
             majorDataMap[p.major].pctCount++;
         }
         // حسابات المقررات
         if (!courseStats[p.courseName]) courseStats[p.courseName] = { deprived: 0, over20: 0 };
         if (p.isDeprived) courseStats[p.courseName].deprived++;
-        if (p.absPercentage >= 20) courseStats[p.courseName].over20++;
+        if (p.absPercentage > 20) courseStats[p.courseName].over20++;
     });
 
     // --- 2. بناء جدول التخصصات ---
@@ -1401,29 +1402,26 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
 
     let sortedInst = Object.entries(instructorAbs).sort((a,b) => b[1] - a[1]).slice(0, 5);
     let sortedCourses = Object.entries(courseStats).sort((a,b) => b[1].over20 - a[1].over20).slice(0, 5);
+// حساب إحصائيات المدربين (الأكثر والأقل)
+    let allInstructorIds = Object.keys(instNameMap);
+    let instructorStats = Object.keys(instNameMap).map(id => ({ name: instNameMap[id], count: instructorAbs[id] || 0 }));
 
+    let topInst = [...instructorStats].sort((a, b) => b.count - a.count).slice(0, 5);
+    let leastInst = [...instructorStats].sort((a, b) => a.count - b.count).slice(0, 5);
+
+    let traineeAbsenceStats = processedData.active.map(t => {
+        let totalAbs = Object.values(t.crns).reduce((sum, c) => sum + c.absHours, 0);
+        return { id: t.id, name: t.name, totalAbs: totalAbs };
+    });
+    let topAbsentTrainees = traineeAbsenceStats.sort((a, b) => b.totalAbs - a.totalAbs).slice(0, 5);
+    
     // --- 4. بناء الجداول السفلية ---
-    html += `
-        <div class="admin-grid">
-            <div class="admin-card">
-                <h4>أكثر المقررات تجاوزاً للـ 20%</h4>
-                <table>
-                    <thead><tr><th>المقرر</th><th class="text-center">تجاوز 20%</th><th class="text-center">حرمان</th></tr></thead>
-                    <tbody>
-                        ${sortedCourses.map(([name, stat]) => `<tr><td>${name}</td><td class="text-center mono">${stat.over20}</td><td class="text-center mono">${stat.deprived}</td></tr>`).join('')}
-                    </tbody>
-                </table>
-            </div>
-            <div class="admin-card">
-                <h4>أعلى ${txt.instructors} تسجيلاً للغياب</h4>
-                <table>
-                    <thead><tr><th>${txt.instructor}</th><th class="text-center">عدد الحالات</th></tr></thead>
-                    <tbody>
-                        ${sortedInst.length > 0 ? sortedInst.map(([id, val]) => `<tr><td>${instNameMap[id] || (txt.instructor + ' ' + id)}</td><td class="text-center mono">${val}</td></tr>`).join('') : '<tr><td colspan="2" class="text-center">لا توجد بيانات</td></tr>'}
-                    </tbody>
-                </table>
-            </div>
-        </div>`;
+    html += `<div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
+        <div class="admin-card"><h4>أكثر المقررات تجاوزاً للـ 20%</h4><table><thead><tr><th>المقرر</th><th class="text-center">تجاوز 20%</th></tr></thead><tbody>${sortedCourses.map(([n, s]) => `<tr><td>${n}</td><td class="text-center mono">${s.over20}</td></tr>`).join('')}</tbody></table></div>
+        <div class="admin-card"><h4>${txt.topAbsentTrainees}</h4><table><thead><tr><th>${txt.trainee}</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topAbsentTrainees.map(t => `<tr><td>${t.name}</td><td class="text-center mono">${t.totalAbs.toFixed(0)} ساعة</td></tr>`).join('')}</tbody></table></div>
+        <div class="admin-card"><h4>أعلى ${txt.instructors} تسجيلاً للغياب</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${topInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
+        <div class="admin-card"><h4>${txt.leastAbsenceInstructors}</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${leastInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
+    </div>`;
     // --- المحلل الذكي آلياً ---
     let insights = [];
     
@@ -1442,7 +1440,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
     }
 
     // 2. تحليل المنطقة الصفراء (الإنذارات الوشيكة)
-    let borderline = processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).length;
+    let borderline = processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage <= 20).length;
     if(borderline > 0) {
         insights.push({
             type: 'warning',
@@ -1670,7 +1668,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
                     cardClass = 'c-danger';
                     let depText = isFemale ? 'محرومة (ح)' : 'محروم (ح)';
                     pctText = `${depText} | ${c.absPercentage.toFixed(1)}%`;
-                } else if (c.absPercentage >= 20) {
+                } else if (c.absPercentage > 20) {
                     cardClass = 'c-danger';
                 } else if (c.absPercentage >= 15) {
                     cardClass = 'c-warning';
@@ -1746,7 +1744,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
             
             if (p.isDeprived) {
                 statusBadge = `<span class="badge badge-danger">${deprivedText}</span>`;
-            } else if (p.absPercentage >= 20) {
+            } else if (p.absPercentage > 20) {
                 statusBadge = '<span class="badge badge-danger" style="background:#ea580c26; color:#ea580c; border-color:#ea580c;">تجاوز 20%</span>';
             } else if (p.absPercentage >= 15) {
                 statusBadge = '<span class="badge badge-warning">إنذار</span>';
