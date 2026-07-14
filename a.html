@@ -1294,12 +1294,12 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
             <div class="dash-card" style="border-bottom: 3px solid #facc15;">
     <h4>${txt.borderline}</h4>
     <div class="val" style="color: #facc15;">${borderlineCount}</div>
-    <div class="sub-val">نسبة غيابهم بين 18% و 20%</div>
+    <div class="sub-val">نسبة الغياب بين 18% و 20%</div>
 </div>
 <div class="dash-card" style="border-bottom: 3px solid #3b82f6;">
     <h4>فجوة التحضير (المحتمل)</h4>
     <div class="val" style="color: #3b82f6;">${totalProbable}</div>
-    <div class="sub-val">لم يتم رصد حضور/غياب لهم للأسبوع ${currentWeek}</div>
+    <div class="sub-val">لم يتم رصد حضور/غياب للأسبوع ${currentWeek}</div>
 </div>
 <div class="dash-card" style="border-bottom: 3px solid var(--info);">
                 <h4>متوسط غياب المقرر</h4>
@@ -1422,8 +1422,10 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         <div class="admin-card"><h4>أعلى ${txt.instructors} تسجيلاً للغياب</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${topInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>${txt.leastAbsenceInstructors}</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${leastInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
     </div>`;
+
     // --- المحلل الذكي آلياً ---
     let insights = [];
+    let totalIntake = totalActive + totalExcluded; // إجمالي المتدربين المسجلين منذ بداية الفصل
     
     // 1. تحليل أعلى تخصص في مؤشر الخطورة
     let sortedMajors = Object.entries(majorDataMap).sort((a, b) => {
@@ -1439,29 +1441,36 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         });
     }
 
-    // 2. تحليل المنطقة الصفراء (الإنذارات الوشيكة)
+    // 2. تحليل حالات طي القيد (الجديد)
+    if (terminatedCount > (totalIntake * 0.03)) { 
+            insights.push({
+            type: 'danger',
+            text: `تنبيه إداري: لوحظ ارتفاع في حالات <b>(${txt.terminated})</b> بواقع <b>(${terminatedCount})</b> حالة. نوصي بمراجعة مسببات التعثر الأكاديمي.`
+        });
+    }
+
+    // 3. تحليل المنطقة الصفراء (الإنذارات الوشيكة)
     let borderline = processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage <= 20).length;
     if(borderline > 0) {
         insights.push({
             type: 'warning',
-            text: `يوجد <b>(${borderline})</b> مقرر في "المنطقة الصفراء" (15% - 19%). نوصي بإرسال رسائل تحذيرية إضافية لمنع وصولهم للحرمان.`
-        });
-    }
-
-    // 3. تحليل فجوة الرصد (المحتمل)
-    let maxProbMajor = Object.entries(majorDataMap).sort((a,b) => b[1].pctCount - a[1].pctCount)[0]; // تبسيط للفكرة
-    if(totalProbable > (totalActive * 0.1)) { // إذا تجاوز المحتمل 10%
-        insights.push({
-            type: 'info',
-            text: `ملاحظة إدارية: لوحظ وجود فجوة في رصد الحضور بنسبة مرتفعة. نوصي بالتأكيد على المدربين بضرورة إغلاق سجلات التحضير أسبوعياً.`
+            text: `يوجد <b>(${borderline})</b> مقرر في "المنطقة الصفراء" (15% - 20%). نوصي بإرسال رسائل تحذيرية إضافية لمنع الوصول إلى الحرمان.`
         });
     }
 
     // 4. تحليل المنسحبين
-    if(withdrawn > (totalActive * 0.05)) {
+    if(withdrawn > (totalIntake * 0.05)) {
         insights.push({
             type: 'warning',
-            text: `نسبة الانسحاب الرسمي بلغت <b>(${(withdrawn/(totalActive+totalExcluded)*100).toFixed(1)}%)</b>. يفضل دراسة أسباب التسرب في الأسابيع الأولى.`
+            text: `نسبة <b>(${txt.withdrawn})</b> بلغت <b>(${(withdrawn/totalIntake*100).toFixed(1)}%)</b>. يفضل دراسة أسباب التسرب في الأسابيع الأولى.`
+        });
+    }
+
+    // 5. تحليل فجوة الرصد (المحتمل)
+    if(totalProbable > (totalActive * 0.1)) {
+        insights.push({
+            type: 'info',
+            text: `ملاحظة إدارية: لوحظ وجود فجوة في رصد الحضور بنسبة مرتفعة (أكثر من 10%). نوصي بالتأكيد على ${txt.instructors} بضرورة إغلاق سجلات التحضير.`
         });
     }
 
@@ -1469,7 +1478,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
     let analystHtml = `
         <div class="analyst-card">
             <div class="analyst-header">
-                <svg class="insight-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                 توصيات المحلل الذكي للوحدة
             </div>
             ${insights.map(item => `
@@ -1481,8 +1490,8 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         </div>
     `;
 
-    // أضف analystHtml إلى نهاية متغير html قبل عرضه
     html += analystHtml;
+    
     document.getElementById('dashboard-content').innerHTML = html;
 
     // 5. رسم المخططات البيانية
