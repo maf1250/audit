@@ -1186,10 +1186,10 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
     let weeklyProbable = Array(totalWeeks).fill(0);
     processedData.active.forEach(t => {
     const weeks = t.weekStatuses || {};
-    for (let w = 1; w <= totalWeeks; w++) {
-        if (weeks[w] === 'كامل') weeklyFull[w - 1]++;
-        else if (weeks[w] === 'جزئي') weeklyPartial[w - 1]++;
-        else if(t.weeks[w] === 'محتمل') weeklyProbable[w-1]++; 
+        for (let w = 1; w <= totalWeeks; w++) {
+        if (weekStatuses[w] === 'كامل') weeklyFull[w - 1]++;
+        else if (weekStatuses[w] === 'جزئي') weeklyPartial[w - 1]++;
+        else if(t.weekStatuses[w] === 'محتمل') weeklyProbable[w-1]++; 
     }
 });
 
@@ -1202,6 +1202,11 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         over20: isFemale ? "تجاوزن 20%" : "تجاوزوا 20%",
         instructors: isFemale ? "المدربات" : "المدربون",
         instructor: isFemale ? "المدربة" : "المدرب",
+        current: isFemale ? "مستمرة" : "مستمر",
+        leftOut: isFemale ? "مستبعدة" : "مستبعد", 
+        DA: isFemale ? "رصد لهن درجة (ح)" : "رصد لهم درجة (ح)", 
+        DAeligible: isFemale ? "مؤهلات للحرمان" : "مؤهلين للحرمان", 
+        warned: isFemale ? "بلغن نسبة الإنذار" : "بلغوا نسبة الإنذار", 
         terminated: isFemale ? "المطوي قيدهن" : "المطوي قيدهم"
     };
 
@@ -1211,7 +1216,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
             <div class="dash-card" onclick="drillDown('absence', '')" style="border-bottom: 3px solid var(--primary);">
                 <h4>إجمالي ${txt.trainees}</h4>
                 <div class="val">${totalActive + totalExcluded}</div>
-                <div class="sub-val">${totalActive} نشطة | ${totalExcluded} مستبعدة</div>
+                <div class="sub-val">${totalActive} ${txt.current} | ${totalExcluded} ${txt.leftOut}</div>
             </div>
             <div class="dash-card">
                 <h4>التخصصات والشعب</h4>
@@ -1221,29 +1226,29 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
             <div class="dash-card" style="border-bottom: 3px solid var(--danger);">
                 <h4>${txt.deprived}</h4>
                 <div class="val" style="color: var(--danger);">${deprivedTrainees}</div>
-                <div class="sub-val">رصد لهن درجة (ح)</div>
+                <div class="sub-val">${txt.DA}</div>
             </div>
             <div class="dash-card" style="border-bottom: 3px solid #ea580c;">
                 <h4>${txt.over20}</h4>
                 <div class="val" style="color: #ea580c;">${over20Trainees}</div>
-                <div class="sub-val">مؤهلات للحرمان</div>
+                <div class="sub-val">${txt.DAeligible}</div>
             </div>
             <div class="dash-card" style="border-bottom: 3px solid var(--warning);">
                 <h4>إنذار (15%+)</h4>
                 <div class="val" style="color: var(--warning);">${warning15Trainees}</div>
-                <div class="sub-val">بلغن نسبة الإنذار</div>
+                <div class="sub-val">${txt.warned}</div>
             </div>
             <div class="dash-card" onclick="switchTab('report-fullweek', document.getElementById('nav-fullweek'))" style="border-bottom: 3px solid #7c3aed;">
                 <h4>غياب أسبوع كامل</h4>
                 <div class="val">${fullWeekAbsent}</div>
                 <div class="sub-val">مرة واحدة على الأقل</div>
             </div>
-            <div class="dash-card" onclick="drillDown('status', 'مطوي')" style="border-bottom: 3px solid #7c2d12;">
-    <h4>${txt.terminated}</h4>
+<div class="dash-card" onclick="switchTab('report-excluded', document.getElementById('nav-excluded'))" style="border-bottom: 3px solid #7c2d12;">
+<h4>${txt.terminated}</h4>
     <div class="val">${terminatedCount}</div>
     <div class="sub-val">عمليات طي القيد</div>
 </div>
-            <div class="dash-card" onclick="drillDown('status', 'انسحاب')" style="border-bottom: 3px solid var(--text-muted);">
+            <div class="dash-card" onclick="switchTab('report-excluded', document.getElementById('nav-excluded'))" style="border-bottom: 3px solid var(--text-muted);">
                 <h4>${txt.withdrawn}</h4>
                 <div class="val">${withdrawn}</div>
                 <div class="sub-val">انسحاب رسمي</div>
