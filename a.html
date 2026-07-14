@@ -1163,6 +1163,7 @@ themeBtn.addEventListener('click', () => {
         
         let deprivedTrainees = processedData.active.filter(t => t.totalDeprivedCourses > 0).length;
         let over20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 20).map(p => p.traineeId)).size;
+        let warning15Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage <= 20).map(p => p.traineeId)).size;
         let fullWeekAbsent = processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).length;
         
         let allAbsPercentages = processedData.percentages.map(p => p.absPercentage);
@@ -1215,6 +1216,11 @@ themeBtn.addEventListener('click', () => {
                     <h4>تجاوزوا 20%</h4>
                     <div class="val" style="color: #ea580c;">${over20Trainees}</div>
                     <div class="sub-val">مؤهلين للحرمان</div>
+                </div>
+                 <div class="dash-card" style="border-bottom: 3px solid var(--warning);">
+                    <h4>إنذار (15%+)</h4>
+                    <div class="val" style="color: var(--warning);">${warning15Trainees}</div>
+                    <div class="sub-val">بلغوا نسبة الإنذار</div>
                 </div>
                 <div class="dash-card" onclick="switchTab('report-fullweek', document.getElementById('nav-fullweek'))" style="border-bottom: 3px solid var(--danger);">
                     <h4>غياب أسبوع كامل</h4>
