@@ -1427,8 +1427,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
 
     let sortedInst = Object.entries(instructorAbs).sort((a,b) => b[1] - a[1]).slice(0, 5);
     let sortedCourses = Object.entries(courseStats).sort((a,b) => b[1].over20 - a[1].over20).slice(0, 5);
-    let leastCourses = Object.entries(courseStats).sort((a, b) => a[1].over20 > 0 - b[1].over20).slice(0, 5);
-// حساب إحصائيات المدربين (الأكثر والأقل)
+    let leastCourses = Object.entries(courseStats).filter(c => c[1].deprived > 0).sort((a, b) => a[1].deprived - b[1].deprived).slice(0, 5);
     let allInstructorIds = Object.keys(instNameMap);
     let instructorStats = Object.keys(instNameMap).map(id => ({ name: instNameMap[id], count: instructorAbs[id] || 0 }));
 
@@ -1490,13 +1489,34 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
 
             if (dateStr) {
                 let dayIndex = -1;
-                // تحليل التاريخ (يدعم صيغة dd/mm/yyyy و yyyy-mm-dd)
-                if (dateStr.includes('/')) {
-                    let p = dateStr.split('/');
-                    dayIndex = p[0].length === 4 ? new Date(p[0], p[1]-1, p[2]).getDay() : new Date(p[2], p[1]-1, p[0]).getDay();
-                } else if (dateStr.includes('-')) {
-                    let p = dateStr.split('-');
-                    dayIndex = p[0].length === 4 ? new Date(p[0], p[1]-1, p[2]).getDay() : new Date(p[2], p[1]-1, p[0]).getDay();
+           // تنظيف التاريخ والتعامل مع صيغ الإكسل المتعددة
+                let cleanDate = dateStr.trim().split(' ')[0];
+                
+                // إذا كان التاريخ محفوظاً كرقم تسلسلي من الإكسل (مثال: 45150)
+                if (!isNaN(cleanDate) && !cleanDate.includes('/') && !cleanDate.includes('-')) {
+                    let excelSerial = parseInt(cleanDate);
+                    let dateObj = new Date(Math.round((excelSerial - 25569) * 86400 * 1000));
+                    dayIndex = dateObj.getDay();
+                } else {
+                    let p = cleanDate.split(/[-/]/);
+                    if (p.length === 3) {
+                        let y = p[0].length === 4 ? parseInt(p[0]) : parseInt(p[2]);
+                        if (y < 100) y += 2000; // تصحيح سنوات الخانتين (مثل 23 إلى 2023)
+                        
+                        let m, d;
+                        if (p[0].length === 4) { // حالة yyyy-mm-dd
+                            m = parseInt(p[1]) - 1; d = parseInt(p[2]);
+                        } else { 
+                            // الافتراضي dd/mm/yyyy
+                            d = parseInt(p[0]); m = parseInt(p[1]) - 1;
+                            // إذا ظهر أن الشهر أكبر من 12، نعكس لأن الصيغة تكون mm/dd/yyyy
+                            if (m + 1 > 12) {
+                                m = parseInt(p[0]) - 1; d = parseInt(p[1]);
+                            }
+                        }
+                        let dateObj = new Date(y, m, d);
+                        dayIndex = dateObj.getDay();
+                    }
                 }
                 
                 if (dayIndex >= 0 && dayIndex <= 6) {
@@ -1530,7 +1550,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         <div class="admin-card"><h4>أكثر المقررات تجاوزاً للـ 20%</h4><table><thead><tr><th>المقرر</th><th class="text-center">تجاوز 20%</th></tr></thead><tbody>${sortedCourses.map(([n, s]) => `<tr><td>${n}</td><td class="text-center mono">${s.over20}</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>${txt.topAbsentTrainees}</h4><table><thead><tr><th>${txt.trainee}</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topAbsentTrainees.map(t => `<tr><td>${t.name}</td><td class="text-center mono">${t.totalAbs.toFixed(0)} ساعة</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>${txt.leastAbsentTrainees}</h4><table><thead><tr><th>${txt.trainee}</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${leastAbsentTrainees.map(t => `<tr><td>${t.name}</td><td class="text-center mono">ساعة ${t.totalAbs.toFixed(0)}</td></tr>`).join('')}</tbody></table></div>
-        <div class="admin-card"><h4>أقل المقررات حرماناً</h4><table><thead><tr><th>المقرر</th><th class="text-center">حالات الحرمان</th></tr></thead><tbody>${leastCourses.map(([n, s]) => `<tr><td>${n}</td><td class="text-center mono">${s.over20}</td></tr>`).join('')}</tbody></table></div>
+        <div class="admin-card"><h4>أقل المقررات حرماناً</h4><table><thead><tr><th>المقرر</th><th class="text-center">حالات الحرمان</th></tr></thead><tbody>${leastCourses.map(([n, s]) => `<tr><td>${n}</td><td class="text-center mono">${s.deprived}</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>أعلى ${txt.instructors} تسجيلاً للغياب</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${topInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>${txt.leastAbsenceInstructors}</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${leastInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>أكثر المقررات نسبةً للحرمان</h4><table><thead><tr><th>المقرر</th><th class="text-center">النسبة (%)</th></tr></thead><tbody>${topCoursesByDepPct.map(c => `<tr><td>${c.name}</td><td class="text-center mono" style="color:var(--danger);">${c.pct.toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
