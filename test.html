@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
@@ -49,7 +50,7 @@
             --ease: cubic-bezier(.4, 0, .2, 1); --dur: .2s; --header-h: 65px;
         }
 
-        /* الوضع الليلي - يتم تفعيله عند وجود data-theme="dark" في الـ html */
+        /* الوضع الليلي */
         [data-theme="dark"] {
             --bg-base: #14191c;
             --bg-surface: #1a2226;
@@ -103,6 +104,8 @@
         [data-theme="dark"] #badge-excluded { background: #2a363c; color: var(--text-secondary); border-color: #3a474e; }
         #badge-matrix, #badge-percentages { background: var(--warning-subtle); color: var(--warning); border-color: #f59e0b40; }
         [data-theme="dark"] #badge-matrix, [data-theme="dark"] #badge-percentages { background: rgba(217, 169, 62, 0.15); border-color: #d9a93e40; }
+        #badge-threatened { background: rgba(234, 88, 12, 0.15); color: #ea580c; border-color: rgba(234, 88, 12, 0.4); }
+        [data-theme="dark"] #badge-threatened { background: rgba(234, 88, 12, 0.15); border-color: rgba(234, 88, 12, 0.4); color: #f97316; }
 
         ._uploadGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-4); }
         ._dropZone { border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--bg-surface); padding: var(--sp-6) var(--sp-4); text-align: center; cursor: pointer; transition: all var(--dur) var(--ease); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; position: relative;}
@@ -161,6 +164,9 @@
         .badge-success { background: var(--success-subtle); color: var(--success); border: 1px solid var(--success); }
         .badge-info { background: var(--info-subtle); color: var(--info); border: 1px solid var(--info); }
         
+        .clickable-name { cursor: pointer; color: var(--primary); text-decoration: none; font-weight: bold; transition: all 0.2s; }
+        .clickable-name:hover { text-decoration: underline; color: var(--primary-hover); }
+
         .hidden { display: none !important; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         .gap-2 { display: flex; gap: var(--sp-2); align-items: center; }
@@ -188,16 +194,18 @@
         .dash-card .val { font-size: 24px; font-weight: 800; line-height: 1; }
         .dash-card .sub-val { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
 
-        .chart-row { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 24px; }
-.chart-container {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    height: 400px; 
-    position: relative;
-}        .chart-container h4 { margin: 0 0 16px 0; font-size: 14px; color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 16px; margin-bottom: 24px; }
 
+        .chart-container {
+            background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; height: 500px; display: flex; flex-direction: column;
+        }
+        .chart-container canvas { max-height: 85% !important; }
+        .chart-container h4 { margin: 0 0 16px 0; font-size: 14px; color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
+        
+        .analyst-card { background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%); border: 1px solid var(--primary-border); border-right: 5px solid var(--primary); border-radius: var(--radius-md); padding: 20px; margin-top: 24px; }
+        .analyst-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--primary); font-weight: 800; }
+        .insight-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 13.5px; line-height: 1.6; }
+        
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 24px; }
         .admin-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
         .admin-card h4 { margin: 0 0 12px 0; font-size: 14px; color: var(--warning); display: flex; align-items: center; gap: 8px; }
@@ -208,13 +216,41 @@
         .credits { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); line-height: 1.6; }
         .visitor-counter { margin-top: auto; display: flex; justify-content: center; padding-top: var(--sp-4); padding-bottom: var(--sp-4); }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        /* نوافذ Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(3px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background: var(--bg-surface); padding: var(--sp-6); border-radius: var(--radius-lg); width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); transform: translateY(-20px); transition: all 0.3s; }
+        .modal-content { background: var(--bg-surface); padding: var(--sp-6); border-radius: var(--radius-lg); width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); transform: translateY(-20px); transition: all 0.3s; }
         .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-content.wide { max-width: 800px; }
         
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .modal-header h3 { margin: 0; color: var(--primary); }
+        .close-modal { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; }
+        .close-modal:hover { color: var(--danger); }
+        
+        .modal-content textarea { width: 100%; height: 130px; background: var(--bg-inset); border: 1px solid var(--border); color: var(--text-primary); padding: 10px; border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; resize: vertical; margin-bottom: 15px; }
+        .modal-content textarea:focus { outline: none; border-color: var(--primary); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-btn { padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: bold; border: none; font-family: inherit; transition: background-color 0.2s; }
+        .modal-btn-save { background: var(--primary); color: white; }
+        .modal-btn-save:hover { background: var(--primary-hover); }
+        .modal-btn-cancel { background: var(--bg-inset); color: var(--text-primary); border: 1px solid var(--border); }
+        .modal-btn-cancel:hover { background: var(--bg-hover); }
+        
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .profile-item { background: var(--bg-inset); padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+        .profile-item span { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+        .profile-item strong { display: block; font-size: 14px; color: var(--text-primary); }
+        .absence-list { list-style: none; padding: 0; margin: 0; }
+        .absence-list li { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px dashed var(--border); font-size: 13px; }
+        
+        .wa-vars { font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; background: var(--bg-inset); padding: 10px; border-radius: 6px; border: 1px dashed var(--border); line-height: 1.8; }
+        .wa-vars span { display: inline-block; background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-strong); cursor: pointer; color: var(--primary); font-weight: bold; margin-left: 5px; transition: all 0.2s; direction: ltr; }
+        .wa-vars span:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
         @media (max-width: 992px) {
             .chart-row { grid-template-columns: 1fr; }
+            .profile-grid { grid-template-columns: 1fr; }
         }
 
         @media print {
@@ -249,6 +285,13 @@
         <div class="_navItem" id="nav-dashboard" onclick="switchTab('report-dashboard', this)">
             <span>لوحة الإحصائيات</span>
         </div>
+        <div class="_navItem" id="nav-instructors" onclick="switchTab('report-instructors', this)">
+            <span>تقرير المدربين</span><span class="tab-badge" id="badge-instructors">0</span>
+        </div>
+        <div class="_navItem" id="nav-sections" onclick="switchTab('report-sections', this)">
+            <span>تقرير الشُعب والمقررات</span><span class="tab-badge" id="badge-sections">0</span>
+        </div>
+        <div style="margin: 10px 15px; border-bottom: 1px dashed var(--border-strong);"></div>
         <div class="_navItem" id="nav-main" onclick="switchTab('report-main', this)">
             <span id="label-main">المتدربون</span><span class="tab-badge" id="badge-main">0</span>
         </div>
@@ -258,8 +301,11 @@
         <div class="_navItem" onclick="switchTab('report-percentages', this)">
             <span>نسبة الغياب والإنذارات</span><span class="tab-badge" id="badge-percentages">0</span>
         </div>
-        <div class="_navItem" onclick="switchTab('report-fullweek', this)">
+        <div class="_navItem" id="nav-fullweek" onclick="switchTab('report-fullweek', this)">
             <span>غياب أسبوع كامل فأكثر</span><span class="tab-badge" id="badge-fullweek">0</span>
+        </div>
+        <div class="_navItem" id="nav-threatened" onclick="switchTab('report-threatened', this)">
+            <span id="label-threatened">المتدربون المهددون بالحرمان</span><span class="tab-badge" id="badge-threatened">0</span>
         </div>
         <div class="_navItem" onclick="switchTab('report-deprived-all', this)">
             <span>الحرمان بكل المقررات</span><span class="tab-badge" id="badge-deprived-all">0</span>
@@ -268,7 +314,7 @@
             <span>الحرمان ماعدا مقرر</span><span class="tab-badge" id="badge-deprived-except">0</span>
         </div>
         <div class="_navItem" id="nav-excluded" onclick="switchTab('report-excluded', this)">
-            <span id="label-excluded">المنسحبين والمطوي قيدهم</span><span class="tab-badge" id="badge-excluded">0</span>
+            <span id="label-excluded">المنسحبون والمطوي قيدهم</span><span class="tab-badge" id="badge-excluded">0</span>
         </div>
         
         <div class="visitor-counter">
@@ -365,7 +411,7 @@
                         </li>
                         <li>
                             <div class="info-badge-wrapper"><span class="badge badge-danger">تجاوز 20%</span></div>
-                            <div id="legend-twenty">تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).</div>
+                            <div id="legend-twenty">تعني أن نسبة غياب المتدرب في المقرر تجاوز 20% (مؤهل للحرمان إذا لم يُقبل عذره).</div>
                         </li>
                     </ul>
                    <div style="margin-top: 10px; color: var(--danger); font-size: 12.5px; font-weight: bold;">
@@ -378,14 +424,14 @@
                 </div>
             </div>
 
-            <div id="report-dashboard" class="tab-content hidden">
-                <div id="dashboard-content" style="padding: 0;"></div>
-            </div>
-
+            <div id="report-dashboard" class="tab-content hidden"><div id="dashboard-content" style="padding: 0;"></div></div>
+            <div id="report-instructors" class="tab-content hidden"><div class="_tableWrapper" id="table-instructors"></div></div>
+            <div id="report-sections" class="tab-content hidden"><div class="_tableWrapper" id="table-sections"></div></div>
             <div id="report-main" class="tab-content hidden"><div class="_tableWrapper" id="table-main"></div></div>
             <div id="report-matrix" class="tab-content hidden"><div class="_tableWrapper" id="table-matrix"></div></div>
             <div id="report-percentages" class="tab-content hidden"><div class="_tableWrapper" id="table-percentages"></div></div>
             <div id="report-fullweek" class="tab-content hidden"><div class="_tableWrapper" id="table-fullweek"></div></div>
+            <div id="report-threatened" class="tab-content hidden"><div class="_tableWrapper" id="table-threatened"></div></div>
             <div id="report-deprived-all" class="tab-content hidden"><div class="_tableWrapper" id="table-deprived-all"></div></div>
             <div id="report-deprived-except" class="tab-content hidden"><div class="_tableWrapper" id="table-deprived-except"></div></div>
             <div id="report-excluded" class="tab-content hidden"><div class="_tableWrapper" id="table-excluded"></div></div>
@@ -393,9 +439,13 @@
     </div>
 </div>
 
+<!-- Modal تعديل الواتساب -->
 <div id="waModal" class="modal-overlay">
     <div class="modal-content">
-        <h3>تخصيص عبارة الواتساب</h3>
+        <div class="modal-header">
+            <h3>تخصيص عبارة الواتساب</h3>
+            <button class="close-modal" onclick="closeWaModal()">&times;</button>
+        </div>
         <div class="wa-vars">
             <b>متغيرات يمكن إضافتها بالنقر عليها:</b><br>
             <span onclick="insertWaVar('{name}')">{name}</span> للاسم
@@ -410,22 +460,53 @@
     </div>
 </div>
 
+<!-- Modal الملف الشخصي للمتدرب -->
+<div id="traineeProfileModal" class="modal-overlay">
+    <div class="modal-content wide">
+        <div class="modal-header">
+            <h3 id="tp-name">الملف الشخصي</h3>
+            <button class="close-modal" onclick="closeTraineeProfile()">&times;</button>
+        </div>
+        <div class="profile-grid">
+            <div class="profile-item"><span>الرقم الأكاديمي</span><strong id="tp-id" class="mono"></strong></div>
+            <div class="profile-item"><span>التخصص</span><strong id="tp-major"></strong></div>
+            <div class="profile-item"><span>حالة التسجيل</span><strong id="tp-reg-status"></strong></div>
+            <div class="profile-item"><span>حالة المتدرب</span><strong id="tp-status"></strong></div>
+            <div class="profile-item"><span>الجوال</span><strong id="tp-phone" class="mono"></strong></div>
+            <div class="profile-item"><span>إجمالي عدد مقررات الحرمان</span><strong id="tp-deprived" style="color:var(--danger)"></strong></div>
+        </div>
+        
+        <h4 style="margin: 20px 0 10px; color: var(--primary); border-bottom: 1px dashed var(--border); padding-bottom: 8px;">تفاصيل المقررات ونسبة الغياب</h4>
+        <div class="_tableWrapper" style="max-height: 250px; margin-bottom: 20px;">
+            <table id="tp-courses-table">
+                <thead><tr><th>المقرر</th><th class="text-center">الشعبة</th><th class="text-center">ساعات الغياب</th><th class="text-center">نسبة الغياب</th><th class="text-center">حالة الحرمان</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <h4 style="margin: 20px 0 10px; color: var(--warning); border-bottom: 1px dashed var(--border); padding-bottom: 8px;">سجل التغيب التفصيلي (بدون عذر)</h4>
+        <div style="max-height: 200px; overflow-y: auto; background: var(--bg-inset); border: 1px solid var(--border); border-radius: 8px; padding: 10px;">
+            <ul id="tp-absence-list" class="absence-list"></ul>
+        </div>
+    </div>
+</div>
+
 <script>
-// تحديد الثيم
-const themeBtn = document.getElementById('themeToggle');
-const rootElement = document.documentElement; 
+    // تحديد الثيم
+    const themeBtn = document.getElementById('themeToggle');
+    const rootElement = document.documentElement; 
+    const savedTheme = localStorage.getItem('appTheme') || 'dark';
+    rootElement.setAttribute('data-theme', savedTheme);
 
-const savedTheme = localStorage.getItem('appTheme') || 'dark';
-rootElement.setAttribute('data-theme', savedTheme);
-
-themeBtn.addEventListener('click', () => {
-    const currentTheme = rootElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    rootElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('appTheme', newTheme);
-    const themeColor = newTheme === 'dark' ? "#14191c" : "#e3ecee";
-    document.querySelector('meta[name="theme-color"]').setAttribute("content", themeColor);
-});    
+    themeBtn.addEventListener('click', () => {
+        const currentTheme = rootElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        rootElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('appTheme', newTheme);
+        const themeColor = newTheme === 'dark' ? "#14191c" : "#e3ecee";
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", themeColor);
+        if(processedData.active.length > 0) setTimeout(() => renderDashboard(), 50);
+    });    
 
     function openDB() {
         return new Promise((resolve, reject) => {
@@ -462,24 +543,26 @@ themeBtn.addEventListener('click', () => {
                 request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(request.error);
             });
-        } catch (e) {
-            console.error("Error loading from IndexedDB:", e); return null;
-        }
+        } catch (e) { console.error("Error loading from IndexedDB:", e); return null; }
     }
 
     var rawData = { sf01: [], ss01: [], so04: [] };
     var fileDates = { sf01: null, ss01: null, so04: null };
-    var processedData = { active: [], excluded: [], percentages: [] };
+    var processedData = { active: [], excluded: [], percentages: [], instructors: [], sections: [] };
+    var TTH = {};
     var courseHours = {}; 
     var isFemale = false; 
+    
+    // متغيرات جديدة للإحصائيات
+    var globalExcuseStats = { unexcused: 0, excused: 0, canceled: 0 };
+    var instructorCanceledHours = {};
+    var fullTraineeSessionDetails = {};
 
     async function saveDataLocally() {
         try {
             localStorage.setItem('abs_reports_dates', JSON.stringify(fileDates));
             await saveToDB('rawData', rawData);
-        } catch (e) {
-            console.warn("حدث خطأ أثناء حفظ البيانات محلياً", e);
-        }
+        } catch (e) {}
     }
 
     function saveSettingsLocally() {
@@ -507,7 +590,6 @@ themeBtn.addEventListener('click', () => {
             document.getElementById('pageTitle').innerText = titleOverride;
         }
         
-        // إعادة تهيئة الرسوم البيانية عند العودة للإحصائيات
         if(tabId === 'report-dashboard' && processedData.active.length > 0) {
             setTimeout(() => renderDashboard(), 50);
         }
@@ -516,63 +598,44 @@ themeBtn.addEventListener('click', () => {
     window.renderFileDate = function(type, fDate) {
         let dateEl = document.getElementById(`date-${type}`);
         if(!dateEl) return;
-
         let now = new Date();
         let diffMs = Math.abs(now - fDate);
         let diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
         let days = Math.floor(diffHrs / 24);
         let hours = diffHrs % 24;
-        
         let ageText = '';
         if (days > 0) ageText += days + ' يوم ';
         if (days > 0 && hours > 0) ageText += 'و ';
         if (hours > 0) ageText += hours + ' ساعة';
         if (days === 0 && hours === 0) ageText = 'أقل من ساعة';
-
         let dateStr = fDate.toLocaleDateString('en-GB') + ' ' + fDate.toLocaleTimeString('en-US');
         let color = days >= 3 ? 'var(--danger)' : (days >= 1 ? 'var(--warning)' : 'var(--success)');
         
         dateEl.innerHTML = `<div style="background:var(--bg-elevated); padding:6px 12px; border-radius:6px; border:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; width:100%; font-weight:normal;">
-            <div style="text-align:right;">
-                تاريخ الملف: <span dir="ltr" style="display:inline-block; font-weight:bold;">${dateStr}</span><br>
-                <span style="color:${color}; font-weight:bold; font-size:11px;">(العمر: ${ageText})</span>
-            </div>
+            <div style="text-align:right;">تاريخ الملف: <span dir="ltr" style="display:inline-block; font-weight:bold;">${dateStr}</span><br>
+            <span style="color:${color}; font-weight:bold; font-size:11px;">(عمر التقرير: ${ageText})</span></div>
             <button onclick="event.stopPropagation(); deleteReport('${type}');" style="background:var(--danger-subtle); color:var(--danger); border:1px solid var(--danger); border-radius:4px; padding:2px 8px; cursor:pointer; font-weight:bold; font-size:12px; transition:all 0.2s;" title="حذف هذا التقرير">✖</button>
         </div>`;
     };
 
     window.deleteReport = async function(type) {
         if(confirm("هل أنت متأكد من حذف هذا التقرير؟")) {
-            rawData[type] = [];
-            fileDates[type] = null;
-            
-            let dropZone = document.getElementById(`drop-${type}`);
-            dropZone.classList.remove('has-file');
+            rawData[type] = []; fileDates[type] = null;
+            let dropZone = document.getElementById(`drop-${type}`); dropZone.classList.remove('has-file');
             let pEl = dropZone.querySelector('p');
             if(type === 'sf01') pEl.innerText = "قائمة المتدربين المسجلين";
             if(type === 'ss01') pEl.innerText = "جداول الوحدة التدريبية";
             if(type === 'so04') pEl.innerText = "التقرير التاريخي للغياب";
-            
-            let dateEl = document.getElementById(`date-${type}`);
-            if(dateEl) dateEl.innerHTML = '';
-            
-            await saveDataLocally();
-            processData();
+            let dateEl = document.getElementById(`date-${type}`); if(dateEl) dateEl.innerHTML = '';
+            await saveDataLocally(); processData();
         }
     };
 
     window.handleFile = function(e, type) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        let dropZone = document.getElementById(`drop-${type}`);
-        dropZone.classList.add('has-file');
-        let pEl = dropZone.querySelector('p');
-        pEl.innerText = file.name;
-
-        let fDate = new Date(file.lastModified);
-        fileDates[type] = fDate.getTime();
-        renderFileDate(type, fDate);
+        const file = e.target.files[0]; if (!file) return;
+        let dropZone = document.getElementById(`drop-${type}`); dropZone.classList.add('has-file');
+        let pEl = dropZone.querySelector('p'); pEl.innerText = file.name;
+        let fDate = new Date(file.lastModified); fileDates[type] = fDate.getTime(); renderFileDate(type, fDate);
 
         const reader = new FileReader();
         reader.onload = async function(evt) {
@@ -580,40 +643,23 @@ themeBtn.addEventListener('click', () => {
             const workbook = XLSX.read(data, {type: 'array'});
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
-            
-            await saveDataLocally(); 
-            window.processData();
+            await saveDataLocally(); window.processData();
         };
-        reader.readAsArrayBuffer(file);
-        
-        e.target.value = null; 
+        reader.readAsArrayBuffer(file); e.target.value = null; 
     };
 
     window.exportExcel = async function() {
         let activeTab = document.querySelector('.tab-content:not(.hidden)');
-        if (!activeTab || activeTab.id === 'upload' || activeTab.id === 'report-dashboard') {
-            alert('للتصدير، لابد من اختيار التبويبة المرغوبة من القائمة');
-            return;
-        }
-
-        let table = activeTab.querySelector('table');
-        if (!table) {
-            alert('لا توجد بيانات لتصديرها');
-            return;
-        }
-
+        if (!activeTab || activeTab.id === 'upload' || activeTab.id === 'report-dashboard') { alert('للتصدير، لابد من اختيار التبويبة المرغوبة من القائمة'); return; }
+        let table = activeTab.querySelector('table'); if (!table) { alert('لا توجد بيانات لتصديرها'); return; }
         let pageTitle = document.getElementById('pageTitle').innerText.trim() || 'تقرير_الغياب';
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet(pageTitle.substring(0, 31), { views: [{ rightToLeft: true }] });
 
-        let theadRows = table.querySelectorAll('thead tr');
-        let headerRow = [];
-        let headerTr = theadRows[0]; 
-        let ths = headerTr.querySelectorAll('th');
-        ths.forEach(th => {
-            headerRow.push(th.innerText.replace(/▲|▼/g, '').trim());
-        });
+        let theadRows = table.querySelectorAll('thead tr'); let headerRow = [];
+        let headerTr = theadRows[0]; let ths = headerTr.querySelectorAll('th');
+        ths.forEach(th => headerRow.push(th.innerText.replace(/▲|▼/g, '').trim()));
         worksheet.addRow(headerRow);
         
         let tbody = table.querySelector('tbody');
@@ -621,121 +667,98 @@ themeBtn.addEventListener('click', () => {
             let trs = tbody.querySelectorAll('tr');
             trs.forEach(tr => {
                 if (tr.style.display !== 'none') {
-                    let rowData = [];
-                    let tds = tr.querySelectorAll('td');
-                    tds.forEach(td => {
-                        let text = td.innerText.trim().replace(/\n+/g, ' | ');
-                        rowData.push(text);
-                    });
+                    let rowData = []; let tds = tr.querySelectorAll('td');
+                    tds.forEach(td => rowData.push(td.innerText.trim().replace(/\n+/g, ' | ')));
                     worksheet.addRow(rowData);
                 }
             });
         }
-
         worksheet.getRow(1).font = { bold: true, size: 12 };
         worksheet.getRow(1).alignment = { horizontal: 'center' };
-        worksheet.columns.forEach(column => {
-            column.width = 22; 
-            column.alignment = { wrapText: true, vertical: 'middle' };
-        });
-
-        const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), pageTitle + '.xlsx');
+        worksheet.columns.forEach(column => { column.width = 22; column.alignment = { wrapText: true, vertical: 'middle' }; });
+        const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), pageTitle + '.xlsx');
     };
 
     window.calculateContactHours = function(timeStr) {
         if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes('-')) return 0;
-        let parts = timeStr.split('-');
-        let t1 = parts[0].trim(); 
-        let t2 = parts[1].trim(); 
-        
+        let parts = timeStr.split('-'); let t1 = parts[0].trim(); let t2 = parts[1].trim(); 
         function toMins(t) {
-            t = t.replace(/\D/g,''); 
-            if(t.length < 3) return 0;
-            let h = parseInt(t.substring(0, t.length - 2));
-            let m = parseInt(t.substring(t.length - 2));
+            t = t.replace(/\D/g,''); if(t.length < 3) return 0;
+            let h = parseInt(t.substring(0, t.length - 2)); let m = parseInt(t.substring(t.length - 2));
             return (h * 60) + m;
         }
-        
-        let diff = Math.abs(toMins(t1) - toMins(t2));
-        return Math.round(diff / 50); 
+        return Math.round(Math.abs(toMins(t1) - toMins(t2)) / 50); 
     };
 
     window.formatPhone = function(phone) {
-        if(!phone) return "";
-        let p = phone.toString().trim().replace(/\s+/g, '');
-        if(p.startsWith('05')) return '966' + p.substring(1);
-        if(p.startsWith('5')) return '966' + p;
-        return p;
+        if(!phone) return ""; let p = phone.toString().trim().replace(/\s+/g, '');
+        if(p.startsWith('05')) return '966' + p.substring(1); if(p.startsWith('5')) return '966' + p; return p;
     };
     
-    window.sortTable = function(th, colIndex, isNumeric) {
-        const table = th.closest('table');
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        const isAscending = th.classList.contains('asc');
+    // دالة لترتيب التواريخ إذا كان المعطى كنص DD/MM/YYYY أو YYYY-MM-DD
+    window.parseCustomDate = function(dateStr) {
+        if(!dateStr) return 0;
+        let c = dateStr.trim().split(' ')[0];
+        if(!isNaN(c) && !c.includes('/') && !c.includes('-')) return parseInt(c); // Excel Serial
+        let p = c.split(/[-/]/);
+        if(p.length === 3) {
+            let y = p[0].length === 4 ? parseInt(p[0]) : parseInt(p[2]);
+            let m = p[0].length === 4 ? parseInt(p[1])-1 : parseInt(p[1])-1;
+            let d = p[0].length === 4 ? parseInt(p[2]) : parseInt(p[0]);
+            if(y < 100) y += 2000;
+            return new Date(y, m, d).getTime();
+        }
+        return 0;
+    };
 
-        table.querySelectorAll('th').forEach(h => {
-            h.classList.remove('asc', 'desc');
-            h.innerHTML = h.innerHTML.replace(/ <span class="sort-icon">.*?<\/span>/g, '');
-        });
+    window.sortTable = function(th, colIndex, isNumeric) {
+        const table = th.closest('table'); const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr')); const isAscending = th.classList.contains('asc');
+        table.querySelectorAll('th').forEach(h => { h.classList.remove('asc', 'desc'); h.innerHTML = h.innerHTML.replace(/ <span class="sort-icon">.*?<\/span>/g, ''); });
 
         rows.sort((a, b) => {
-            let aText = a.cells[colIndex].innerText.trim();
-            let bText = b.cells[colIndex].innerText.trim();
+            let aText = a.cells[colIndex].innerText.trim(); let bText = b.cells[colIndex].innerText.trim();
+            if (aText === '-') aText = '0'; if (bText === '-') bText = '0';
             
-            if (aText === '-') aText = '0';
-            if (bText === '-') bText = '0';
+            // تحقق إذا كان العمود يحتوي على تاريخ
+            if(aText.includes('/') || aText.includes('-') && aText.split('/').length === 3) {
+                let d1 = parseCustomDate(aText); let d2 = parseCustomDate(bText);
+                return isAscending ? d2 - d1 : d1 - d2;
+            }
 
             if (isNumeric) {
-                let aNum = parseFloat(aText.replace(/[^0-9.-]+/g,"")) || 0;
-                let bNum = parseFloat(bText.replace(/[^0-9.-]+/g,"")) || 0;
+                let aNum = parseFloat(aText.replace(/[^0-9.-]+/g,"")) || 0; let bNum = parseFloat(bText.replace(/[^0-9.-]+/g,"")) || 0;
                 return isAscending ? bNum - aNum : aNum - bNum;
             } else {
                 return isAscending ? bText.localeCompare(aText, 'ar') : aText.localeCompare(bText, 'ar');
             }
         });
-
-        th.classList.toggle('asc', !isAscending);
-        th.classList.toggle('desc', isAscending);
+        th.classList.toggle('asc', !isAscending); th.classList.toggle('desc', isAscending);
         th.innerHTML += !isAscending ? ' <span class="sort-icon">▲</span>' : ' <span class="sort-icon">▼</span>';
-
         tbody.append(...rows);
     };
 
     window.filterTables = function() {
-        let input = document.getElementById('searchInput');
-        let globalTextFilter = input.value.trim().toLowerCase();
-        
+        let input = document.getElementById('searchInput'); let globalTextFilter = input.value.trim().toLowerCase();
         let majorFilter = document.getElementById('filterMajor') ? document.getElementById('filterMajor').value : "";
         let statusFilter = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : "";
         let absenceFilter = document.getElementById('filterAbsence') ? document.getElementById('filterAbsence').value : "";
-        
-        let tabs = ['dashboard-content', 'table-main', 'table-matrix', 'table-percentages', 'table-fullweek', 'table-deprived-all', 'table-deprived-except', 'table-excluded'];
+        let tabs = ['dashboard-content', 'table-instructors', 'table-sections', 'table-main', 'table-matrix', 'table-percentages', 'table-threatened', 'table-fullweek', 'table-deprived-all', 'table-deprived-except', 'table-excluded'];
         
         tabs.forEach(tabId => {
-            let container = document.getElementById(tabId);
-            if (!container) return;
+            let container = document.getElementById(tabId); if (!container) return;
             let table = container.querySelector('table');
             if (table) {
-                let tbody = table.querySelector('tbody');
-                if (!tbody) return;
-                
-                let trs = tbody.querySelectorAll('tr');
-                let colFilters = table.querySelectorAll('.col-filter');
+                let tbody = table.querySelector('tbody'); if (!tbody) return;
+                let trs = tbody.querySelectorAll('tr'); let colFilters = table.querySelectorAll('.col-filter');
                 
                 trs.forEach(tr => {
-                    let idTd = tr.getElementsByTagName("td")[0];
-                    let nameTd = tr.getElementsByTagName("td")[1];
-                    let idVal = idTd ? (idTd.textContent || idTd.innerText) : "";
-                    let nameVal = nameTd ? (nameTd.textContent || nameTd.innerText) : "";
+                    let idTd = tr.getElementsByTagName("td")[0]; let nameTd = tr.getElementsByTagName("td")[1];
+                    let idVal = idTd ? (idTd.textContent || idTd.innerText) : ""; let nameVal = nameTd ? (nameTd.textContent || nameTd.innerText) : "";
                     
                     let matchGlobalText = false;
-                    if (idTd && nameTd) {
-                        matchGlobalText = (idVal.toLowerCase().indexOf(globalTextFilter) > -1 || nameVal.toLowerCase().indexOf(globalTextFilter) > -1);
-                    } else {
-                        matchGlobalText = (tr.textContent || tr.innerText).toLowerCase().indexOf(globalTextFilter) > -1;
-                    }
+                    if (idTd && nameTd) matchGlobalText = (idVal.toLowerCase().indexOf(globalTextFilter) > -1 || nameVal.toLowerCase().indexOf(globalTextFilter) > -1);
+                    else matchGlobalText = (tr.textContent || tr.innerText).toLowerCase().indexOf(globalTextFilter) > -1;
                     
                     let rowMajor = tr.getAttribute('data-major') || "";
                     let rowStatus = tr.getAttribute('data-status') || "";
@@ -751,20 +774,12 @@ themeBtn.addEventListener('click', () => {
                         for (let i = 0; i < colFilters.length; i++) {
                             let filterVal = colFilters[i].value.trim().toLowerCase();
                             if (filterVal !== "") {
-                                let th = colFilters[i].closest('th');
-                                let colIdx = Array.from(th.parentNode.children).indexOf(th);
+                                let th = colFilters[i].closest('th'); let colIdx = Array.from(th.parentNode.children).indexOf(th);
                                 let td = tr.cells[colIdx];
-                                if (td) {
-                                    let cellText = td.textContent || td.innerText;
-                                    if (cellText.toLowerCase().indexOf(filterVal) === -1) {
-                                        show = false;
-                                        break;
-                                    }
-                                }
+                                if (td && (td.textContent || td.innerText).toLowerCase().indexOf(filterVal) === -1) { show = false; break; }
                             }
                         }
                     }
-                    
                     tr.style.display = show ? "" : "none";
                 });
             }
@@ -773,38 +788,19 @@ themeBtn.addEventListener('click', () => {
 
     window.updateUIText = function() {
         document.getElementById('label-main').innerText = isFemale ? 'المتدربات' : 'المتدربون';
-        document.getElementById('label-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبين والمطوي قيدهم';
-        
-        document.getElementById('legend-full').innerHTML = isFemale 
-            ? 'تعني أن المتدربة انقطعت وغابت غياباً تاماً وبنسبة 100% عن جميع مقرراتها المسجلة في ذلك الأسبوع.'
-            : 'تعني أن المتدرب انقطع وغاب غياباً تاماً وبنسبة 100% عن جميع مقرراته المسجلة في ذلك الأسبوع.';
-            
-        document.getElementById('legend-partial').innerHTML = isFemale
-            ? 'تعني أن المتدربة غابت عن بعض المقررات أو المحاضرات، ولكنها حضرت في مقررات أخرى خلال نفس الأسبوع.'
-            : 'تعني أن المتدرب غاب عن بعض المقررات أو المحاضرات، ولكنه حضر في مقررات أخرى خلال نفس الأسبوع.';
-            
-        document.getElementById('legend-prob').innerHTML = isFemale
-            ? 'تعني أنه لم يُسجل للمتدربة أي غياب، وفي نفس الوقت لم تقم أي مدربة بالتحضير في نظامها، لذا يحتمل حضورها أو غيابها.'
-            : 'تعني أنه لم يُسجل للمتدرب أي غياب، وفي نفس الوقت لم يقم أي مدرب بالتحضير في نظامه، لذا يحتمل حضوره أو غيابها.';
-            
-        document.getElementById('legend-present').innerHTML = isFemale
-            ? 'تعني أن المتدربة حاضرة (تم تحضيرها في محاضرة واحدة على الأقل ولم يسجل لها أي غياب).'
-            : 'تعني أن المتدرب حاضر (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).';
-
-        document.getElementById('legend-deprived').innerHTML = isFemale
-            ? 'تعني أن المتدربة تجاوزت الحد المسموح للغياب وتم رصد درجة الحرمان (ح) لها في تقرير SF01.'
-            : 'تعني أن المتدرب تجاوز الحد المسموح للغياب وتم رصد درجة الحرمان (ح) له في تقرير SF01.';
-
-        document.getElementById('legend-twenty').innerHTML = isFemale
-            ? 'تعني أن نسبة غياب المتدربة في المقرر بلغت 20% فأكثر (مؤهلة للحرمان إذا لم تُقبل أعذارها).'
-            : 'تعني أن نسبة غياب المتدرب في المقرر بلغت 20% فأكثر (مؤهل للحرمان إذا لم يُقبل عذره).';
+        document.getElementById('label-excluded').innerText = isFemale ? 'المنسحبات والمطوي قيدهن' : 'المنسحبون والمطوي قيدهم';
+        document.getElementById('label-threatened').innerText = isFemale ? 'المتدربات المهددات بالحرمان' : 'المتدربون المهددون بالحرمان';
+        document.getElementById('legend-full').innerHTML = isFemale ? 'تعني أن المتدربة انقطعت وغابت غياباً تاماً وبنسبة 100% عن جميع مقرراتها المسجلة في ذلك الأسبوع.' : 'تعني أن المتدرب انقطع وغاب غياباً تاماً وبنسبة 100% عن جميع مقرراته المسجلة في ذلك الأسبوع.';
+        document.getElementById('legend-partial').innerHTML = isFemale ? 'تعني أن المتدربة غابت عن بعض المقررات أو المحاضرات، ولكنها حضرت في مقررات أخرى خلال نفس الأسبوع.' : 'تعني أن المتدرب غاب عن بعض المقررات أو المحاضرات، ولكنه حضر في مقررات أخرى خلال نفس الأسبوع.';
+        document.getElementById('legend-prob').innerHTML = isFemale ? 'تعني أنه لم يُسجل للمتدربة أي غياب، وفي نفس الوقت لم تقم أي مدربة بالتحضير في نظامها، لذا يحتمل حضورها أو غيابها.' : 'تعني أنه لم يُسجل للمتدرب أي غياب، وفي نفس الوقت لم يقم أي مدرب بالتحضير في نظامه، لذا يحتمل حضوره أو غيابها.';
+        document.getElementById('legend-present').innerHTML = isFemale ? 'تعني أن المتدربة حاضرة (تم تحضيرها في محاضرة واحدة على الأقل ولم يسجل لها أي غياب).' : 'تعني أن المتدرب حاضر (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).';
+        document.getElementById('legend-deprived').innerHTML = isFemale ? 'تعني أن المتدربة تجاوزت الحد المسموح للغياب وتم رصد درجة الحرمان (ح) لها في تقرير SF01.' : 'تعني أن المتدرب تجاوز الحد المسموح للغياب وتم رصد درجة الحرمان (ح) له في تقرير SF01.';
+        document.getElementById('legend-twenty').innerHTML = isFemale ? 'تعني أن نسبة غياب المتدربة في المقرر تجاوزت 20% (مؤهلة للحرمان إذا لم تُقبل أعذارها).' : 'تعني أن نسبة غياب المتدرب في المقرر تجاوز 20% (مؤهل للحرمان إذا لم يُقبل عذره).';
 
         let activeTab = document.querySelector('._navItem.active');
-        if (activeTab && activeTab.id !== 'nav-main' && activeTab.id !== 'nav-excluded' && activeTab.id !== 'nav-dashboard' && activeTab.id !== 'nav-upload') {
-            
-        } else if (activeTab) {
+        if (activeTab && !['nav-main','nav-excluded','nav-dashboard','nav-upload'].includes(activeTab.id)) {
             let spanTitle = activeTab.querySelector('span:first-child');
-            document.getElementById('pageTitle').innerText = spanTitle ? spanTitle.innerText : activeTab.innerText;
+            if(spanTitle) document.getElementById('pageTitle').innerText = spanTitle.innerText;
         }
     };
 
@@ -812,15 +808,11 @@ themeBtn.addEventListener('click', () => {
         saveSettingsLocally(); 
         
         if (!rawData.sf01 || rawData.sf01.length === 0 || !rawData.ss01 || rawData.ss01.length === 0 || !rawData.so04 || rawData.so04.length === 0) {
-            processedData.active = [];
-            processedData.excluded = [];
-            processedData.percentages = [];
-            let tw = parseInt(document.getElementById('totalWeeks').value) || 18;
-            window.renderTables(tw);
+            processedData = { active: [], excluded: [], percentages: [], instructors: [], sections: [] };
+            window.renderTables(parseInt(document.getElementById('totalWeeks').value) || 18);
             window.renderDashboard();
-            ['badge-main', 'badge-matrix', 'badge-percentages', 'badge-fullweek', 'badge-deprived-all', 'badge-deprived-except', 'badge-excluded'].forEach(id => {
-                let el = document.getElementById(id);
-                if(el) el.innerText = "0";
+            ['badge-instructors', 'badge-sections', 'badge-main', 'badge-matrix', 'badge-percentages', 'badge-threatened', 'badge-fullweek', 'badge-deprived-all', 'badge-deprived-except', 'badge-excluded'].forEach(id => {
+                let el = document.getElementById(id); if(el) el.innerText = "0";
             });
             return;
         }
@@ -828,77 +820,99 @@ themeBtn.addEventListener('click', () => {
         isFemale = false;
         for (let i = 0; i < rawData.ss01.length; i++) {
             let unitName = rawData.ss01[i]['الوحدة التدريبية'] || rawData.ss01[i]['الوحدة'] || '';
-            if (unitName.includes('بنات') || unitName.includes('نسوي')) {
-                isFemale = true;
-                break;
-            }
+            if (unitName.includes('بنات') || unitName.includes('نسوي')) { isFemale = true; break; }
         }
         window.updateUIText();
 
         const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
-
-        courseHours = {};
-        let crnUniqueSessions = {}; 
+        courseHours = {}; let crnUniqueSessions = {}; let majorsSet = new Set(); let statusesSet = new Set();
         
-        let majorsSet = new Set();
-        let statusesSet = new Set();
-        
+        // بناء قاموس المدربين والشُعب
+        let crnMap = {};
         rawData.ss01.forEach(row => {
             let crn = row['الرقم المرجعي'] || row['CRN'];
             let time = row['الوقت'] || row['فترة المحاضرة'];
             let day = row['اليوم'] || '';
+            let courseCode = row['المقرر'] || '';
+            let courseName = row['اسم المقرر'] || row['عنوان المقرر'] || '';
+            let instId = (row['رقم المدرب'] || row['الرقم الوظيفي'] || row['رقم المدربة'])?.toString().trim();
+            let instName = (row['إسم المدرب'] || row['اسم المدرب'] || row['إسم المدربة'] || row['اسم المدربة'])?.toString().trim();
             
+            if(crn && !crnMap[crn]) {
+                crnMap[crn] = { code: courseCode, name: courseName, instId: instId, instName: instName, hours: 0, enrolled:0, deprived:0, totalAbsPct:0 };
+            }
+
             if (crn && time && day) {
                 let uniqueKey = day.trim() + '_' + time.trim();
                 if (!crnUniqueSessions[crn]) crnUniqueSessions[crn] = new Set();
-                
                 if (!crnUniqueSessions[crn].has(uniqueKey)) {
                     crnUniqueSessions[crn].add(uniqueKey);
                     let h = window.calculateContactHours(time);
                     courseHours[crn] = (courseHours[crn] || 0) + h;
+                    if(crnMap[crn]) crnMap[crn].hours = courseHours[crn];
                 }
             }
         });
 
         rawData.ss01.forEach(row => {
-            let crn = row['الرقم المرجعي'] || row['CRN'];
-            let contactHoursCol = row['ساعات الاتصال'];
-            if (crn && !courseHours[crn] && contactHoursCol !== undefined && contactHoursCol !== "") {
+            let crn = row['الرقم المرجعي'] || row['CRN']; let contactHoursCol = row['ساعات الاتصال'];
+            if (crn && !courseHours[crn] && contactHoursCol) {
                 courseHours[crn] = parseFloat(contactHoursCol);
+                if(crnMap[crn]) crnMap[crn].hours = courseHours[crn];
             }
         });
+
+        // تهيئة الإحصائيات الشاملة
+        globalExcuseStats = { unexcused: 0, excused: 0, canceled: 0 };
+        instructorCanceledHours = {};
+        let instructorLastAction = {};
 
         let globalSessionStatus = {}; 
         rawData.so04.forEach(row => {
             let crn = row['الرقم المرجعي'];
             let weekNum = parseInt(row['رقم الأسبوع']);
             let date = row['تاريخ المحاضرة'] || '';
+            let opDate = row['تاريخ العملية'] || date;
             let time = row['فترة المحاضرة'] || '';
             let absHours = parseFloat(row['ساعات الغياب']) || 0;
             let excuse = row['نوع العذر'] || '';
+            let instId = (row['رقم المدرب'] || row['الرقم الوظيفي'] || row['رقم المدربة'])?.toString().trim();
+            let instName = (crnMap[crn] && crnMap[crn].instName) ? crnMap[crn].instName : 'غير محدد';
             
-            if(!crn || isNaN(weekNum) || absHours <= 0) return;
+            if(absHours > 0) {
+                if (excuse.includes('بدون عذر')) globalExcuseStats.unexcused += absHours;
+                else if (excuse.includes('جلسة ملغاة')) { 
+                    globalExcuseStats.canceled += absHours;
+                    if(instName !== 'غير محدد') instructorCanceledHours[instName] = (instructorCanceledHours[instName] || 0) + absHours;
+                }
+                else globalExcuseStats.excused += absHours;
+            }
 
+            if(instId && opDate) {
+                let pd = parseCustomDate(opDate);
+                if(pd > 0) {
+                    if(!instructorLastAction[instId]) instructorLastAction[instId] = pd;
+                    else if(pd > instructorLastAction[instId]) instructorLastAction[instId] = pd;
+                }
+            }
+
+            if(!crn || isNaN(weekNum) || absHours <= 0) return;
             let sessionKey = date + '_' + time;
             if(!globalSessionStatus[crn]) globalSessionStatus[crn] = {};
             if(!globalSessionStatus[crn][weekNum]) globalSessionStatus[crn][weekNum] = {};
-            
             globalSessionStatus[crn][weekNum][sessionKey] = {
-                absHours: Math.max((globalSessionStatus[crn][weekNum][sessionKey]?.absHours || 0), absHours),
-                excuse: excuse 
+                absHours: Math.max((globalSessionStatus[crn][weekNum][sessionKey]?.absHours || 0), absHours), excuse: excuse 
             };
         });
 
-        let TTH = {}; 
+        TTH = {}; 
         for(let c in globalSessionStatus) {
             for(let w in globalSessionStatus[c]) {
                 if(!TTH[w]) TTH[w] = {};
                 let sum = 0;
                 for(let key in globalSessionStatus[c][w]) {
                     let s = globalSessionStatus[c][w][key];
-                    if (!s.excuse.includes('جلسة ملغاة')) {
-                        sum += s.absHours;
-                    }
+                    if (!s.excuse.includes('جلسة ملغاة')) sum += s.absHours;
                 }
                 TTH[w][c] = sum;
             }
@@ -906,105 +920,67 @@ themeBtn.addEventListener('click', () => {
 
         let traineesMap = {};
         rawData.sf01.forEach(row => {
-            let id = row['رقم المتدرب'] || row['رقم المتدربة'];
-            if(!id) return;
-            
+            let id = row['رقم المتدرب'] || row['رقم المتدربة']; if(!id) return;
             let name = row['إسم المتدرب'] || row['اسم المتدرب'] || row['إسم المتدربة'] || row['اسم المتدربة'];
-            let major = row['التخصص'] || '';
-            let regStatus = row['حالة تسجيل'] || '';
+            let major = row['التخصص'] || ''; let regStatus = row['حالة تسجيل'] || '';
             let traineeStatus = row['حالة المتدرب'] || row['حالة المتدربة'] || '';
             let grade = row['الدرجة'] ? row['الدرجة'].toString().trim() : ''; 
             
-            if(major && major.trim() !== '') majorsSet.add(major.trim());
-            if(traineeStatus && traineeStatus.trim() !== '') statusesSet.add(traineeStatus.trim());
+            if(major) majorsSet.add(major.trim()); if(traineeStatus) statusesSet.add(traineeStatus.trim());
 
             if(!traineesMap[id]) {
-                traineesMap[id] = {
-                    id: id,
-                    name: name,
-                    major: major,
-                    phone: row['رقم الجوال'],
-                    regStatus: regStatus,
-                    traineeStatus: traineeStatus,
-                    crns: {}, 
-                    courseCodes: new Set(), 
-                    weeklyCrnAbsences: {}, 
-                    weekStatuses: {}, 
-                    weeksAbsentCount: 0,
-                    totalUniqueCourses: 0,
-                    totalDeprivedCourses: 0
-                };
+                traineesMap[id] = { id: id, name: name, major: major, phone: row['رقم الجوال'], regStatus: regStatus, traineeStatus: traineeStatus, crns: {}, courseCodes: new Set(), weeklyCrnAbsences: {}, weekStatuses: {}, weeksAbsentCount: 0, totalUniqueCourses: 0, totalDeprivedCourses: 0 };
             }
             
-            let crn = row['الرقم المرجعي'];
-            let courseCode = row['المقرر'];
-            let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
-            let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي');
-            let isDeprived = (grade === 'ح'); 
+            let crn = row['الرقم المرجعي']; let courseCode = row['المقرر']; let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
+            let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي'); let isDeprived = (grade === 'ح'); 
 
             if(crn && courseCode && !isCourseExcluded) {
                 traineesMap[id].courseCodes.add(courseCode);
-                
                 if (!traineesMap[id].crns[crn]) {
                     let ch = courseHours[crn] || 0;
-                    traineesMap[id].crns[crn] = {
-                        code: courseCode,
-                        name: courseName,
-                        hours: ch,
-                        absHours: 0,
-                        isOfficiallyDeprived: isDeprived
-                    };
-                } else if (isDeprived) {
-                    traineesMap[id].crns[crn].isOfficiallyDeprived = true;
+                    traineesMap[id].crns[crn] = { code: courseCode, name: courseName, hours: ch, absHours: 0, isOfficiallyDeprived: isDeprived };
+                } else if (isDeprived) traineesMap[id].crns[crn].isOfficiallyDeprived = true;
+                
+                // تحديث بيانات الشُعب (Sections)
+                if(crnMap[crn]) {
+                    crnMap[crn].enrolled++;
+                    if(isDeprived) crnMap[crn].deprived++;
                 }
             }
         });
 
-        const majorSelect = document.getElementById('filterMajor');
-        majorSelect.innerHTML = '<option value="">كل التخصصات</option>';
+        const majorSelect = document.getElementById('filterMajor'); majorSelect.innerHTML = '<option value="">كل التخصصات</option>';
         [...majorsSet].sort().forEach(m => majorSelect.innerHTML += `<option value="${m}">${m}</option>`);
-
-        const statusSelect = document.getElementById('filterStatus');
-        statusSelect.innerHTML = '<option value="">كل حالات المتدرب</option>';
+        const statusSelect = document.getElementById('filterStatus'); statusSelect.innerHTML = '<option value="">كل الحالات</option>';
         [...statusesSet].sort().forEach(s => statusSelect.innerHTML += `<option value="${s}">${s}</option>`);
-
         document.getElementById('filtersBar').classList.remove('hidden');
 
-        let traineeSessionStatus = {}; 
+        let traineeSessionStatus = {}; fullTraineeSessionDetails = {};
         rawData.so04.forEach(row => {
-            let id = row['رقم المتدرب'] || row['رقم المتدربة'];
-            let crn = row['الرقم المرجعي'];
-            let weekNum = parseInt(row['رقم الأسبوع']);
-            let date = row['تاريخ المحاضرة'] || '';
-            let time = row['فترة المحاضرة'] || '';
-            let absHours = parseFloat(row['ساعات الغياب']) || 0;
-            let excuse = row['نوع العذر'] || '';
+            let id = row['رقم المتدرب'] || row['رقم المتدربة']; let crn = row['الرقم المرجعي']; let weekNum = parseInt(row['رقم الأسبوع']);
+            let date = row['تاريخ المحاضرة'] || ''; let time = row['فترة المحاضرة'] || '';
+            let absHours = parseFloat(row['ساعات الغياب']) || 0; let excuse = row['نوع العذر'] || '';
+            let cName = row['عنوان المقرر'] || '';
             
             if(!id || !crn || !traineesMap[id] || !traineesMap[id].crns[crn] || isNaN(weekNum) || absHours === 0) return;
             
             let sessionKey = weekNum + '_' + date + '_' + time;
-            
             if(!traineeSessionStatus[id]) traineeSessionStatus[id] = {};
             if(!traineeSessionStatus[id][crn]) traineeSessionStatus[id][crn] = {};
+            traineeSessionStatus[id][crn][sessionKey] = { weekNum: weekNum, absHours: Math.max((traineeSessionStatus[id][crn][sessionKey]?.absHours || 0), absHours), excuse: excuse };
             
-            traineeSessionStatus[id][crn][sessionKey] = {
-                weekNum: weekNum,
-                absHours: Math.max((traineeSessionStatus[id][crn][sessionKey]?.absHours || 0), absHours),
-                excuse: excuse
-            };
+            // لحفظ التفاصيل للملف الشخصي
+            if(!fullTraineeSessionDetails[id]) fullTraineeSessionDetails[id] = [];
+            fullTraineeSessionDetails[id].push({ courseName: cName, crn: crn, week: weekNum, date: date, hours: absHours, excuse: excuse });
         });
 
         Object.keys(traineeSessionStatus).forEach(id => {
             Object.keys(traineeSessionStatus[id]).forEach(crn => {
                 Object.keys(traineeSessionStatus[id][crn]).forEach(sessionKey => {
                     let session = traineeSessionStatus[id][crn][sessionKey];
-                    
-                    if(!traineesMap[id].weeklyCrnAbsences[session.weekNum]) {
-                        traineesMap[id].weeklyCrnAbsences[session.weekNum] = {};
-                    }
-                    if(!traineesMap[id].weeklyCrnAbsences[session.weekNum][crn]) {
-                        traineesMap[id].weeklyCrnAbsences[session.weekNum][crn] = { unexcusedAbs: 0, canceledAbs: 0 };
-                    }
+                    if(!traineesMap[id].weeklyCrnAbsences[session.weekNum]) traineesMap[id].weeklyCrnAbsences[session.weekNum] = {};
+                    if(!traineesMap[id].weeklyCrnAbsences[session.weekNum][crn]) traineesMap[id].weeklyCrnAbsences[session.weekNum][crn] = { unexcusedAbs: 0, canceledAbs: 0 };
 
                     if(session.excuse.includes('بدون عذر')) {
                         traineesMap[id].crns[crn].absHours += session.absHours; 
@@ -1016,669 +992,372 @@ themeBtn.addEventListener('click', () => {
             });
         });
 
-        processedData.active = [];
-        processedData.excluded = [];
-        processedData.percentages = [];
+        processedData.active = []; processedData.excluded = []; processedData.percentages = [];
 
         Object.values(traineesMap).forEach(t => {
-            let isFullyExcluded = t.regStatus.includes('انسحاب') || t.regStatus.includes('مطوي') || 
-                                  t.traineeStatus.includes('انسحاب') || t.traineeStatus.includes('مطوي');
-
-            if(isFullyExcluded || t.courseCodes.size === 0) {
-                t.totalUniqueCourses = t.courseCodes.size;
-                processedData.excluded.push(t);
-                return; 
-            }
+            let isFullyExcluded = t.regStatus.includes('انسحاب') || t.regStatus.includes('مطوي') || t.traineeStatus.includes('انسحاب') || t.traineeStatus.includes('مطوي');
+            if(isFullyExcluded || t.courseCodes.size === 0) { t.totalUniqueCourses = t.courseCodes.size; processedData.excluded.push(t); return; }
 
             t.deprivedCourseCodes = new Set(); 
             Object.keys(t.crns).forEach(crn => {
-                let crnData = t.crns[crn];
-                let totalCrnHours = crnData.hours * totalWeeks;
-                
+                let crnData = t.crns[crn]; let totalCrnHours = crnData.hours * totalWeeks;
                 if (crnData.isOfficiallyDeprived) t.deprivedCourseCodes.add(crnData.code);
                 crnData.absPercentage = totalCrnHours > 0 ? (crnData.absHours / totalCrnHours) * 100 : 0;
+                
+                if(crnMap[crn]) crnMap[crn].totalAbsPct += crnData.absPercentage;
 
                 if(crnData.absPercentage > 0) {
-                    processedData.percentages.push({
-                        traineeName: t.name, traineeId: t.id, phone: t.phone,
-                        major: t.major, traineeStatus: t.traineeStatus,
-                        courseCode: crnData.code, courseName: crnData.name, crn: crn,
-                        absPercentage: crnData.absPercentage, isDeprived: crnData.isOfficiallyDeprived
-                    });
+                    processedData.percentages.push({ traineeName: t.name, traineeId: t.id, phone: t.phone, major: t.major, traineeStatus: t.traineeStatus, courseCode: crnData.code, courseName: crnData.name, crn: crn, absPercentage: crnData.absPercentage, isDeprived: crnData.isOfficiallyDeprived });
                 }
             });
 
-            t.totalUniqueCourses = t.courseCodes.size;
-            t.totalDeprivedCourses = t.deprivedCourseCodes.size;
-            t.weeksAbsentCount = 0;
-            
+            t.totalUniqueCourses = t.courseCodes.size; t.totalDeprivedCourses = t.deprivedCourseCodes.size; t.weeksAbsentCount = 0;
             let activeCrns = Object.keys(t.crns);
 
             for(let w=1; w<=totalWeeks; w++) {
-                let absentCrnsCount = 0;
-                let fullyAbsentCrnsCount = 0;
-                let expectedCrnsCount = 0; 
-                let anyTrainerTaught = false;
-
+                let absentCrnsCount = 0; let fullyAbsentCrnsCount = 0; let expectedCrnsCount = 0; let anyTrainerTaught = false;
                 activeCrns.forEach(crn => {
-                    let taughtHours = (TTH[w] && TTH[w][crn]) ? TTH[w][crn] : 0;
-                    let scheduleHours = t.crns[crn].hours || 0;
-                    
+                    let taughtHours = (TTH[w] && TTH[w][crn]) ? TTH[w][crn] : 0; let scheduleHours = t.crns[crn].hours || 0;
                     let wData = t.weeklyCrnAbsences[w] && t.weeklyCrnAbsences[w][crn];
-                    let unexcusedAbs = wData ? wData.unexcusedAbs : 0;
-                    let canceledAbs = wData ? wData.canceledAbs : 0;
+                    let unexcusedAbs = wData ? wData.unexcusedAbs : 0; let canceledAbs = wData ? wData.canceledAbs : 0;
+                    let baseHours = scheduleHours > 0 ? scheduleHours : taughtHours; let expectedHours = Math.max(0, baseHours - canceledAbs);
 
-                    let baseHours = scheduleHours > 0 ? scheduleHours : taughtHours;
-                    let expectedHours = Math.max(0, baseHours - canceledAbs);
-
-                    if (expectedHours > 0 || taughtHours > 0) expectedCrnsCount++;
-                    if (taughtHours > 0) anyTrainerTaught = true;
-
-                    if (unexcusedAbs > 0) {
-                        absentCrnsCount++;
-                        if (expectedHours === 0 || unexcusedAbs >= expectedHours) {
-                            fullyAbsentCrnsCount++;
-                        }
-                    }
+                    if (expectedHours > 0 || taughtHours > 0) expectedCrnsCount++; if (taughtHours > 0) anyTrainerTaught = true;
+                    if (unexcusedAbs > 0) { absentCrnsCount++; if (expectedHours === 0 || unexcusedAbs >= expectedHours) fullyAbsentCrnsCount++; }
                 });
 
-                if (expectedCrnsCount === 0) {
-                    t.weekStatuses[w] = "-";
-                } else if (absentCrnsCount > 0) {
-                    if (fullyAbsentCrnsCount > 0 && fullyAbsentCrnsCount === expectedCrnsCount) {
-                        t.weekStatuses[w] = "كامل";
-                        t.weeksAbsentCount++;
-                    } else {
-                        t.weekStatuses[w] = "جزئي";
-                        t.weeksAbsentCount++;
-                    }
-                } else if (anyTrainerTaught) {
-                    t.weekStatuses[w] = "-"; 
-                } else {
-                    t.weekStatuses[w] = "محتمل";
-                }
+                if (expectedCrnsCount === 0) t.weekStatuses[w] = "-";
+                else if (absentCrnsCount > 0) {
+                    if (fullyAbsentCrnsCount > 0 && fullyAbsentCrnsCount === expectedCrnsCount) { t.weekStatuses[w] = "كامل"; t.weeksAbsentCount++; }
+                    else { t.weekStatuses[w] = "جزئي"; t.weeksAbsentCount++; }
+                } else if (anyTrainerTaught) t.weekStatuses[w] = "-"; 
+                else t.weekStatuses[w] = "محتمل";
             }
             processedData.active.push(t);
         });
 
+        // ------------------ بناء بيانات المدربين والشعب ------------------
+        processedData.instructors = []; processedData.sections = [];
+        let instMap = {};
+        Object.keys(crnMap).forEach(crn => {
+            let section = crnMap[crn];
+            if(section.enrolled > 0) {
+                section.crn = crn; section.avgPct = section.totalAbsPct / section.enrolled;
+                processedData.sections.push(section);
+
+                let iId = section.instId; let iName = section.instName;
+                if(iId && iName) {
+                    if(!instMap[iId]) instMap[iId] = { id: iId, name: iName, crnCount: 0, totalEnrolled: 0, totalDeprived: 0, totalAbsPctSum: 0 };
+                    instMap[iId].crnCount++; instMap[iId].totalEnrolled += section.enrolled; instMap[iId].totalDeprived += section.deprived; instMap[iId].totalAbsPctSum += section.avgPct;
+                }
+            }
+        });
+        
+        Object.values(instMap).forEach(i => {
+            i.avgPct = i.crnCount > 0 ? i.totalAbsPctSum / i.crnCount : 0;
+            i.lastActionDate = instructorLastAction[i.id] ? new Date(instructorLastAction[i.id]).toLocaleDateString('en-GB') : 'غير متوفر';
+            processedData.instructors.push(i);
+        });
+
         processedData.percentages.sort((a, b) => b.absPercentage - a.absPercentage);
+        processedData.instructors.sort((a, b) => b.avgPct - a.avgPct);
+        processedData.sections.sort((a, b) => b.avgPct - a.avgPct);
         
         document.getElementById('badge-main').innerText = processedData.active.length;
         document.getElementById('badge-matrix').innerText = processedData.active.length;
         document.getElementById('badge-percentages').innerText = processedData.percentages.length;
+        document.getElementById('badge-threatened').innerText = processedData.percentages.filter(p => p.absPercentage >= 18 && p.absPercentage <= 20).length;
         document.getElementById('badge-fullweek').innerText = processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).length;
         document.getElementById('badge-deprived-all').innerText = processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).length;
         document.getElementById('badge-deprived-except').innerText = processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).length;
         document.getElementById('badge-excluded').innerText = processedData.excluded.length;
+        document.getElementById('badge-instructors').innerText = processedData.instructors.length;
+        document.getElementById('badge-sections').innerText = processedData.sections.length;
 
-        window.renderTables(totalWeeks);
-        window.renderDashboard(); 
+        window.renderTables(totalWeeks); window.renderDashboard(); 
     };
 
     const createFilterRow = (numCols, disabledIndexes = [], customHTML = {}) => {
         let r = `<tr class="filter-row">`;
         for(let i=0; i<numCols; i++) {
-            if (disabledIndexes.includes(i)) {
-                if(customHTML[i]) {
-                    r += `<th style="padding: 4px; text-align: center;">${customHTML[i]}</th>`;
-                } else {
-                    r += `<th style="padding: 4px;"></th>`;
-                }
-            } else {
-                r += `<th style="padding: 4px;"><input type="text" class="col-filter input-select" style="width:100%; padding:4px 6px; font-size:11.5px; min-width:40px; border-radius:4px;" placeholder="تصفية..." onkeyup="filterTables()"></th>`;
-            }
+            if (disabledIndexes.includes(i)) r += `<th style="padding: 4px; text-align: center;">${customHTML[i] || ''}</th>`;
+            else r += `<th style="padding: 4px;"><input type="text" class="col-filter input-select" style="width:100%; padding:4px 6px; font-size:11.5px; min-width:40px; border-radius:4px;" placeholder="تصفية..." onkeyup="filterTables()"></th>`;
         }
-        r += `</tr>`;
-        return r;
+        r += `</tr>`; return r;
     };
 
-    // --- وظيفة الـ Drill-down ---
     window.drillDown = function(type, value) {
-        if (type === 'major') {
-            document.getElementById('filterMajor').value = value;
-        } else if (type === 'status') {
-            document.getElementById('filterStatus').value = value;
-        } else if (type === 'absence') {
-            document.getElementById('filterAbsence').value = value;
+        if (type === 'major') document.getElementById('filterMajor').value = value;
+        else if (type === 'status') document.getElementById('filterStatus').value = value;
+        else if (type === 'absence') document.getElementById('filterAbsence').value = value;
+        filterTables(); saveSettingsLocally(); switchTab('report-main', document.getElementById('nav-main'));
+    };
+
+    window.openTraineeProfile = function(id) {
+        let trainee = processedData.active.find(t => t.id === id) || processedData.excluded.find(t => t.id === id);
+        if(!trainee) return;
+        
+        document.getElementById('tp-name').innerText = trainee.name;
+        document.getElementById('tp-id').innerText = trainee.id;
+        document.getElementById('tp-major').innerText = trainee.major || '-';
+        document.getElementById('tp-reg-status').innerText = trainee.regStatus || '-';
+        document.getElementById('tp-status').innerText = trainee.traineeStatus || '-';
+        document.getElementById('tp-phone').innerText = window.formatPhone(trainee.phone) || '-';
+        document.getElementById('tp-deprived').innerText = trainee.totalDeprivedCourses || 0;
+
+        let tbody = document.querySelector('#tp-courses-table tbody'); tbody.innerHTML = '';
+        Object.keys(trainee.crns).forEach(crn => {
+            let c = trainee.crns[crn];
+            let badge = c.isOfficiallyDeprived ? '<span class="badge badge-danger">حرمان</span>' : '<span class="badge badge-success">مستمر</span>';
+            tbody.innerHTML += `<tr><td>${c.name}</td><td class="text-center mono">${crn}</td><td class="text-center mono">${c.absHours}</td><td class="text-center mono" style="color:${c.absPercentage>=15?'var(--danger)':'inherit'}">${c.absPercentage.toFixed(1)}%</td><td class="text-center">${badge}</td></tr>`;
+        });
+
+        let ul = document.getElementById('tp-absence-list'); ul.innerHTML = '';
+        let details = fullTraineeSessionDetails[trainee.id] || [];
+        details.sort((a,b) => a.week - b.week);
+        
+        if(details.length === 0) { ul.innerHTML = '<li><span style="color:var(--success)">لا يوجد أي سجل غياب للمتدرب.</span></li>'; }
+        else {
+            details.forEach(d => {
+                if(!d.excuse.includes('بدون عذر')) return;
+                ul.innerHTML += `<li><div><b>الأسبوع ${d.week}</b> - ${d.courseName} <span class="mono" style="color:var(--text-muted); font-size:11px;">(${d.crn})</span></div><div class="text-left"><span style="color:var(--danger); font-weight:bold;">${d.hours} ساعة</span> <span class="mono" style="color:var(--text-muted);">| ${d.date}</span></div></li>`;
+            });
+            if(ul.innerHTML === '') ul.innerHTML = '<li><span style="color:var(--success)">جميع الغيابات المسجلة مقبولة العذر.</span></li>';
         }
         
-        filterTables();
-        saveSettingsLocally();
-        switchTab('report-main', document.getElementById('nav-main'));
+        document.getElementById('traineeProfileModal').classList.add('active');
     };
 
-window.renderDashboard = function() {
-    const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
-    
-    // 1. حساب الـ KPIs الأساسية
-    let totalActive = processedData.active.length;
-    let totalExcluded = processedData.excluded.length;
-    let majorsCount = new Set(processedData.active.concat(processedData.excluded).map(t => t.major)).size;
-    let crnsCount = new Set(rawData.ss01.map(r => r['الرقم المرجعي'] || r['CRN'])).size;
-    let coursesCount = new Set(rawData.ss01.map(r => r['المقرر'])).size;
-    
-    let withdrawn = processedData.excluded.filter(t => (t.regStatus||'').includes('انسحاب') || (t.traineeStatus||'').includes('انسحاب')).length;
-    let terminated = processedData.excluded.filter(t => (t.regStatus||'').includes('مطوي') || (t.traineeStatus||'').includes('مطوي')).length;
-    
-    let deprivedTrainees = processedData.active.filter(t => t.totalDeprivedCourses > 0).length;
-    let over20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 20).map(p => p.traineeId)).size;
-    let warning15Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId)).size;
-    let fullWeekAbsent = processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).length;
-    
-    // حساب متوسط الغياب
-    let allAbsPercentages = processedData.percentages.map(p => p.absPercentage);
-    let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=>a+b,0) / (totalActive || 1)) : 0;
+    window.closeTraineeProfile = function() { document.getElementById('traineeProfileModal').classList.remove('active'); };
 
-    // --- [هام] تعريف بيانات الرسم البياني الدائري ---
-    let statusCounts = { "نشط": totalActive };
-    processedData.excluded.forEach(t => {
-        let s = t.traineeStatus || "أخرى";
-        statusCounts[s] = (statusCounts[s] || 0) + 1;
-    });
+    window.renderDashboard = function() {
+        let borderlineCount = new Set(processedData.percentages.filter(p => p.absPercentage >= 18 && p.absPercentage <= 20).map(p => p.traineeId)).size;
+        let currentWeek = Math.max(...Object.keys(TTH || {1:0}).map(Number)); 
+        let totalProbable = processedData.active.filter(t => t.weekStatuses[currentWeek] === 'محتمل').length;
+        const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
+        
+        let totalActive = processedData.active.length; let totalExcluded = processedData.excluded.length;
+        let majorsCount = new Set(processedData.active.concat(processedData.excluded).map(t => t.major)).size;
+        let crnsCount = new Set(rawData.ss01.map(r => r['الرقم المرجعي'] || r['CRN'])).size;
+        let coursesCount = new Set(rawData.ss01.map(r => r['المقرر'])).size;
+        
+        let withdrawn = processedData.excluded.filter(t => (t.regStatus||'').includes('انسحاب') || (t.traineeStatus||'').includes('انسحاب')).length;
+        let terminatedCount = processedData.excluded.filter(t => (t.regStatus||'').includes('مطوي') || (t.traineeStatus||'').includes('مطوي')).length;
+        let deprivedTrainees = processedData.active.filter(t => t.totalDeprivedCourses > 0).length;
+        let over20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage > 20).map(p => p.traineeId)).size;
+        let warning15Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage <= 20).map(p => p.traineeId)).size;
+        let fullWeekAbsent = processedData.active.filter(t => Object.values(t.weekStatuses || {}).includes('كامل')).length;    
+        let allAbsPercentages = processedData.percentages.map(p => p.absPercentage);
+        let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=>a+b,0) / allAbsPercentages.length) : 0;
+        let statusCounts = {}; [...processedData.active, ...processedData.excluded].forEach(t => { let s = t.traineeStatus && t.traineeStatus.trim() !== "" ? t.traineeStatus : "غير محدد"; statusCounts[s] = (statusCounts[s] || 0) + 1; });
 
-    // 2. تجميع بيانات الأسابيع
-    let weeklyFull = Array(totalWeeks).fill(0);
-    let weeklyPartial = Array(totalWeeks).fill(0);
-    processedData.active.forEach(t => {
-        for(let w=1; w<=totalWeeks; w++) {
-            if(t.weekStatuses[w] === 'كامل') weeklyFull[w-1]++;
-            else if(t.weekStatuses[w] === 'جزئي') weeklyPartial[w-1]++;
-        }
-    });
+        let weeklyFull = Array(totalWeeks).fill(0); let weeklyPartial = Array(totalWeeks).fill(0); let weeklyProbable = Array(totalWeeks).fill(0);
+        processedData.active.forEach(t => { const weeks = t.weekStatuses || {}; for (let w = 1; w <= totalWeeks; w++) { if (weeks[w] === 'كامل') weeklyFull[w - 1]++; else if (weeks[w] === 'جزئي') weeklyPartial[w - 1]++; else if (weeks[w] === 'محتمل') weeklyProbable[w - 1]++; } });
 
-    // 3. نصوص التأنيث/التذكير
-    const txt = {
-        trainee: isFemale ? "المتدربة" : "المتدرب",
-        trainees: isFemale ? "المتدربات" : "المتدربون",
-        withdrawn: isFemale ? "المنسحبات" : "المنسحبين",
-        deprived: isFemale ? "المحرومات" : "المحرومون",
-        over20: isFemale ? "تجاوزن 20%" : "تجاوزوا 20%",
-        instructors: isFemale ? "المدربات" : "المدربون",
-        instructor: isFemale ? "المدربة" : "المدرب"
-    };
+        const txt = { trainee: isFemale?"المتدربة":"المتدرب", trainees: isFemale?"المتدربات":"المتدربين", withdrawn: isFemale?"المنسحبات":"المنسحبون", deprived: isFemale?"المحرومات":"المحرومون", over20: isFemale?"تجاوزن 20%":"تجاوزوا 20%", instructors: isFemale?"المدربات":"المدربين", instructor: isFemale?"المدربة":"المدرب", current: isFemale?"مستمرة":"مستمر", leftOut: isFemale?"مستبعدة":"مستبعد", DA: isFemale?"رصد لهن درجة (ح)":"رصد لهم درجة (ح)", DAeligible: isFemale?"مؤهلات للحرمان":"مؤهلين للحرمان", warned: isFemale?"بلغن نسبة الإنذار":"بلغوا نسبة الإنذار", borderline: "على وشك الحرمان", probableDesc: "غياب لم يُحضر", topAbsentTrainees: isFemale?"أكثر المتدربات غياباً":"أكثر المتدربين غياباً", leastAbsentTrainees: isFemale?"أقل المتدربات غياباً":"أقل المتدربين غياباً", leastAbsenceInstructors: isFemale?"أقل المدربات تسجيلاً للغياب":"أقل المدربين تسجيلاً للغياب", terminated: isFemale?"المطوي قيدهن":"المطوي قيدهم" };
 
-    // 4. بناء الـ HTML (البطاقات)
-    let html = `
-        <div class="dash-grid">
-            <div class="dash-card" onclick="drillDown('absence', '')" style="border-bottom: 3px solid var(--primary);">
-                <h4>إجمالي ${txt.trainees}</h4>
-                <div class="val">${totalActive + totalExcluded}</div>
-                <div class="sub-val">${totalActive} نشطة | ${totalExcluded} مستبعدة</div>
-            </div>
-            <div class="dash-card">
-                <h4>التخصصات والشعب</h4>
-                <div class="val">${majorsCount}</div>
-                <div class="sub-val">${coursesCount} مقرر | ${crnsCount} شعبة</div>
-            </div>
-            <div class="dash-card" style="border-bottom: 3px solid var(--danger);">
-                <h4>${txt.deprived}</h4>
-                <div class="val" style="color: var(--danger);">${deprivedTrainees}</div>
-                <div class="sub-val">رصد لهن درجة (ح)</div>
-            </div>
-            <div class="dash-card" style="border-bottom: 3px solid #ea580c;">
-                <h4>${txt.over20}</h4>
-                <div class="val" style="color: #ea580c;">${over20Trainees}</div>
-                <div class="sub-val">مؤهلات للحرمان</div>
-            </div>
-            <div class="dash-card" style="border-bottom: 3px solid var(--warning);">
-                <h4>إنذار (15%+)</h4>
-                <div class="val" style="color: var(--warning);">${warning15Trainees}</div>
-                <div class="sub-val">بلغن نسبة الإنذار</div>
-            </div>
-            <div class="dash-card" onclick="switchTab('report-fullweek', document.getElementById('nav-fullweek'))" style="border-bottom: 3px solid #7c3aed;">
-                <h4>غياب أسبوع كامل</h4>
-                <div class="val">${fullWeekAbsent}</div>
-                <div class="sub-val">مرة واحدة على الأقل</div>
-            </div>
-            <div class="dash-card" onclick="drillDown('status', 'انسحاب')" style="border-bottom: 3px solid var(--text-muted);">
-                <h4>${txt.withdrawn}</h4>
-                <div class="val">${withdrawn}</div>
-                <div class="sub-val">انسحاب رسمي</div>
-            </div>
-            <div class="dash-card" style="border-bottom: 3px solid var(--info);">
-                <h4>متوسط الغياب</h4>
-                <div class="val">${avgAbsence.toFixed(1)}%</div>
-                <div class="sub-val">لكل المقررات</div>
-            </div>
+        let html = `<div class="dash-grid">
+            <div class="dash-card" onclick="drillDown('absence', '')" style="border-bottom: 3px solid var(--primary);"><h4>إجمالي ${txt.trainees}</h4><div class="val">${totalActive + totalExcluded}</div><div class="sub-val">${totalActive} ${txt.current} | ${totalExcluded} ${txt.leftOut}</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid var(--primary);"><h4>التخصصات</h4><div class="val">${majorsCount}</div><div class="sub-val">عدد التخصصات في الوحدة</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid var(--primary);"><h4>الشعب والمقررات</h4><div class="val">${coursesCount}</div><div class="sub-val">${coursesCount} مقرر | ${crnsCount} شعبة</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid var(--danger);"><h4>${txt.deprived}</h4><div class="val" style="color: var(--danger);">${deprivedTrainees}</div><div class="sub-val">${txt.DA}</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid #ea580c;"><h4>${txt.over20}</h4><div class="val" style="color: #ea580c;">${over20Trainees}</div><div class="sub-val">${txt.DAeligible}</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid var(--warning);"><h4>إنذار (15%+)</h4><div class="val" style="color: var(--warning);">${warning15Trainees}</div><div class="sub-val">${txt.warned}</div></div>
+            <div class="dash-card" onclick="switchTab('report-fullweek', document.getElementById('nav-fullweek'))" style="border-bottom: 3px solid #7c3aed;"><h4>غياب أسبوع كامل</h4><div class="val">${fullWeekAbsent}</div><div class="sub-val">مرة واحدة على الأقل</div></div>
+            <div class="dash-card" onclick="switchTab('report-excluded', document.getElementById('nav-excluded'))" style="border-bottom: 3px solid #7c2d12;"><h4>${txt.terminated}</h4><div class="val">${terminatedCount}</div><div class="sub-val">عمليات طي القيد</div></div>
+            <div class="dash-card" onclick="switchTab('report-excluded', document.getElementById('nav-excluded'))" style="border-bottom: 3px solid var(--text-muted);"><h4>${txt.withdrawn}</h4><div class="val">${withdrawn}</div><div class="sub-val">انسحاب رسمي</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid #facc15;"><h4>${txt.borderline}</h4><div class="val" style="color: #facc15;">${borderlineCount}</div><div class="sub-val">نسبة الغياب بين 18% و 20%</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid #3b82f6;"><h4>فجوة التحضير (المحتمل)</h4><div class="val" style="color: #3b82f6;">${totalProbable}</div><div class="sub-val">لم يتم رصد حضور/غياب للأسبوع ${currentWeek}</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid var(--info);"><h4>متوسط غياب المقرر</h4><div class="val">${avgAbsence.toFixed(1)}%</div><div class="sub-val">بناءً على ${allAbsPercentages.length} سجل</div></div>
         </div>
-
         <div class="chart-row">
-            <div class="chart-container">
-                <h4>توزيع حالات ${txt.trainees}</h4>
-                <canvas id="statusChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h4>توجه الغياب الأسبوعي (عدد ${txt.trainees})</h4>
-                <canvas id="weeklyChart"></canvas>
-            </div>
+            <div class="chart-container"><h4>توزيع حالات ${txt.trainees}</h4><canvas id="statusChart"></canvas></div>
+            <div class="chart-container"><h4>مقارنة أنواع الغياب المُسجلة</h4><canvas id="excuseChart"></canvas></div>
+            <div class="chart-container"><h4>توجه الغياب الأسبوعي (عدد ${txt.trainees})</h4><canvas id="weeklyChart"></canvas></div>
         </div>
+        <div class="admin-card" style="margin-bottom: 24px;"><h4 style="color: var(--primary);">تحليل الأقسام والتخصصات (مؤشر الخطورة)</h4><div class="_tableWrapper" style="max-height: none;"><table><thead><tr><th>التخصص</th><th class="text-center">${txt.trainees}</th><th class="text-center">${txt.deprived}</th><th class="text-center">تجاوز 20%</th><th class="text-center">متوسط الغياب</th><th class="text-center">مؤشر الخطورة</th></tr></thead><tbody>`;
 
-        <div class="admin-card" style="margin-bottom: 24px;">
-            <h4 style="color: var(--primary);">تحليل الأقسام والتخصصات (مؤشر الخطورة)</h4>
-            <div class="_tableWrapper" style="max-height: none;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>التخصص</th>
-                            <th class="text-center">${txt.trainees}</th>
-                            <th class="text-center">${txt.deprived}</th>
-                            <th class="text-center">تجاوز 20%</th>
-                            <th class="text-center">متوسط الغياب</th>
-                            <th class="text-center">مؤشر الخطورة</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-    `;
+        let majorDataMap = {};
+        processedData.active.forEach(t => {
+            if (!majorDataMap[t.major]) majorDataMap[t.major] = { count: 0, deprived: 0, over20: 0, sumPct: 0, pctCount: 0 };
+            majorDataMap[t.major].count++; if (t.totalDeprivedCourses > 0) majorDataMap[t.major].deprived++;
+        });
 
-    // تحليل التخصصات
-    let majors = [...new Set(processedData.active.map(t => t.major))].sort();
-    majors.forEach(m => {
-        let mActive = processedData.active.filter(t => t.major === m);
-        let mDeprived = mActive.filter(t => t.totalDeprivedCourses > 0).length;
-        let mOver20 = new Set(processedData.percentages.filter(p => p.major === m && p.absPercentage >= 20).map(p => p.traineeId)).size;
-        let mPercs = processedData.percentages.filter(p => p.major === m).map(p => p.absPercentage);
-        let mAvg = mPercs.length > 0 ? (mPercs.reduce((a,b)=>a+b,0) / mActive.length) : 0;
-        
-        let riskScore = ((mDeprived/mActive.length)*40) + ((mOver20/mActive.length)*30) + (Math.min(mAvg, 30));
-        let riskClass = riskScore > 25 ? 'risk-high' : (riskScore > 15 ? 'risk-med' : '');
+        let courseStats = {};
+        processedData.percentages.forEach(p => {
+            if (majorDataMap[p.major]) { if (p.absPercentage > 20) majorDataMap[p.major].over20++; majorDataMap[p.major].sumPct += p.absPercentage; majorDataMap[p.major].pctCount++; }
+            if (!courseStats[p.courseName]) courseStats[p.courseName] = { deprived: 0, over20: 0 };
+            if (p.isDeprived) courseStats[p.courseName].deprived++; if (p.absPercentage > 20) courseStats[p.courseName].over20++;
+        });
 
-        html += `
-            <tr class="${riskClass}">
-                <td style="cursor:pointer; color:var(--primary); font-weight:bold;" onclick="drillDown('major', '${m}')">${m}</td>
-                <td class="text-center mono">${mActive.length}</td>
-                <td class="text-center mono">${mDeprived}</td>
-                <td class="text-center mono">${mOver20}</td>
-                <td class="text-center mono">${mAvg.toFixed(1)}%</td>
-                <td class="text-center"><span class="badge ${riskScore > 25 ? 'badge-danger' : (riskScore > 15 ? 'badge-warning' : 'badge-success')}">${riskScore.toFixed(0)}</span></td>
-            </tr>
-        `;
-    });
-    html += `</tbody></table></div></div>`;
+        Object.keys(majorDataMap).sort().forEach(m => {
+            const stats = majorDataMap[m]; const mAvg = stats.sumPct / Math.max(stats.pctCount, 1);
+            const riskScore = ((stats.deprived / Math.max(stats.count, 1)) * 40) + ((stats.over20 / Math.max(stats.count, 1)) * 30) + Math.min(mAvg, 30);
+            html += `<tr class="${riskScore > 25 ? 'risk-high' : (riskScore > 15 ? 'risk-med' : '')}"><td style="cursor:pointer; color:var(--primary); font-weight:bold;" onclick="drillDown('major', '${m}')">${m}</td><td class="text-center mono">${stats.count}</td><td class="text-center mono">${stats.deprived}</td><td class="text-center mono">${stats.over20}</td><td class="text-center mono">${mAvg.toFixed(1)}%</td><td class="text-center"><span class="badge ${riskScore > 25 ? 'badge-danger' : (riskScore > 15 ? 'badge-warning' : 'badge-success')}">${riskScore.toFixed(0)}</span></td></tr>`;
+        });
+        html += `</tbody></table></div></div>`;
 
-    // تحليل المدربين والمقررات
-    let instNameMap = {};
-    rawData.ss01.forEach(row => {
-        let id = row['رقم المدرب'] || row['الرقم الوظيفي'] || row['رقم المدربة'];
-        let name = row['إسم المدرب'] || row['اسم المدرب'] || row['إسم المدربة'] || row['اسم المدربة'];
-        if (id && name) instNameMap[id.toString().trim()] = name.toString().trim();
-    });
+        let sortedCourses = Object.entries(courseStats).sort((a,b) => b[1].over20 - a[1].over20).slice(0, 5);
+        let leastCourses = Object.entries(courseStats).filter(c => c[1].deprived > 0).sort((a, b) => a[1].deprived - b[1].deprived).slice(0, 5);
+        let topCanceledInst = Object.entries(instructorCanceledHours).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-    let instructorAbs = {};
-    rawData.so04.forEach(row => {
-        let instId = row['رقم المدرب'] || row['الرقم الوظيفي'] || row['رقم المدربة'];
-        let hours = parseFloat(row['ساعات الغياب']) || 0;
-        if (instId && hours > 0) {
-            let idStr = instId.toString().trim();
-            instructorAbs[idStr] = (instructorAbs[idStr] || 0) + 1;
-        }
-    });
-    let sortedInst = Object.entries(instructorAbs).sort((a,b) => b[1] - a[1]).slice(0, 5);
+        let traineeAbsenceStats = processedData.active.map(t => { return { id: t.id, name: t.name, totalAbs: Object.values(t.crns).reduce((sum, c) => sum + c.absHours, 0) }; });
+        let topAbsentTrainees = traineeAbsenceStats.sort((a, b) => b.totalAbs - a.totalAbs).slice(0, 5);
+        let leastAbsentTrainees = traineeAbsenceStats.sort((a, b) => a.totalAbs - b.totalAbs).slice(0, 5);
 
-    let courseStats = {};
-    processedData.percentages.forEach(p => {
-        if(!courseStats[p.courseName]) courseStats[p.courseName] = { deprived: 0, over20: 0 };
-        if(p.isDeprived) courseStats[p.courseName].deprived++;
-        if(p.absPercentage >= 20) courseStats[p.courseName].over20++;
-    });
-    let sortedCourses = Object.entries(courseStats).sort((a,b) => b[1].over20 - a[1].over20).slice(0, 5);
-
-    html += `
-        <div class="admin-grid">
-            <div class="admin-card">
-                <h4>أكثر المقررات تجاوزاً للـ 20%</h4>
-                <table>
-                    <thead><tr><th>المقرر</th><th class="text-center">تجاوز 20%</th><th class="text-center">حرمان</th></tr></thead>
-                    <tbody>
-                        ${sortedCourses.map(([name, stat]) => `<tr><td>${name}</td><td class="text-center mono">${stat.over20}</td><td class="text-center mono">${stat.deprived}</td></tr>`).join('')}
-                    </tbody>
-                </table>
-            </div>
-            <div class="admin-card">
-                <h4>أعلى ${txt.instructors} تسجيلاً للغياب</h4>
-                <table>
-                    <thead><tr><th>${txt.instructor}</th><th class="text-center">عدد الحالات</th></tr></thead>
-                    <tbody>
-                        ${sortedInst.map(([id, val]) => `<tr><td>${instNameMap[id] || (txt.instructor + ' ' + id)}</td><td class="text-center mono">${val}</td></tr>`).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('dashboard-content').innerHTML = html;
-
-    // 5. رسم المخططات البيانية
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#9fb0b5' : '#475569';
-
-    new Chart(document.getElementById('statusChart'), {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(statusCounts),
-            datasets: [{
-                data: Object.values(statusCounts),
-                backgroundColor: ['#34c2b4', '#ef4444', '#f59e0b', '#3b82f6', '#64748b'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Cairo' } } } }
-        }
-    });
-
-    new Chart(document.getElementById('weeklyChart'), {
-        type: 'line',
-        data: {
-            labels: Array.from({length: totalWeeks}, (_, i) => `أسبوع ${i+1}`),
-            datasets: [
-                { label: 'غياب كامل', data: weeklyFull, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.3 },
-                { label: 'غياب جزئي', data: weeklyPartial, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: textColor, font: { family: 'Cairo' } }, grid: { display: false } },
-                y: { beginAtZero: true, ticks: { color: textColor } }
-            },
-            plugins: { legend: { labels: { color: textColor, font: { family: 'Cairo' } } } }
-        }
-    });
-};
-    const createThead = (isExcluded = false) => {
-        let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب';
-        let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
-        let totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
-
-        let html = `<thead><tr>
-            <th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th>
-            <th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th>
-            <th class="nowrap sortable" style="min-width: 180px;" onclick="sortTable(this, 2, false)">التخصص</th>`;              
-        
-        let numCols = 3;
-        if(!isExcluded) {
-            html += `
-            <th class="nowrap text-center sortable" onclick="sortTable(this, 3, true)">عدد المقررات</th>
-            <th class="nowrap text-center sortable" onclick="sortTable(this, 4, true)">مقررات الحرمان</th>
-            <th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">أسابيع الغياب</th>`;
-            numCols += 3;
-            for(let w=1; w<=totalWeeks; w++) {
-                html += `<th class="text-center nowrap">الأسبوع ${w}</th>`;
-                numCols++;
+        let weekAbsStats = {}; let dayAbsStats = {};
+        rawData.so04.forEach(row => {
+            let week = parseInt(row['رقم الأسبوع']); let absHours = parseFloat(row['ساعات الغياب']) || 0; let excuse = row['نوع العذر'] || ''; let dayStr = row['اليوم'] || '';
+            if (!isNaN(week) && absHours > 0 && excuse.includes('بدون عذر')) {
+                weekAbsStats[week] = (weekAbsStats[week] || 0) + absHours; 
+                if (dayStr) {
+                    let cleanDay = dayStr.trim().replace(/[أإآ]/g, 'ا');
+                    if (cleanDay === "الاحد") cleanDay = "الأحد"; else if (cleanDay === "الاثنين") cleanDay = "الإثنين"; else if (cleanDay === "الاربعاء") cleanDay = "الأربعاء"; else cleanDay = dayStr.trim();
+                    dayAbsStats[cleanDay] = (dayAbsStats[cleanDay] || 0) + absHours;
+                }
             }
-        } else {
-            html += `
-            <th class="nowrap sortable" onclick="sortTable(this, 3, false)">حالة التسجيل</th>
-            <th class="nowrap sortable" onclick="sortTable(this, 4, false)">حالة المتدرب</th>`;
-            numCols += 2;
-        }
-        html += `</tr>`;
-        html += createFilterRow(numCols);
-        html += `</thead>`;
-        return html;
+        });
+
+        let topWeeks = Object.entries(weekAbsStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        let topDays = Object.entries(dayAbsStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        
+        let courseDetailedStats = {}; let instructorDetailedStats = {};
+        processedData.sections.forEach(s => {
+            if(!courseDetailedStats[s.name]) courseDetailedStats[s.name] = { enrolled:0, deprived:0, sumAbsPct:0 };
+            courseDetailedStats[s.name].enrolled += s.enrolled; courseDetailedStats[s.name].deprived += s.deprived; courseDetailedStats[s.name].sumAbsPct += (s.avgPct * s.enrolled);
+        });
+        processedData.instructors.forEach(i => { instructorDetailedStats[i.name] = { enrolled: i.totalEnrolled, deprived: i.totalDeprived }; });
+
+        let topCoursesByDepPct = Object.entries(courseDetailedStats).filter(c => c[1].enrolled >= 3).map(c => ({ name: c[0], pct: (c[1].deprived / c[1].enrolled) * 100 })).sort((a, b) => b.pct - a.pct).slice(0, 5);
+        let topCoursesByAvgAbs = Object.entries(courseDetailedStats).filter(c => c[1].enrolled >= 3).map(c => ({ name: c[0], avgPct: c[1].sumAbsPct / c[1].enrolled })).sort((a, b) => b.avgPct - a.avgPct).slice(0, 5);
+        let topInstructorsByDepPct = Object.entries(instructorDetailedStats).filter(i => i[1].enrolled >= 3).map(i => ({ name: i[0], pct: (i[1].deprived / i[1].enrolled) * 100 })).sort((a, b) => b.pct - a.pct).slice(0, 5);
+
+        html += `<div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
+            <div class="admin-card"><h4>أكثر المقررات تجاوزاً للـ 20%</h4><table><thead><tr><th>المقرر</th><th class="text-center">تجاوز 20%</th></tr></thead><tbody>${sortedCourses.map(([n, s]) => `<tr><td>${n}</td><td class="text-center mono">${s.over20}</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>أقل المقررات حرماناً</h4><table><thead><tr><th>المقرر</th><th class="text-center">حالات الحرمان</th></tr></thead><tbody>${leastCourses.map(([n, s]) => `<tr><td>${n}</td><td class="text-center mono">${s.deprived}</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>أكثر المقررات نسبةً للحرمان</h4><table><thead><tr><th>المقرر</th><th class="text-center">النسبة (%)</th></tr></thead><tbody>${topCoursesByDepPct.map(c => `<tr><td>${c.name}</td><td class="text-center mono" style="color:var(--danger);">${c.pct.toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>${txt.topAbsentTrainees}</h4><table><thead><tr><th>${txt.trainee}</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topAbsentTrainees.map(t => `<tr><td class="name-cell"><a href="#" class="clickable-name" onclick="openTraineeProfile('${t.id}'); return false;">${t.name}</a></td><td class="text-center mono">${t.totalAbs.toFixed(0)}</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>أعلى متوسط غياب لكل مقرر</h4><table><thead><tr><th>المقرر</th><th class="text-center">متوسط الغياب</th></tr></thead><tbody>${topCoursesByAvgAbs.map(c => `<tr><td>${c.name}</td><td class="text-center mono" style="color:var(--warning);">${c.avgPct.toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>أكثر الأسابيع غياباً</h4><table><thead><tr><th>الأسبوع</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topWeeks.map(w => `<tr><td>الأسبوع ${w[0]}</td><td class="text-center mono">${w[1].toFixed(0)}</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>أكثر الأيام تسجيلاً للغياب</h4><table><thead><tr><th>اليوم</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topDays.map(d => `<tr><td>${d[0]}</td><td class="text-center mono">${d[1].toFixed(0)}</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>أعلى ${txt.instructors} نسبةً للحرمان</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">النسبة (%)</th></tr></thead><tbody>${topInstructorsByDepPct.map(i => `<tr><td>${i.name}</td><td class="text-center mono" style="color:var(--danger);">${i.pct.toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
+            <div class="admin-card"><h4>أكثر ${txt.instructors} إلغاءً للجلسات</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">ساعات ملغاة</th></tr></thead><tbody>${topCanceledInst.map(i => `<tr><td>${i[0]}</td><td class="text-center mono" style="color:var(--info);">${i[1]}</td></tr>`).join('')}</tbody></table></div>
+        </div>`;
+
+        let insights = []; let totalIntake = totalActive + totalExcluded; 
+        let sortedMajors = Object.entries(majorDataMap).sort((a, b) => (((b[1].deprived/Math.max(b[1].count,1))*40) + (b[1].sumPct/Math.max(b[1].pctCount,1))) - (((a[1].deprived/Math.max(a[1].count,1))*40) + (a[1].sumPct/Math.max(a[1].pctCount,1))));
+        if(sortedMajors.length > 0) insights.push({ type: 'danger', text: `تنبيه حرج: تخصص <b>(${sortedMajors[0][0]})</b> هو الأكثر عرضة للفقد الأكاديمي، بمؤشر خطورة مرتفع. يتطلب تدخل الإرشاد الأكاديمي فوراً.` });
+        if (terminatedCount > (totalIntake * 0.03)) insights.push({ type: 'danger', text: `تنبيه إداري: لوحظ ارتفاع في حالات <b>(${txt.terminated})</b> بواقع <b>(${terminatedCount})</b> حالة.` });
+        let borderline = processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage <= 20).length;
+        if(borderline > 0) insights.push({ type: 'warning', text: `يوجد <b>(${borderline})</b> مقرر في "المنطقة الصفراء" (15% - 20%). نوصي بإرسال رسائل تحذيرية.` });
+        if(withdrawn > (totalIntake * 0.05)) insights.push({ type: 'warning', text: `نسبة <b>(${txt.withdrawn})</b> بلغت <b>(${(withdrawn/totalIntake*100).toFixed(1)}%)</b>. يفضل دراسة أسباب التسرب.` });
+        if(totalProbable > (totalActive * 0.1)) insights.push({ type: 'info', text: `لوحظ وجود فجوة في رصد الحضور بنسبة مرتفعة. نوصي بالتأكيد على ${txt.instructors} بإغلاق سجلات التحضير.` });
+
+        html += `<div class="analyst-card"><div class="analyst-header"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> توصيات المحلل الذكي للوحدة </div>${insights.map(item => `<div class="insight-item"><span style="color:${item.type === 'danger' ? 'var(--danger)' : (item.type === 'warning' ? 'var(--warning)' : 'var(--info)')}">●</span><span>${item.text}</span></div>`).join('')}</div>`;
+        document.getElementById('dashboard-content').innerHTML = html;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark'; const textColor = isDark ? '#9fb0b5' : '#475569';
+        new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: Object.keys(statusCounts), datasets: [{ data: Object.values(statusCounts), backgroundColor: ['#34c2b4', '#ef4444', '#f59e0b', '#3b82f6', '#64748b'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 20 } }, plugins: { legend: { position: 'bottom', align: 'center', labels: { color: textColor, padding: 20, font: { family: 'Cairo', size: 11 }, usePointStyle: true, boxWidth: 8 } } } } });
+        new Chart(document.getElementById('excuseChart'), { type: 'pie', data: { labels: ['غياب بدون عذر', 'غياب بعذر (إجازات)', 'جلسات ملغاة'], datasets: [{ data: [globalExcuseStats.unexcused, globalExcuseStats.excused, globalExcuseStats.canceled], backgroundColor: ['#ef4444', '#34c2b4', '#3b82f6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 20 } }, plugins: { legend: { position: 'bottom', align: 'center', labels: { color: textColor, padding: 20, font: { family: 'Cairo', size: 11 }, usePointStyle: true, boxWidth: 8 } } } } });
+        new Chart(document.getElementById('weeklyChart'), { type: 'line', data: { labels: Array.from({length: totalWeeks}, (_, i) => `أسبوع ${i+1}`), datasets: [ { label: 'غياب كامل', data: weeklyFull, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.3 }, { label: 'غياب جزئي', data: weeklyPartial, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }, { label: 'غياب محتمل', data: weeklyProbable, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: textColor, font: { family: 'Cairo', size: 10 }, maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 18 }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: textColor } } }, plugins: { legend: { labels: { color: textColor, font: { family: 'Cairo' }, padding: 15 } } } } });
+    };
+
+    const createThead = (isExcluded = false) => {
+        let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب'; let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
+        let totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
+        let html = `<thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th><th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th><th class="nowrap sortable" style="min-width: 180px;" onclick="sortTable(this, 2, false)">التخصص</th>`;              
+        let numCols = 3;
+        if(!isExcluded) { html += `<th class="nowrap text-center sortable" onclick="sortTable(this, 3, true)">عدد المقررات</th><th class="nowrap text-center sortable" onclick="sortTable(this, 4, true)">مقررات الحرمان</th><th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">أسابيع الغياب</th>`; numCols += 3; for(let w=1; w<=totalWeeks; w++) { html += `<th class="text-center nowrap">الأسبوع ${w}</th>`; numCols++; } }
+        else { html += `<th class="nowrap sortable" onclick="sortTable(this, 3, false)">حالة التسجيل</th><th class="nowrap sortable" onclick="sortTable(this, 4, false)">حالة المتدرب</th>`; numCols += 2; }
+        html += `</tr>${createFilterRow(numCols)}</thead>`; return html;
     };
 
     const createRow = (t, isExcluded = false) => {
-        let totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
-        let hasAbsence = t.weeksAbsentCount > 0 || t.totalDeprivedCourses > 0;
-        let safeStatus = t.traineeStatus ? t.traineeStatus.replace(/"/g, '&quot;') : '';
-        let safeMajor = t.major ? t.major.replace(/"/g, '&quot;') : '';
-        
-        let html = `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="${hasAbsence}">
-            <td class="mono">${t.id}</td>
-            <td class="name-cell">${t.name}</td>
-            <td>${t.major || '-'}</td>`;
-        
+        let totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18; let hasAbsence = t.weeksAbsentCount > 0 || t.totalDeprivedCourses > 0;
+        let safeStatus = t.traineeStatus ? t.traineeStatus.replace(/"/g, '&quot;') : ''; let safeMajor = t.major ? t.major.replace(/"/g, '&quot;') : '';
+        let html = `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="${hasAbsence}"><td class="mono">${t.id}</td><td class="name-cell"><a href="#" class="clickable-name" onclick="openTraineeProfile('${t.id}'); return false;">${t.name}</a></td><td>${t.major || '-'}</td>`;
         if(!isExcluded) {
-            html += `
-            <td class="text-center">${t.totalUniqueCourses || 0}</td>
-            <td class="text-center">
-                <span class="badge ${t.totalDeprivedCourses > 0 ? 'badge-danger' : 'badge-success'}">${t.totalDeprivedCourses || 0}</span>
-            </td>
-            <td class="text-center">
-                ${t.weeksAbsentCount > 0 ? `<span class="badge badge-warning">${t.weeksAbsentCount}</span>` : '<span style="color:var(--text-muted); font-weight:bold;">-</span>'}
-            </td>`;
-            
-            for(let w=1; w<=totalWeeks; w++) {
-                let st = t.weekStatuses ? t.weekStatuses[w] : null;
-                let badge = '';
-                if(st === 'كامل') badge = '<span class="badge badge-danger">كامل</span>';
-                else if(st === 'محتمل') badge = '<span class="badge badge-info">محتمل</span>';
-                else if(st === 'جزئي') badge = '<span class="badge badge-warning">جزئي</span>';
-                else badge = '<span style="color:var(--text-muted); font-weight:bold;">-</span>';
-                html += `<td class="text-center">${badge}</td>`;
-            }
-        } else {
-            html += `
-            <td>${t.regStatus || '-'}</td>
-            <td>${t.traineeStatus || '-'}</td>`;
-        }
-        html += `</tr>`;
-        return html;
+            html += `<td class="text-center">${t.totalUniqueCourses || 0}</td><td class="text-center"><span class="badge ${t.totalDeprivedCourses > 0 ? 'badge-danger' : 'badge-success'}">${t.totalDeprivedCourses || 0}</span></td><td class="text-center">${t.weeksAbsentCount > 0 ? `<span class="badge badge-warning">${t.weeksAbsentCount}</span>` : '<span style="color:var(--text-muted); font-weight:bold;">-</span>'}</td>`;
+            for(let w=1; w<=totalWeeks; w++) { let st = t.weekStatuses ? t.weekStatuses[w] : null; let badge = ''; if(st === 'كامل') badge = '<span class="badge badge-danger">كامل</span>'; else if(st === 'محتمل') badge = '<span class="badge badge-info">محتمل</span>'; else if(st === 'جزئي') badge = '<span class="badge badge-warning">جزئي</span>'; else badge = '<span style="color:var(--text-muted); font-weight:bold;">-</span>'; html += `<td class="text-center">${badge}</td>`; }
+        } else { html += `<td>${t.regStatus || '-'}</td><td>${t.traineeStatus || '-'}</td>`; }
+        html += `</tr>`; return html;
     };
 
     window.renderTables = function(totalWeeks) {
-        let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب';
-        let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
+        let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب'; let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب'; let colInst = isFemale ? 'المدربة' : 'المدرب';
 
-        let htmlMain = `<table>${createThead(false)}<tbody>`;
-        processedData.active.forEach(t => htmlMain += createRow(t, false));
-        htmlMain += `</tbody></table>`;
-        document.getElementById('table-main').innerHTML = htmlMain;
+        // جداول المدربين والشعب الجديدة
+        let htmlInst = `<table><thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">الرقم الوظيفي</th><th class="nowrap sortable name-cell" onclick="sortTable(this, 1, false)">اسم ${colInst}</th><th class="nowrap text-center sortable" onclick="sortTable(this, 2, true)">إجمالي الشُعب</th><th class="nowrap text-center sortable" onclick="sortTable(this, 3, true)">المتدربين المسجلين</th><th class="nowrap text-center sortable" onclick="sortTable(this, 4, true)">حالات الحرمان</th><th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">متوسط غياب متدربيه</th><th class="nowrap text-center sortable" onclick="sortTable(this, 6, false)">تاريخ آخر تحضير رُصد</th></tr>${createFilterRow(7)}</thead><tbody>`;
+        processedData.instructors.forEach(i => { htmlInst += `<tr><td class="mono">${i.id}</td><td class="name-cell">${i.name}</td><td class="text-center mono">${i.crnCount}</td><td class="text-center mono">${i.totalEnrolled}</td><td class="text-center mono"><span class="badge ${i.totalDeprived > 0 ? 'badge-danger' : 'badge-success'}">${i.totalDeprived}</span></td><td class="text-center mono" style="color:var(--warning); font-weight:bold;">${i.avgPct.toFixed(1)}%</td><td class="text-center mono">${i.lastActionDate}</td></tr>`; });
+        htmlInst += `</tbody></table>`; document.getElementById('table-instructors').innerHTML = htmlInst;
 
-        let htmlMatrix = `<table><thead><tr>
-            <th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th>
-            <th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th>
-            <th class="nowrap sortable" style="min-width: 180px;" onclick="sortTable(this, 2, false)">التخصص</th>
-            <th>المقررات المسجلة ونسبة غياب كل مقرر</th>
-        </tr>
-        ${createFilterRow(4)}
-        </thead><tbody>`;
+        let htmlSec = `<table><thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">الشعبة (CRN)</th><th class="nowrap sortable" onclick="sortTable(this, 1, false)">رمز المقرر</th><th class="nowrap sortable name-cell" onclick="sortTable(this, 2, false)">اسم المقرر</th><th class="nowrap sortable" onclick="sortTable(this, 3, false)">اسم ${colInst}</th><th class="nowrap text-center sortable" onclick="sortTable(this, 4, true)">المسجلين</th><th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">المحرومين</th><th class="nowrap text-center sortable" onclick="sortTable(this, 6, true)">متوسط غياب الشعبة</th></tr>${createFilterRow(7)}</thead><tbody>`;
+        processedData.sections.forEach(s => { htmlSec += `<tr><td class="mono">${s.crn}</td><td class="mono">${s.code}</td><td>${s.name}</td><td>${s.instName}</td><td class="text-center mono">${s.enrolled}</td><td class="text-center mono"><span class="badge ${s.deprived > 0 ? 'badge-danger' : 'badge-success'}">${s.deprived}</span></td><td class="text-center mono" style="color:var(--danger); font-weight:bold;">${s.avgPct.toFixed(1)}%</td></tr>`; });
+        htmlSec += `</tbody></table>`; document.getElementById('table-sections').innerHTML = htmlSec;
 
+        let htmlMain = `<table>${createThead(false)}<tbody>`; processedData.active.forEach(t => htmlMain += createRow(t, false)); htmlMain += `</tbody></table>`; document.getElementById('table-main').innerHTML = htmlMain;
+
+        let htmlMatrix = `<table><thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th><th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th><th class="nowrap sortable" style="min-width: 180px;" onclick="sortTable(this, 2, false)">التخصص</th><th>المقررات المسجلة ونسبة غياب كل مقرر</th></tr>${createFilterRow(4)}</thead><tbody>`;
         processedData.active.forEach(t => {
-            let hasAbsence = t.weeksAbsentCount > 0 || t.totalDeprivedCourses > 0;
-            let safeStatus = t.traineeStatus ? t.traineeStatus.replace(/"/g, '&quot;') : '';
-            let safeMajor = t.major ? t.major.replace(/"/g, '&quot;') : '';
-            
-            htmlMatrix += `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="${hasAbsence}">
-                <td class="mono">${t.id}</td>
-                <td class="name-cell">${t.name}</td>
-                <td>${t.major || '-'}</td>
-                <td><div class="course-card-wrapper">`;
-            
-            Object.values(t.crns).forEach(c => {
-                let cardClass = 'c-success';
-                let pctText = c.absPercentage.toFixed(1) + '%';
-                
-                if (c.isOfficiallyDeprived) {
-                    cardClass = 'c-danger';
-                    let depText = isFemale ? 'محرومة (ح)' : 'محروم (ح)';
-                    pctText = `${depText} | ${c.absPercentage.toFixed(1)}%`;
-                } else if (c.absPercentage >= 20) {
-                    cardClass = 'c-danger';
-                } else if (c.absPercentage >= 15) {
-                    cardClass = 'c-warning';
-                }
-                
-                htmlMatrix += `<div class="course-card ${cardClass}">
-                    <span>${c.name} <span style="opacity:0.7; font-size:10px;">(${c.code})</span></span>
-                    <span class="pct">${pctText}</span>
-                </div>`;
-            });
-            
+            let safeStatus = t.traineeStatus ? t.traineeStatus.replace(/"/g, '&quot;') : ''; let safeMajor = t.major ? t.major.replace(/"/g, '&quot;') : '';
+            htmlMatrix += `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="${t.weeksAbsentCount > 0 || t.totalDeprivedCourses > 0}"><td class="mono">${t.id}</td><td class="name-cell"><a href="#" class="clickable-name" onclick="openTraineeProfile('${t.id}'); return false;">${t.name}</a></td><td>${t.major || '-'}</td><td><div class="course-card-wrapper">`;
+            Object.values(t.crns).forEach(c => { let cardClass = 'c-success'; let pctText = c.absPercentage.toFixed(1) + '%'; if (c.isOfficiallyDeprived) { cardClass = 'c-danger'; pctText = `${isFemale ? 'محرومة (ح)' : 'محروم (ح)'} | ${c.absPercentage.toFixed(1)}%`; } else if (c.absPercentage > 20) cardClass = 'c-danger'; else if (c.absPercentage >= 15) cardClass = 'c-warning'; htmlMatrix += `<div class="course-card ${cardClass}"><span>${c.name} <span style="opacity:0.7; font-size:10px;">(${c.code})</span></span><span class="pct">${pctText}</span></div>`; });
             htmlMatrix += `</div></td></tr>`;
         });
-        htmlMatrix += `</tbody></table>`;
-        document.getElementById('table-matrix').innerHTML = htmlMatrix;
+        htmlMatrix += `</tbody></table>`; document.getElementById('table-matrix').innerHTML = htmlMatrix;
 
-        let htmlFull = `<table>${createThead(false)}<tbody>`;
-        processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).forEach(t => htmlFull += createRow(t, false));
-        htmlFull += `</tbody></table>`;
-        document.getElementById('table-fullweek').innerHTML = htmlFull;
+        let htmlFull = `<table>${createThead(false)}<tbody>`; processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).forEach(t => htmlFull += createRow(t, false)); htmlFull += `</tbody></table>`; document.getElementById('table-fullweek').innerHTML = htmlFull;
+        let htmlDepAll = `<table>${createThead(false)}<tbody>`; processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).forEach(t => htmlDepAll += createRow(t, false)); htmlDepAll += `</tbody></table>`; document.getElementById('table-deprived-all').innerHTML = htmlDepAll;
+        let htmlDepExc = `<table>${createThead(false)}<tbody>`; processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).forEach(t => htmlDepExc += createRow(t, false)); htmlDepExc += `</tbody></table>`; document.getElementById('table-deprived-except').innerHTML = htmlDepExc;
+        let htmlExc = `<table>${createThead(true)}<tbody>`; processedData.excluded.forEach(t => htmlExc += createRow(t, true)); htmlExc += `</tbody></table>`; document.getElementById('table-excluded').innerHTML = htmlExc;
 
-        let htmlDepAll = `<table>${createThead(false)}<tbody>`;
-        processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).forEach(t => htmlDepAll += createRow(t, false));
-        htmlDepAll += `</tbody></table>`;
-        document.getElementById('table-deprived-all').innerHTML = htmlDepAll;
-
-        let htmlDepExc = `<table>${createThead(false)}<tbody>`;
-        processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).forEach(t => htmlDepExc += createRow(t, false));
-        htmlDepExc += `</tbody></table>`;
-        document.getElementById('table-deprived-except').innerHTML = htmlDepExc;
-
-        let htmlExc = `<table>${createThead(true)}<tbody>`;
-        processedData.excluded.forEach(t => htmlExc += createRow(t, true));
-        htmlExc += `</tbody></table>`;
-        document.getElementById('table-excluded').innerHTML = htmlExc;
-
-        let customActionCol = {
-            7: `<button class="btn-action" style="padding:4px 8px; font-size:10.5px; width:100%; justify-content:center; background:var(--bg-elevated);" onclick="openWaModal()">تعديل العبارة ⚙️</button>`
-        };
+        let customActionCol = { 7: `<button class="btn-action" style="padding:4px 8px; font-size:10.5px; width:100%; justify-content:center; background:var(--bg-elevated);" onclick="openWaModal()">تعديل العبارة ⚙️</button>` };
+        let headPerc = `<table><thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th><th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th><th class="nowrap sortable" onclick="sortTable(this, 2, false)">رمز المقرر</th><th class="sortable" onclick="sortTable(this, 3, false)">اسم المقرر</th><th class="nowrap sortable" onclick="sortTable(this, 4, false)">الشعبة</th><th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">نسبة الغياب</th><th class="nowrap text-center sortable" onclick="sortTable(this, 6, false)">الحالة</th><th class="nowrap text-center">الإجراء</th></tr>${createFilterRow(8, [7], customActionCol)}</thead><tbody>`;
         
-        let htmlPerc = `<table><thead><tr>
-            <th class="nowrap sortable" onclick="sortTable(this, 0, false)">${colId}</th>
-            <th class="nowrap name-cell sortable" onclick="sortTable(this, 1, false)">${colName}</th>
-            <th class="nowrap sortable" onclick="sortTable(this, 2, false)">رمز المقرر</th>
-            <th class="sortable" onclick="sortTable(this, 3, false)">اسم المقرر</th>
-            <th class="nowrap sortable" onclick="sortTable(this, 4, false)">الشعبة</th>
-            <th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">نسبة الغياب</th>
-            <th class="nowrap text-center sortable" onclick="sortTable(this, 6, false)">الحالة</th>
-            <th class="nowrap text-center">الإجراء</th>
-        </tr>
-        ${createFilterRow(8, [7], customActionCol)}
-        </thead><tbody>`;
-        
-        let defaultMsg = isFemale 
-            ? "عزيزتي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n{course}\n هي {pct}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب"
-            : "عزيزي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n{course}\n هي {pct}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب";
-        let currentWaTemplate = localStorage.getItem(isFemale ? 'wa_template_f' : 'wa_template_m') || defaultMsg;
+        let currentWaTemplate = localStorage.getItem(isFemale ? 'wa_template_f' : 'wa_template_m') || (isFemale ? "عزيزتي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n{course}\n هي {pct}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب" : "عزيزي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n{course}\n هي {pct}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب");
 
+        let htmlPerc = headPerc; let htmlThreatened = headPerc;
         processedData.percentages.forEach(p => {
-            let formattedPhone = window.formatPhone(p.phone);
-            let safeStatus = p.traineeStatus ? p.traineeStatus.replace(/"/g, '&quot;') : '';
-            let safeMajor = p.major ? p.major.replace(/"/g, '&quot;') : '';
-            
-            let msg = currentWaTemplate
-                .replace(/{name}/g, p.traineeName)
-                .replace(/{course}/g, p.courseName)
-                .replace(/{pct}/g, p.absPercentage.toFixed(1));
-                
-            let waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(msg)}`;
-            
-            let statusBadge = '';
-            let deprivedText = isFemale ? 'محرومة (ح)' : 'محروم (ح)';
-            
-            if (p.isDeprived) {
-                statusBadge = `<span class="badge badge-danger">${deprivedText}</span>`;
-            } else if (p.absPercentage >= 20) {
-                statusBadge = '<span class="badge badge-danger" style="background:#ea580c26; color:#ea580c; border-color:#ea580c;">تجاوز 20%</span>';
-            } else if (p.absPercentage >= 15) {
-                statusBadge = '<span class="badge badge-warning">إنذار</span>';
-            } else {
-                statusBadge = '<span class="badge badge-success">طبيعي</span>';
+            let safeStatus = p.traineeStatus ? p.traineeStatus.replace(/"/g, '&quot;') : ''; let safeMajor = p.major ? p.major.replace(/"/g, '&quot;') : '';
+            let msg = currentWaTemplate.replace(/{name}/g, p.traineeName).replace(/{course}/g, p.courseName).replace(/{pct}/g, p.absPercentage.toFixed(1));
+            let waUrl = `https://api.whatsapp.com/send?phone=${window.formatPhone(p.phone)}&text=${encodeURIComponent(msg)}`;
+            let statusBadge = p.isDeprived ? `<span class="badge badge-danger">${isFemale?'محرومة (ح)':'محروم (ح)'}</span>` : (p.absPercentage > 20 ? '<span class="badge badge-danger" style="background:#ea580c26; color:#ea580c; border-color:#ea580c;">تجاوز 20%</span>' : (p.absPercentage >= 15 ? '<span class="badge badge-warning">إنذار</span>' : '<span class="badge badge-success">طبيعي</span>'));
+            let rowHtml = `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="true"><td class="mono">${p.traineeId}</td><td class="name-cell"><a href="#" class="clickable-name" onclick="openTraineeProfile('${p.traineeId}'); return false;">${p.traineeName}</a></td><td class="mono">${p.courseCode}</td><td>${p.courseName}</td><td class="mono">${p.crn}</td><td class="mono text-center" style="color: ${p.absPercentage >= 15 ? 'var(--danger)' : 'var(--text-primary)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td><td class="text-center">${statusBadge}</td><td class="text-center nowrap"><a href="${waUrl}" target="_blank" class="btn-whatsapp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> إرسال واتساب</a></td></tr>`;
+            htmlPerc += rowHtml;
+            if (p.absPercentage >= 18 && p.absPercentage <= 20) {
+                let tb = '<span class="badge badge-warning" style="background:#facc1533; color:#ca8a04; border-color:#facc15;">على وشك الحرمان</span>';
+                htmlThreatened += rowHtml.replace(statusBadge, tb);
             }
-
-            htmlPerc += `<tr data-major="${safeMajor}" data-status="${safeStatus}" data-absent="true">
-                <td class="mono">${p.traineeId}</td>
-                <td class="name-cell">${p.traineeName}</td>
-                <td class="mono">${p.courseCode}</td>
-                <td>${p.courseName}</td>
-                <td class="mono">${p.crn}</td>
-                <td class="mono text-center" style="color: ${p.absPercentage >= 15 ? 'var(--danger)' : 'var(--text-primary)'}; font-weight: bold;">${p.absPercentage.toFixed(1)}%</td>
-                <td class="text-center">${statusBadge}</td>
-                <td class="text-center nowrap">
-                    <a href="${waUrl}" target="_blank" class="btn-whatsapp">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                        إرسال واتساب
-                    </a>
-                </td>
-            </tr>`;
         });
-        htmlPerc += `</tbody></table>`;
-        document.getElementById('table-percentages').innerHTML = htmlPerc;
+        htmlPerc += `</tbody></table>`; document.getElementById('table-percentages').innerHTML = htmlPerc;
+        htmlThreatened += `</tbody></table>`; document.getElementById('table-threatened').innerHTML = htmlThreatened;
 
         if (window.savedFilters) {
-            if(document.getElementById('filterMajor')) document.getElementById('filterMajor').value = window.savedFilters.major || '';
-            if(document.getElementById('filterStatus')) document.getElementById('filterStatus').value = window.savedFilters.status || '';
-            if(document.getElementById('filterAbsence')) document.getElementById('filterAbsence').value = window.savedFilters.absence || '';
-            if(document.getElementById('searchInput')) document.getElementById('searchInput').value = window.savedFilters.search || '';
+            ['filterMajor', 'filterStatus', 'filterAbsence', 'searchInput'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = window.savedFilters[id.replace('filter','').toLowerCase()] || ''; });
         }
-
         window.filterTables();
     };
 
     window.openWaModal = function() {
-        let defaultMsg = isFemale 
-            ? "عزيزتي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n{course}\n هي {pct}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب"
-            : "عزيزي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n{course}\n هي {pct}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب";
-        let savedTemplate = localStorage.getItem(isFemale ? 'wa_template_f' : 'wa_template_m');
-        document.getElementById('waTemplateInput').value = savedTemplate || defaultMsg;
+        document.getElementById('waTemplateInput').value = localStorage.getItem(isFemale ? 'wa_template_f' : 'wa_template_m') || (isFemale ? "عزيزتي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابكِ في مقرر \n{course}\n هي {pct}% \nلذا نأمل منكِ الانتباه والحرص على عدم الغياب" : "عزيزي {name}\nهذه رسالة تلقائية تبلغك بأن نسبة غيابك في مقرر \n{course}\n هي {pct}% \nلذا نأمل منك الانتباه والحرص على عدم الغياب");
         document.getElementById('waModal').classList.add('active');
     };
-    window.closeWaModal = function() {
-        document.getElementById('waModal').classList.remove('active');
-    };
-    window.saveWaTemplate = function() {
-        let val = document.getElementById('waTemplateInput').value;
-        localStorage.setItem(isFemale ? 'wa_template_f' : 'wa_template_m', val);
-        closeWaModal();
-        window.renderTables(parseInt(document.getElementById('totalWeeks').value) || 18);
-    };
-    window.insertWaVar = function(v) {
-        let input = document.getElementById('waTemplateInput');
-        let start = input.selectionStart;
-        let end = input.selectionEnd;
-        let text = input.value;
-        input.value = text.substring(0, start) + v + text.substring(end);
-        input.focus();
-        input.selectionStart = input.selectionEnd = start + v.length;
-    };
+    window.closeWaModal = function() { document.getElementById('waModal').classList.remove('active'); };
+    window.saveWaTemplate = function() { localStorage.setItem(isFemale ? 'wa_template_f' : 'wa_template_m', document.getElementById('waTemplateInput').value); closeWaModal(); window.renderTables(parseInt(document.getElementById('totalWeeks').value) || 18); };
+    window.insertWaVar = function(v) { let input = document.getElementById('waTemplateInput'); let start = input.selectionStart; let end = input.selectionEnd; input.value = input.value.substring(0, start) + v + input.value.substring(end); input.focus(); input.selectionStart = input.selectionEnd = start + v.length; };
 
     window.addEventListener('DOMContentLoaded', async () => {
         let settings = JSON.parse(localStorage.getItem('abs_reports_settings'));
-        if (settings) {
-            document.getElementById('totalWeeks').value = settings.weeks || 18;
-            window.savedFilters = settings;
-        }
-
-        let storedDates = localStorage.getItem('abs_reports_dates');
-        let dbData = await loadFromDB('rawData');
-        
+        if (settings) { document.getElementById('totalWeeks').value = settings.weeks || 18; window.savedFilters = settings; }
+        let storedDates = localStorage.getItem('abs_reports_dates'); let dbData = await loadFromDB('rawData');
         if (dbData) {
             try {
                 rawData = dbData;
-                if (storedDates) {
-                    fileDates = JSON.parse(storedDates);
-                    Object.keys(fileDates).forEach(type => {
-                        if (fileDates[type]) {
-                            renderFileDate(type, new Date(fileDates[type]));
-                            let dropz = document.getElementById(`drop-${type}`);
-                            if(dropz) {
-                                dropz.classList.add('has-file');
-                                dropz.querySelector('p').innerText = "تم استرجاع الملف من التخزين";
-                            }
-                        }
-                    });
-                }
-                
-                if (rawData.sf01 && rawData.sf01.length > 0 && rawData.ss01 && rawData.ss01.length > 0 && rawData.so04 && rawData.so04.length > 0) {
-                    processData(); 
-                    switchTab('report-dashboard', document.getElementById('nav-dashboard'));
-                } else {
-                    switchTab('upload', document.getElementById('nav-upload'));
-                }
-            } catch(e) {
-                console.error("خطأ أثناء استرجاع البيانات المحفوظة", e);
-                switchTab('upload', document.getElementById('nav-upload'));
-            }
-        } else {
-            switchTab('upload', document.getElementById('nav-upload'));
-        }
+                if (storedDates) { fileDates = JSON.parse(storedDates); Object.keys(fileDates).forEach(type => { if (fileDates[type]) { renderFileDate(type, new Date(fileDates[type])); let dropz = document.getElementById(`drop-${type}`); if(dropz) { dropz.classList.add('has-file'); dropz.querySelector('p').innerText = "تم استرجاع الملف من التخزين"; } } }); }
+                if (rawData.sf01?.length > 0 && rawData.ss01?.length > 0 && rawData.so04?.length > 0) { processData(); switchTab('report-dashboard', document.getElementById('nav-dashboard')); } else switchTab('upload', document.getElementById('nav-upload'));
+            } catch(e) { switchTab('upload', document.getElementById('nav-upload')); }
+        } else switchTab('upload', document.getElementById('nav-upload'));
     });
-
 </script>
 </body>
 </html>
