@@ -1147,10 +1147,10 @@ themeBtn.addEventListener('click', () => {
         switchTab('report-main', document.getElementById('nav-main'));
     };
 
-    window.renderDashboard = function() {
+window.renderDashboard = function() {
     const totalWeeks = parseInt(document.getElementById('totalWeeks').value) || 18;
     
-    // 1. حساب الـ KPIs
+    // 1. حساب الـ KPIs الأساسية
     let totalActive = processedData.active.length;
     let totalExcluded = processedData.excluded.length;
     let majorsCount = new Set(processedData.active.concat(processedData.excluded).map(t => t.major)).size;
@@ -1165,10 +1165,16 @@ themeBtn.addEventListener('click', () => {
     let warning15Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId)).size;
     let fullWeekAbsent = processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).length;
     
-    // تصحيح حساب متوسط الغياب (المتوسط الفعلي لجميع سجلات الغياب المرصودة)
+    // حساب متوسط الغياب
     let allAbsPercentages = processedData.percentages.map(p => p.absPercentage);
-    let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=>a+b,0) / (totalActive * (coursesCount/majorsCount) || 1)) : 0;
-    if (avgAbsence > 100) avgAbsence = (allAbsPercentages.reduce((a,b)=>a+b,0) / allAbsPercentages.length);
+    let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=>a+b,0) / (totalActive || 1)) : 0;
+
+    // --- [هام] تعريف بيانات الرسم البياني الدائري ---
+    let statusCounts = { "نشط": totalActive };
+    processedData.excluded.forEach(t => {
+        let s = t.traineeStatus || "أخرى";
+        statusCounts[s] = (statusCounts[s] || 0) + 1;
+    });
 
     // 2. تجميع بيانات الأسابيع
     let weeklyFull = Array(totalWeeks).fill(0);
@@ -1180,18 +1186,18 @@ themeBtn.addEventListener('click', () => {
         }
     });
 
-    // 3. نصوص التأنيث
+    // 3. نصوص التأنيث/التذكير
     const txt = {
         trainee: isFemale ? "المتدربة" : "المتدرب",
         trainees: isFemale ? "المتدربات" : "المتدربون",
         withdrawn: isFemale ? "المنسحبات" : "المنسحبين",
-        terminated: isFemale ? "المطوي قيدهن" : "المطوي قيدهم",
         deprived: isFemale ? "المحرومات" : "المحرومون",
         over20: isFemale ? "تجاوزن 20%" : "تجاوزوا 20%",
         instructors: isFemale ? "المدربات" : "المدربون",
         instructor: isFemale ? "المدربة" : "المدرب"
     };
 
+    // 4. بناء الـ HTML (البطاقات)
     let html = `
         <div class="dash-grid">
             <div class="dash-card" onclick="drillDown('absence', '')" style="border-bottom: 3px solid var(--primary);">
@@ -1219,7 +1225,7 @@ themeBtn.addEventListener('click', () => {
                 <div class="val" style="color: var(--warning);">${warning15Trainees}</div>
                 <div class="sub-val">بلغن نسبة الإنذار</div>
             </div>
-            <div class="dash-card" onclick="switchTab('report-fullweek', document.getElementById('nav-fullweek'))" style="border-bottom: 3px solid var(--danger);">
+            <div class="dash-card" onclick="switchTab('report-fullweek', document.getElementById('nav-fullweek'))" style="border-bottom: 3px solid #7c3aed;">
                 <h4>غياب أسبوع كامل</h4>
                 <div class="val">${fullWeekAbsent}</div>
                 <div class="sub-val">مرة واحدة على الأقل</div>
@@ -1237,18 +1243,18 @@ themeBtn.addEventListener('click', () => {
         </div>
 
         <div class="chart-row">
-            <div class="chart-container" style="height: 400px; position: relative;">
+            <div class="chart-container">
                 <h4>توزيع حالات ${txt.trainees}</h4>
                 <canvas id="statusChart"></canvas>
             </div>
-            <div class="chart-container" style="height: 400px; position: relative;">
+            <div class="chart-container">
                 <h4>توجه الغياب الأسبوعي (عدد ${txt.trainees})</h4>
                 <canvas id="weeklyChart"></canvas>
             </div>
         </div>
 
         <div class="admin-card" style="margin-bottom: 24px;">
-            <h4 style="color: var(--primary);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg> تحليل الأقسام والتخصصات</h4>
+            <h4 style="color: var(--primary);">تحليل الأقسام والتخصصات (مؤشر الخطورة)</h4>
             <div class="_tableWrapper" style="max-height: none;">
                 <table>
                     <thead>
@@ -1256,7 +1262,7 @@ themeBtn.addEventListener('click', () => {
                             <th>التخصص</th>
                             <th class="text-center">${txt.trainees}</th>
                             <th class="text-center">${txt.deprived}</th>
-                            <th class="text-center">${txt.over20.split(' ')[0]} 20%</th>
+                            <th class="text-center">تجاوز 20%</th>
                             <th class="text-center">متوسط الغياب</th>
                             <th class="text-center">مؤشر الخطورة</th>
                         </tr>
@@ -1264,6 +1270,7 @@ themeBtn.addEventListener('click', () => {
                     <tbody>
     `;
 
+    // تحليل التخصصات
     let majors = [...new Set(processedData.active.map(t => t.major))].sort();
     majors.forEach(m => {
         let mActive = processedData.active.filter(t => t.major === m);
@@ -1286,10 +1293,9 @@ themeBtn.addEventListener('click', () => {
             </tr>
         `;
     });
-
     html += `</tbody></table></div></div>`;
 
-    // 4. ربط رقم المدربة بالاسم (Fix للمدربين الأعلى غياباً)
+    // تحليل المدربين والمقررات
     let instNameMap = {};
     rawData.ss01.forEach(row => {
         let id = row['رقم المدرب'] || row['الرقم الوظيفي'] || row['رقم المدربة'];
@@ -1300,20 +1306,17 @@ themeBtn.addEventListener('click', () => {
     let instructorAbs = {};
     rawData.so04.forEach(row => {
         let instId = row['رقم المدرب'] || row['الرقم الوظيفي'] || row['رقم المدربة'];
-        let excuse = row['نوع العذر'] || '';
         let hours = parseFloat(row['ساعات الغياب']) || 0;
-        if (instId && hours > 0 && (excuse.includes('بدون عذر') || excuse.trim() === "")) {
+        if (instId && hours > 0) {
             let idStr = instId.toString().trim();
             instructorAbs[idStr] = (instructorAbs[idStr] || 0) + 1;
         }
     });
-
     let sortedInst = Object.entries(instructorAbs).sort((a,b) => b[1] - a[1]).slice(0, 5);
 
-    // 5. جداول المقررات والمدربات
     let courseStats = {};
     processedData.percentages.forEach(p => {
-        if(!courseStats[p.courseName]) courseStats[p.courseName] = { deprived: 0, over20: 0, code: p.courseCode };
+        if(!courseStats[p.courseName]) courseStats[p.courseName] = { deprived: 0, over20: 0 };
         if(p.isDeprived) courseStats[p.courseName].deprived++;
         if(p.absPercentage >= 20) courseStats[p.courseName].over20++;
     });
@@ -1333,9 +1336,9 @@ themeBtn.addEventListener('click', () => {
             <div class="admin-card">
                 <h4>أعلى ${txt.instructors} تسجيلاً للغياب</h4>
                 <table>
-                    <thead><tr><th>${txt.instructor}</th><th class="text-center">حالات الغياب</th></tr></thead>
+                    <thead><tr><th>${txt.instructor}</th><th class="text-center">عدد الحالات</th></tr></thead>
                     <tbody>
-                        ${sortedInst.length > 0 ? sortedInst.map(([id, val]) => `<tr><td>${instNameMap[id] || (txt.instructor + ' رقم: ' + id)}</td><td class="text-center mono">${val}</td></tr>`).join('') : '<tr><td colspan="2" class="text-center">لا توجد بيانات متاحة</td></tr>'}
+                        ${sortedInst.map(([id, val]) => `<tr><td>${instNameMap[id] || (txt.instructor + ' ' + id)}</td><td class="text-center mono">${val}</td></tr>`).join('')}
                     </tbody>
                 </table>
             </div>
@@ -1344,7 +1347,7 @@ themeBtn.addEventListener('click', () => {
 
     document.getElementById('dashboard-content').innerHTML = html;
 
-    // 6. الرسوم البيانية مع إصلاح الـ Glitch
+    // 5. رسم المخططات البيانية
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const textColor = isDark ? '#9fb0b5' : '#475569';
 
@@ -1354,11 +1357,15 @@ themeBtn.addEventListener('click', () => {
             labels: Object.keys(statusCounts),
             datasets: [{
                 data: Object.values(statusCounts),
-                backgroundColor: ['#34c2b4', '#3b82f6', '#f59e0b', '#ef4444', '#64748b', '#10b981'],
+                backgroundColor: ['#34c2b4', '#ef4444', '#f59e0b', '#3b82f6', '#64748b'],
                 borderWidth: 0
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, font: { family: 'Cairo' } } } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Cairo' } } } }
+        }
     });
 
     new Chart(document.getElementById('weeklyChart'), {
@@ -1366,59 +1373,21 @@ themeBtn.addEventListener('click', () => {
         data: {
             labels: Array.from({length: totalWeeks}, (_, i) => `أسبوع ${i+1}`),
             datasets: [
-                { label: 'غياب كامل', data: weeklyFull, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4 },
-                { label: 'غياب جزئي', data: weeklyPartial, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }
+                { label: 'غياب كامل', data: weeklyFull, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.3 },
+                { label: 'غياب جزئي', data: weeklyPartial, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { grid: { display: false }, ticks: { color: textColor, font: { family: 'Cairo' } } },
+                x: { ticks: { color: textColor, font: { family: 'Cairo' } }, grid: { display: false } },
                 y: { beginAtZero: true, ticks: { color: textColor } }
             },
             plugins: { legend: { labels: { color: textColor, font: { family: 'Cairo' } } } }
         }
     });
-
-        // Chart 2: Weekly Trend
-        new Chart(document.getElementById('weeklyChart'), {
-            type: 'line',
-            data: {
-                labels: Array.from({length: totalWeeks}, (_, i) => `أسبوع ${i+1}`),
-                datasets: [
-                    {
-                        label: 'غياب كامل',
-                        data: weeklyFull,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'غياب جزئي',
-                        data: weeklyPartial,
-                        borderColor: '#f59e0b',
-                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: textColor, font: { family: 'Cairo' } } },
-                    y: { grid: { color: gridColor }, ticks: { color: textColor } }
-                },
-                plugins: {
-                    legend: { labels: { color: textColor, font: { family: 'Cairo' } } }
-                }
-            }
-        });
-    };
-
+};
     const createThead = (isExcluded = false) => {
         let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب';
         let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب';
