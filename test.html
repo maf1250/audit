@@ -555,7 +555,7 @@
     
     // متغيرات جديدة للإحصائيات
     var globalExcuseStats = { unexcused: 0, excused: 0, canceled: 0 };
-    var instructorCanceledHours = {};
+    var instructorCanceledCount = {};
     var fullTraineeSessionDetails = {};
 
     async function saveDataLocally() {
@@ -862,9 +862,10 @@
             }
         });
 
-        // تهيئة الإحصائيات الشاملة
+          // تهيئة الإحصائيات الشاملة
         globalExcuseStats = { unexcused: 0, excused: 0, canceled: 0 };
-        instructorCanceledHours = {};
+        instructorCanceledCount = {}; // لعد المحاضرات بدلاً من الساعات
+        let canceledSessionsSet = {}; // لتتبع المحاضرات الملغاة الفريدة
         let instructorLastAction = {};
 
         let globalSessionStatus = {}; 
@@ -880,21 +881,40 @@
             let instName = (crnMap[crn] && crnMap[crn].instName) ? crnMap[crn].instName : 'غير محدد';
             
             if(absHours > 0) {
-                if (excuse.includes('بدون عذر')) globalExcuseStats.unexcused += absHours;
+                if (excuse.includes('بدون عذر')) {
+                    globalExcuseStats.unexcused += absHours;
+                }
                 else if (excuse.includes('جلسة ملغاة')) { 
                     globalExcuseStats.canceled += absHours;
-                    if(instName !== 'غير محدد') instructorCanceledHours[instName] = (instructorCanceledHours[instName] || 0) + absHours;
+                    // تكوين معرّف فريد للمحاضرة لعدم تكرار عدها لكل متدرب
+                    let sessionUnique = crn + '_' + date + '_' + time;
+                    if(!canceledSessionsSet[sessionUnique]) {
+                        canceledSessionsSet[sessionUnique] = true;
+                        if(instName !== 'غير محدد') {
+                            instructorCanceledCount[instName] = (instructorCanceledCount[instName] || 0) + 1;
+                        }
+                    }
                 }
-                else globalExcuseStats.excused += absHours;
+                else {
+                    globalExcuseStats.excused += absHours;
+                }
             }
 
+            // خوارزمية ترتيب التواريخ الهجرية (تحويل DD/MM/YYYY إلى YYYYMMDD للمقارنة)
             if(instId && opDate) {
-                let pd = parseCustomDate(opDate);
-                if(pd > 0) {
-                    if(!instructorLastAction[instId]) instructorLastAction[instId] = pd;
-                    else if(pd > instructorLastAction[instId]) instructorLastAction[instId] = pd;
+                let p = opDate.split(/[-/]/);
+                if(p.length === 3) {
+                    let y = p[0].length === 4 ? p[0] : p[2];
+                    let m = p[0].length === 4 ? p[1] : p[1];
+                    let d = p[0].length === 4 ? p[2] : p[0];
+                    let sortVal = parseInt(`${y}${m.padStart(2,'0')}${d.padStart(2,'0')}`);
+                    
+                    if(!instructorLastAction[instId] || sortVal > instructorLastAction[instId].sortVal) {
+                        instructorLastAction[instId] = { display: opDate, sortVal: sortVal };
+                    }
                 }
             }
+                
 
             if(!crn || isNaN(weekNum) || absHours <= 0) return;
             let sessionKey = date + '_' + time;
@@ -1055,7 +1075,7 @@
         
         Object.values(instMap).forEach(i => {
             i.avgPct = i.crnCount > 0 ? i.totalAbsPctSum / i.crnCount : 0;
-            i.lastActionDate = instructorLastAction[i.id] ? new Date(instructorLastAction[i.id]).toLocaleDateString('en-GB') : 'غير متوفر';
+            i.lastActionDate = instructorLastAction[i.id] ? instructorLastAction[i.id].display : 'غير متوفر';
             processedData.instructors.push(i);
         });
 
@@ -1094,8 +1114,12 @@
     };
 
     window.openTraineeProfile = function(id) {
-        let trainee = processedData.active.find(t => t.id === id) || processedData.excluded.find(t => t.id === id);
-        if(!trainee) return;
+        // توحيد نوع البيانات (نص) لضمان تطابق رقم المتدرب
+        let trainee = processedData.active.find(t => String(t.id) === String(id)) || processedData.excluded.find(t => String(t.id) === String(id));
+        if(!trainee) {
+            alert("عذراً، لم يتم العثور على التفاصيل.");
+            return;
+        }
         
         document.getElementById('tp-name').innerText = trainee.name;
         document.getElementById('tp-id').innerText = trainee.id;
@@ -1116,7 +1140,7 @@
         let details = fullTraineeSessionDetails[trainee.id] || [];
         details.sort((a,b) => a.week - b.week);
         
-        if(details.length === 0) { ul.innerHTML = '<li><span style="color:var(--success)">لا يوجد أي سجل غياب للمتدرب.</span></li>'; }
+        if(details.length === 0) { ul.innerHTML = '<li><span style="color:var(--success)">لا يوجد أي سجل غياب.</span></li>'; }
         else {
             details.forEach(d => {
                 if(!d.excuse.includes('بدون عذر')) return;
@@ -1199,7 +1223,7 @@
 
         let sortedCourses = Object.entries(courseStats).sort((a,b) => b[1].over20 - a[1].over20).slice(0, 5);
         let leastCourses = Object.entries(courseStats).filter(c => c[1].deprived > 0).sort((a, b) => a[1].deprived - b[1].deprived).slice(0, 5);
-        let topCanceledInst = Object.entries(instructorCanceledHours).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        let topCanceledInst = Object.entries(instructorCanceledCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
         let traineeAbsenceStats = processedData.active.map(t => { return { id: t.id, name: t.name, totalAbs: Object.values(t.crns).reduce((sum, c) => sum + c.absHours, 0) }; });
         let topAbsentTrainees = traineeAbsenceStats.sort((a, b) => b.totalAbs - a.totalAbs).slice(0, 5);
@@ -1241,8 +1265,8 @@
             <div class="admin-card"><h4>أكثر الأسابيع غياباً</h4><table><thead><tr><th>الأسبوع</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topWeeks.map(w => `<tr><td>الأسبوع ${w[0]}</td><td class="text-center mono">${w[1].toFixed(0)}</td></tr>`).join('')}</tbody></table></div>
             <div class="admin-card"><h4>أكثر الأيام تسجيلاً للغياب</h4><table><thead><tr><th>اليوم</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topDays.map(d => `<tr><td>${d[0]}</td><td class="text-center mono">${d[1].toFixed(0)}</td></tr>`).join('')}</tbody></table></div>
             <div class="admin-card"><h4>أعلى ${txt.instructors} نسبةً للحرمان</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">النسبة (%)</th></tr></thead><tbody>${topInstructorsByDepPct.map(i => `<tr><td>${i.name}</td><td class="text-center mono" style="color:var(--danger);">${i.pct.toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
-            <div class="admin-card"><h4>أكثر ${txt.instructors} إلغاءً للجلسات</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">ساعات ملغاة</th></tr></thead><tbody>${topCanceledInst.map(i => `<tr><td>${i[0]}</td><td class="text-center mono" style="color:var(--info);">${i[1]}</td></tr>`).join('')}</tbody></table></div>
-        </div>`;
+            <div class="admin-card"><h4>أكثر ${txt.instructors} إلغاءً للجلسات</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">محاضرات ملغاة</th></tr></thead><tbody>${topCanceledInst.map(i => `<tr><td>${i[0]}</td><td class="text-center mono" style="color:var(--info);">${i[1]}</td></tr>`).join('')}</tbody></table></div>
+</div>`;
 
         let insights = []; let totalIntake = totalActive + totalExcluded; 
         let sortedMajors = Object.entries(majorDataMap).sort((a, b) => (((b[1].deprived/Math.max(b[1].count,1))*40) + (b[1].sumPct/Math.max(b[1].pctCount,1))) - (((a[1].deprived/Math.max(a[1].count,1))*40) + (a[1].sumPct/Math.max(a[1].pctCount,1))));
