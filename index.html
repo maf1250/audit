@@ -1255,6 +1255,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         borderline: isFemale ? "على وشك الحرمان" : "على وشك الحرمان",
         probableDesc: isFemale ? "غياب لم يُحضر" : "غياب لم يُحضر",
         topAbsentTrainees: isFemale ? "أكثر المتدربات غياباً" : "أكثر المتدربين غياباً",
+        leastAbsentTrainees: isFemale ? "أقل المتدربات غياباً" : "أقل المتدربين غياباً",      
         leastAbsenceInstructors: isFemale ? "أقل المدربات تسجيلاً للغياب" : "أقل المدربين تسجيلاً للغياب",
         absHoursLabel: "ساعة غياب",
         terminated: isFemale ? "المطوي قيدهن" : "المطوي قيدهم"
@@ -1426,11 +1427,13 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
         return { id: t.id, name: t.name, totalAbs: totalAbs };
     });
     let topAbsentTrainees = traineeAbsenceStats.sort((a, b) => b.totalAbs - a.totalAbs).slice(0, 5);
+    let leastAbsentTrainees = traineeAbsenceStats.sort((a, b) => a.totalAbs - b.totalAbs).slice(0, 5);
     
     // --- 4. بناء الجداول السفلية ---
     html += `<div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
         <div class="admin-card"><h4>أكثر المقررات تجاوزاً للـ 20%</h4><table><thead><tr><th>المقرر</th><th class="text-center">تجاوز 20%</th></tr></thead><tbody>${sortedCourses.map(([n, s]) => `<tr><td>${n}</td><td class="text-center mono">${s.over20}</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>${txt.topAbsentTrainees}</h4><table><thead><tr><th>${txt.trainee}</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topAbsentTrainees.map(t => `<tr><td>${t.name}</td><td class="text-center mono">${t.totalAbs.toFixed(0)} ساعة</td></tr>`).join('')}</tbody></table></div>
+        <div class="admin-card"><h4>${txt.leastAbsentTrainees}</h4><table><thead><tr><th>${txt.trainee}</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${leastAbsentTrainees.map(t => `<tr><td>${t.name}</td><td class="text-center mono">${t.totalAbs.toFixed(0)} ساعة</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>أعلى ${txt.instructors} تسجيلاً للغياب</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${topInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
         <div class="admin-card"><h4>${txt.leastAbsenceInstructors}</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">الحالات</th></tr></thead><tbody>${leastInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono">${i.count}</td></tr>`).join('')}</tbody></table></div>
     </div>`;
