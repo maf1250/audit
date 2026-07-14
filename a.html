@@ -1416,7 +1416,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
             labels: Array.from({length: totalWeeks}, (_, i) => `أسبوع ${i+1}`),
             datasets: [
                 { label: 'غياب كامل', data: weeklyFull, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.3 },
-                { label: 'غياب جزئي', data: weeklyPartial, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }
+                { label: 'غياب جزئي', data: weeklyPartial, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 },
                 { label: 'غياب محتمل', data: weeklyProbable, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3 }
             ]
         },
