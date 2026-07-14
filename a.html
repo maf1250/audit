@@ -1180,7 +1180,7 @@ themeBtn.addEventListener('click', () => {
 
 window.renderDashboard = function() {
             // حساب المتدربين في المنطقة الصفراء (15% - 19.9%)
-let borderlineCount = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId)).size;
+let borderlineCount = new Set(processedData.percentages.filter(p => p.absPercentage >= 18 && p.absPercentage <= 20).map(p => p.traineeId)).size;
 // حساب إجمالي حالات "المحتمل" في الأسبوع الحالي
 let currentWeek = Math.max(...Object.keys(TTH || {1:0}).map(Number)); 
 let totalProbable = processedData.active.filter(t => t.weekStatuses[currentWeek] === 'محتمل').length;
@@ -1197,8 +1197,8 @@ let totalProbable = processedData.active.filter(t => t.weekStatuses[currentWeek]
     let terminated = processedData.excluded.filter(t => (t.regStatus||'').includes('مطوي') || (t.traineeStatus||'').includes('مطوي')).length;
     let terminatedCount = processedData.excluded.filter(t => (t.regStatus||'').includes('مطوي') || (t.traineeStatus||'').includes('مطوي')).length;
     let deprivedTrainees = processedData.active.filter(t => t.totalDeprivedCourses > 0).length;
-    let over20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 20).map(p => p.traineeId)).size;
-    let warning15Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage < 20).map(p => p.traineeId)).size;
+    let over20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage > 20).map(p => p.traineeId)).size;
+    let warning15Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage <= 20).map(p => p.traineeId)).size;
     let fullWeekAbsent = processedData.active.filter(t => Object.values(t.weekStatuses || {}).includes('كامل')).length;    
     // حساب متوسط الغياب
     let allAbsPercentages = processedData.percentages.map(p => p.absPercentage);
@@ -1293,7 +1293,7 @@ let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=
             <div class="dash-card" style="border-bottom: 3px solid #facc15;">
     <h4>${txt.borderline}</h4>
     <div class="val" style="color: #facc15;">${borderlineCount}</div>
-    <div class="sub-val">نسبة غيابهم بين 15% و 19%</div>
+    <div class="sub-val">نسبة غيابهم بين 18% و 20%</div>
 </div>
 <div class="dash-card" style="border-bottom: 3px solid #3b82f6;">
     <h4>فجوة التحضير (المحتمل)</h4>
