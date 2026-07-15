@@ -1430,7 +1430,7 @@ window.deleteCurrentTerm = async function() {
 
         let html = `<div class="dash-grid">
             <div class="dash-card" onclick="drillDown('absence', '')" style="border-bottom: 3px solid var(--primary);"><h4>إجمالي ${txt.trainees}</h4><div class="val">${totalActive + totalExcluded}</div><div class="sub-val">${totalActive} ${txt.current} | ${totalExcluded} ${txt.leftOut}</div></div>
-            <div class="dash-card" style="border-bottom: 3px solid var(--primary);"><h4>الشعب والمقررات</h4><div class="val">${coursesCount}</div><div class="sub-val">${coursesCount} مقرر | ${crnsCount} شعبة</div></div>
+            <div class="dash-card" style="border-bottom: 3px solid #0cb3ea;"><h4>الشعب والمقررات</h4><div class="val">${coursesCount}</div><div class="sub-val">${coursesCount} مقرر | ${crnsCount} شعبة</div></div>
             <div class="dash-card" style="border-bottom: 3px solid var(--danger);"><h4>${txt.deprived}</h4><div class="val" style="color: var(--danger);">${deprivedTrainees}</div><div class="sub-val">${txt.DA}</div></div>
             <div class="dash-card" style="border-bottom: 3px solid #ea580c;"><h4>${txt.over20}</h4><div class="val" style="color: #ea580c;">${over20Trainees}</div><div class="sub-val">${txt.DAeligible}</div></div>
             <div class="dash-card" style="border-bottom: 3px solid var(--warning);"><h4>إنذار (15%+)</h4><div class="val" style="color: var(--warning);">${warning15Trainees}</div><div class="sub-val">${txt.warned}</div></div>
@@ -1582,9 +1582,9 @@ window.deleteCurrentTerm = async function() {
                         <thead>
                             <tr>
                                 <th>المقرر</th>
-                                <th>${txt.instructors} (الأعلى غياباً)</th>
+                                <th>${txt.instructor} (الأعلى غياباً)</th>
                                 <th class="text-center">متوسط الغياب</th>
-                                <th>${txt.instructors} (الأقل غياباً)</th>
+                                <th>${txt.instructor} (الأقل غياباً)</th>
                                 <th class="text-center">متوسط الغياب</th>
                                 <th class="text-center">الفارق</th>
                             </tr>
@@ -1593,9 +1593,9 @@ window.deleteCurrentTerm = async function() {
                             ${topVariances.length > 0 ? topVariances.map(v => `
                             <tr>
                                 <td style="font-weight:bold;">${v.course}</td>
-                                <td class="name-cell">${v.highInst}</td>
+                                <td class="text-center mono">${v.highInst}</td>
                                 <td class="text-center mono" style="color:var(--danger);">${v.highPct.toFixed(1)}%</td>
-                                <td class="name-cell">${v.lowInst}</td>
+                                <td class="text-center mono">${v.lowInst}</td>
                                 <td class="text-center mono" style="color:var(--success);">${v.lowPct.toFixed(1)}%</td>
                                 <td class="text-center mono"><span class="badge ${v.variance >= 10 ? 'badge-danger' : 'badge-warning'}">${v.variance.toFixed(1)}%</span></td>
                             </tr>
