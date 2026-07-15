@@ -1381,6 +1381,49 @@
 
         let topWeeks = Object.entries(weekAbsStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
         let topDays = Object.entries(dayAbsStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        // --- 1. خوارزمية ذروة الغياب حسب وقت المحاضرة ---
+        let timeAbsStats = {};
+        rawData.so04.forEach(row => {
+            let absHours = parseFloat(row['ساعات الغياب']) || 0;
+            let excuse = row['نوع العذر'] || '';
+            let timeStr = row['فترة المحاضرة'] || row['الوقت'] || '';
+            if (absHours > 0 && excuse.includes('بدون عذر') && timeStr.trim() !== '') {
+                let cleanTime = timeStr.trim();
+                timeAbsStats[cleanTime] = (timeAbsStats[cleanTime] || 0) + absHours;
+            }
+        });
+        let topTimeSlots = Object.entries(timeAbsStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+        // --- 2. خوارزمية التباين بين المدربين في نفس المقرر ---
+        let courseInstMap = {};
+        processedData.sections.forEach(s => {
+            if(!s.name || !s.instName || s.enrolled < 3) return; // تجاهل الشعب الصغيرة جداً
+            if(!courseInstMap[s.name]) courseInstMap[s.name] = {};
+            if(!courseInstMap[s.name][s.instName]) courseInstMap[s.name][s.instName] = { enrolled: 0, sumAbsPct: 0 };
+            
+            courseInstMap[s.name][s.instName].enrolled += s.enrolled;
+            courseInstMap[s.name][s.instName].sumAbsPct += (s.avgPct * s.enrolled);
+        });
+
+        let varianceStats = [];
+        Object.keys(courseInstMap).forEach(cName => {
+            let instructors = Object.keys(courseInstMap[cName]);
+            if(instructors.length > 1) { // يجب أن يدرس المقرر مدربان أو أكثر للمقارنة
+                let instAvgs = instructors.map(inst => {
+                    return { name: inst, avg: courseInstMap[cName][inst].sumAbsPct / courseInstMap[cName][inst].enrolled };
+                });
+                
+                instAvgs.sort((a, b) => b.avg - a.avg); // ترتيب من الأعلى غياباً للأقل
+                let highest = instAvgs[0];
+                let lowest = instAvgs[instAvgs.length - 1];
+                let variance = highest.avg - lowest.avg;
+                
+                if(variance > 0) {
+                    varianceStats.push({ course: cName, highInst: highest.name, highPct: highest.avg, lowInst: lowest.name, lowPct: lowest.avg, variance: variance });
+                }
+            }
+        });
+        let topVariances = varianceStats.sort((a, b) => b.variance - a.variance).slice(0, 5);
         
         let courseDetailedStats = {}; let instructorDetailedStats = {};
         processedData.sections.forEach(s => {
@@ -1406,6 +1449,34 @@
             <div class="admin-card"><h4>أعلى ${txt.instructors} نسبةً للحرمان</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">النسبة (%)</th></tr></thead><tbody>${topInstructorsByDepPct.map(i => `<tr><td>${i.name}</td><td class="text-center mono" style="color:var(--danger);">${i.pct.toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>
             <div class="admin-card"><h4>أكثر ${txt.instructors} إلغاءً للجلسات</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">محاضرات ملغاة</th></tr></thead><tbody>${topCanceledInst.map(i => `<tr><td>${i[0]}</td><td class="text-center mono" style="color:var(--info);">${i[1]}</td></tr>`).join('')}</tbody></table></div>
             <div class="admin-card"><h4>أكثر ${txt.instructors} تسجيلاً لرفع الحرمان</h4><table><thead><tr><th>${txt.instructor}</th><th class="text-center">رفع حرمان</th></tr></thead><tbody>${topLiftedInst.length > 0 ? topLiftedInst.map(i => `<tr><td>${i.name}</td><td class="text-center mono" style="color:#ea580c; font-weight:bold;">${i.liftedCount}</td></tr>`).join('') : '<tr><td colspan="2" class="text-center">لا يوجد</td></tr>'}</tbody></table></div>
+            <div class="admin-card"><h4>ذروة الغياب (حسب وقت المحاضرة)</h4><table><thead><tr><th>فترة المحاضرة</th><th class="text-center">ساعات الغياب</th></tr></thead><tbody>${topTimeSlots.length > 0 ? topTimeSlots.map(t => `<tr><td dir="ltr" class="text-right mono" style="font-weight:bold;">${t[0]}</td><td class="text-center mono" style="color:var(--danger);">${t[1].toFixed(0)}</td></tr>`).join('') : '<tr><td colspan="2" class="text-center">لا توجد بيانات</td></tr>'}</tbody></table></div>
+            <div class="admin-card" style="grid-column: 1 / -1;"><h4 style="color: var(--primary);">التباين بين المدربين في نفس المقرر (مؤشر توحيد المعايير)</h4><div class="_tableWrapper" style="max-height: none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المقرر</th>
+                                <th>المدرب (الأعلى غياباً)</th>
+                                <th class="text-center">متوسط غيابه</th>
+                                <th>المدرب (الأقل غياباً)</th>
+                                <th class="text-center">متوسط غيابه</th>
+                                <th class="text-center">الفارق بينهما</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topVariances.length > 0 ? topVariances.map(v => `
+                            <tr>
+                                <td style="font-weight:bold;">${v.course}</td>
+                                <td class="name-cell">${v.highInst}</td>
+                                <td class="text-center mono" style="color:var(--danger);">${v.highPct.toFixed(1)}%</td>
+                                <td class="name-cell">${v.lowInst}</td>
+                                <td class="text-center mono" style="color:var(--success);">${v.lowPct.toFixed(1)}%</td>
+                                <td class="text-center mono"><span class="badge ${v.variance >= 10 ? 'badge-danger' : 'badge-warning'}">${v.variance.toFixed(1)}%</span></td>
+                            </tr>
+                            `).join('') : '<tr><td colspan="6" class="text-center" style="padding:20px;">لا توجد مقررات مشتركة بين مدربين مختلفين، أو أن البيانات متطابقة تماماً.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 </div>`;
 
         let insights = []; let totalIntake = totalActive + totalExcluded; 
