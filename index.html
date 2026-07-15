@@ -431,7 +431,7 @@
                         </li>
                           <li>
                             <div class="info-badge-wrapper"><span class="badge" style="background:rgba(234, 88, 12, 0.15); color:#ea580c; border:1px solid #ea580c;">رفع حرمان</span></div>
-                            <div id="legend-lifted">تعني أنه تم رصد حرمان للمتدرب مسبقاً، وتم عمل استثناء له وإعادة قيده في المقرر (مقرر معاد قيده لتعديل الحرمان).</div>
+                            <div id="legend-lifted">تعني أنه رصد حرمان للمتدرب مسبقاً، وتم عمل استثناء له وإعادة قيده في المقرر (مقرر معاد قيده لتعديل الحرمان).</div>
                         </li>
                     </ul>
                    <div style="margin-top: 10px; color: var(--danger); font-size: 12.5px; font-weight: bold;">
@@ -901,7 +901,7 @@
         document.getElementById('legend-present').innerHTML = isFemale ? 'تعني أن المتدربة حاضرة (تم تحضيرها في محاضرة واحدة على الأقل ولم يسجل لها أي غياب).' : 'تعني أن المتدرب حاضر (تم تحضيره في محاضرة واحدة على الأقل ولم يسجل له أي غياب).';
         document.getElementById('legend-deprived').innerHTML = isFemale ? 'تعني أن المتدربة تجاوزت الحد المسموح للغياب وتم رصد درجة الحرمان (ح) لها في تقرير SF01.' : 'تعني أن المتدرب تجاوز الحد المسموح للغياب وتم رصد درجة الحرمان (ح) له في تقرير SF01.';
         document.getElementById('legend-twenty').innerHTML = isFemale ? 'تعني أن نسبة غياب المتدربة في المقرر تجاوزت 20% (مؤهلة للحرمان إذا لم تُقبل أعذارها).' : 'تعني أن نسبة غياب المتدرب في المقرر تجاوز 20% (مؤهل للحرمان إذا لم يُقبل عذره).';
-        if(document.getElementById('legend-lifted')) document.getElementById('legend-lifted').innerHTML = isFemale ? 'تعني أنه تم رصد حرمان للمتدربة مسبقاً، وتم عمل استثناء لها وإعادة قيدها في المقرر (مقرر معاد قيده لتعديل الحرمان).' : 'تعني أنه تم رصد حرمان للمتدرب مسبقاً، وتم عمل استثناء له وإعادة قيده في المقرر (مقرر معاد قيده لتعديل الحرمان).';
+        if(document.getElementById('legend-lifted')) document.getElementById('legend-lifted').innerHTML = isFemale ? 'تعني أنه رصد حرمان للمتدربة مسبقاً، وتم عمل استثناء لها وإعادة قيدها في المقرر (مقرر معاد قيده لتعديل الحرمان).' : 'تعني أنه رصد حرمان للمتدرب مسبقاً، وتم عمل استثناء له وإعادة قيده في المقرر (مقرر معاد قيده لتعديل الحرمان).';
         
         let activeTab = document.querySelector('._navItem.active');
         if (activeTab && !['nav-main','nav-excluded','nav-dashboard','nav-upload'].includes(activeTab.id)) {
