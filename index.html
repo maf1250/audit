@@ -1310,7 +1310,7 @@
     };
 
     window.renderTables = function(totalWeeks) {
-        let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب'; let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب'; let colInst = isFemale ? 'المدربة' : 'المدرب'; let colTotal = isFemale ? 'المتدربات المسجلات' : 'المتدربون المسجلون';
+        let colId = isFemale ? 'رقم المتدربة' : 'رقم المتدرب'; let colName = isFemale ? 'اسم المتدربة' : 'اسم المتدرب'; let colInst = isFemale ? 'المدربة' : 'المدرب'; let colTotal = isFemale ? 'عدد المسجلات' : 'عدد المسجلون'; let coldeprived = isFemale ? 'المحرومات' : 'المحرومين';
 
         // جداول المدربين والشعب الجديدة
         let htmlInst = `<table><thead><tr><th class="nowrap sortable" onclick="sortTable(this, 0, false)">الرقم الوظيفي</th><th class="nowrap sortable" onclick="sortTable(this, 1, false)">اسم ${colInst}</th><th class="nowrap text-center sortable" onclick="sortTable(this, 2, true)">إجمالي الشُعب</th><th class="nowrap text-center sortable" onclick="sortTable(this, 3, true)">${colTotal}</th><th class="nowrap text-center sortable" onclick="sortTable(this, 4, true)">حالات الحرمان</th><th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">متوسط الغياب</th><th class="nowrap text-center sortable" onclick="sortTable(this, 6, true)">محاضرات ملغاة</th><th class="nowrap text-center sortable" onclick="sortTable(this, 7, false)">تاريخ آخر تحضير رُصد</th></tr>${createFilterRow(8)}</thead><tbody>`;
@@ -1323,8 +1323,8 @@ let htmlSec = `<table><thead><tr>
             <th class="nowrap sortable" style="min-width: 250px;" onclick="sortTable(this, 2, false)">اسم المقرر</th>
             <th class="nowrap sortable text-center" onclick="sortTable(this, 3, false)">رقم ${colInst}</th>
             <th class="nowrap sortable" style="min-width: 200px;" onclick="sortTable(this, 4, false)">اسم ${colInst}</th>
-            <th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">المسجلين</th>
-            <th class="nowrap text-center sortable" onclick="sortTable(this, 6, true)">المحرومين</th>
+            <th class="nowrap text-center sortable" onclick="sortTable(this, 5, true)">${colTotal}</th>
+            <th class="nowrap text-center sortable" onclick="sortTable(this, 6, true)">${colInst}</th>
             <th class="nowrap text-center sortable" onclick="sortTable(this, 7, true)">متوسط الغياب</th>
         </tr>${createFilterRow(8)}</thead><tbody>`;
         
