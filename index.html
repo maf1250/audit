@@ -958,7 +958,7 @@
             let crn = row['الرقم المرجعي']; let courseCode = row['المقرر']; let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
             let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي'); 
             let isDeprived = (grade === 'ح' || regStatus.includes('حرمان بسبب غياب')); 
-            let isLifted = regStatus.includes('معاد قيده لتعديل الحرمان') || regStatus.includes('تعديل الحرمان') || regStatus.includes('مدير النظام');
+            let isLifted = regStatus.includes('معاد قيده لتعديل الحرمان') || regStatus.includes('تعديل الحرمان');
 
             if(crn && courseCode && !isCourseExcluded) {
                 traineesMap[id].courseCodes.add(courseCode);
