@@ -654,7 +654,6 @@
     window.deleteCurrentTerm = async function() {
         if(termsList.length <= 1) { alert("لا يمكن حذف الفصل الوحيد المتبقي!"); return; }
         if(confirm(`سيتم حذف بيانات "${activeTermName}" نهائياً؟`)) {
-            // مسح من IndexedDB (تجاوز حفظه)
             try {
                 let db = await openDB();
                 let transaction = db.transaction(['store'], 'readwrite');
@@ -662,10 +661,11 @@
             } catch(e){}
             
             termsList = termsList.filter(t => t !== activeTermName);
-            activeTermName = termsList[0]; // العودة لأول فصل
-            await switchTerm();
+            activeTermName = termsList[0];
             renderTermDropdown();
-            await saveDataLocally(); // حفظ القائمة الجديدة
+            await switchTerm();
+            
+            await saveDataLocally();  
         }
     };
 
