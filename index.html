@@ -1234,17 +1234,25 @@
         </div>
         <div class="admin-card" style="margin-bottom: 24px;"><h4 style="color: var(--primary);">تحليل الأقسام والتخصصات (مؤشر الخطورة)</h4><div class="_tableWrapper" style="max-height: none;"><table><thead><tr><th>التخصص</th><th class="text-center">${txt.trainees}</th><th class="text-center">${txt.deprived}</th><th class="text-center">تجاوز 20%</th><th class="text-center">متوسط الغياب</th><th class="text-center">مؤشر الخطورة</th></tr></thead><tbody>`;
 
-        let majorDataMap = {};
+      let majorDataMap = {};
         processedData.active.forEach(t => {
             if (!majorDataMap[t.major]) majorDataMap[t.major] = { count: 0, deprived: 0, over20: 0, sumPct: 0, pctCount: 0 };
-            majorDataMap[t.major].count++; if (t.totalDeprivedCourses > 0) majorDataMap[t.major].deprived++;
+            majorDataMap[t.major].count++; 
+            if (t.totalDeprivedCourses > 0) majorDataMap[t.major].deprived++;
+            
+            let hasOver20 = Object.values(t.crns).some(c => c.absPercentage > 20);
+            if (hasOver20) majorDataMap[t.major].over20++;
         });
 
         let courseStats = {};
         processedData.percentages.forEach(p => {
-            if (majorDataMap[p.major]) { if (p.absPercentage > 20) majorDataMap[p.major].over20++; majorDataMap[p.major].sumPct += p.absPercentage; majorDataMap[p.major].pctCount++; }
+            if (majorDataMap[p.major]) { 
+                majorDataMap[p.major].sumPct += p.absPercentage; 
+                majorDataMap[p.major].pctCount++; 
+            }
             if (!courseStats[p.courseName]) courseStats[p.courseName] = { deprived: 0, over20: 0 };
-            if (p.isDeprived) courseStats[p.courseName].deprived++; if (p.absPercentage > 20) courseStats[p.courseName].over20++;
+            if (p.isDeprived) courseStats[p.courseName].deprived++; 
+            if (p.absPercentage > 20) courseStats[p.courseName].over20++;
         });
 
         Object.keys(majorDataMap).sort().forEach(m => {
