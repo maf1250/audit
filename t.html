@@ -713,15 +713,42 @@
         switchTab('report-dashboard', document.getElementById('nav-dashboard'));
     };
 
-    window.deleteCurrentTerm = async function() {
-        if(termsList.length <= 1) { alert("لا يمكن حذف الفصل الوحيد المتبقي!"); return; }
-        if(confirm(`سيتم حذف بيانات "${activeTermName}" نهائياً؟`)) {
+window.deleteCurrentTerm = async function() {
+        if(termsList.length <= 1) { 
+            if(confirm("تنبيه هام جداً: هذا هو الفصل الوحيد المتبقي!\n\nهل تريد 'تفريغ النظام بالكامل'؟ (سيتم مسح جميع البيانات، الإعدادات، والنماذج المحفوظة والبدء من الصفر).")) {
+                try {
+                    // 1. مسح التخزين المحلي (LocalStorage) بالكامل
+                    localStorage.clear();
+                    
+                    // 2. مسح قاعدة البيانات (IndexedDB) بالكامل
+                    let db = await openDB();
+                    let transaction = db.transaction(['store'], 'readwrite');
+                    let store = transaction.objectStore('store');
+                    let clearRequest = store.clear(); // تفريغ كل السجلات
+                    
+                    clearRequest.onsuccess = function() {
+                        alert("تم تفريغ النظام وإعادة ضبطه بنجاح.\nسيتم تحديث الصفحة الآن.");
+                        location.reload(); // إعادة تحميل الصفحة لتنظيف الذاكرة العشوائية
+                    };
+                    
+                    clearRequest.onerror = function() {
+                        alert("حدث خطأ أثناء مسح قاعدة البيانات.");
+                    };
+                } catch(e) {
+                    console.error("Error during factory reset:", e);
+                }
+            }
+            return; 
+        }
+
+        if(confirm(`سيتم حذف بيانات الفصل "${activeTermName}" نهائياً؟`)) {
             try {
                 let db = await openDB();
                 let transaction = db.transaction(['store'], 'readwrite');
                 transaction.objectStore('store').delete('term_' + activeTermName);
             } catch(e){}
             
+            // إزالة الفصل من القائمة وتحديث الواجهة
             termsList = termsList.filter(t => t !== activeTermName);
             activeTermName = termsList[0];
             renderTermDropdown();
@@ -1813,8 +1840,9 @@ window.runComparison = async function() {
     document.getElementById('compError').style.display = 'none';
     document.getElementById('compResults').style.display = 'block';
 
+    let traineeLabel = isFemale ? "المتدربات المستمرات" : "المتدربون المستمرون";
     let metrics = [
-        { label: "المتدربون المستمرون", v1: stats1.activeTrainees, v2: stats2.activeTrainees, inverse: false },
+        { label: traineeLabel, v1: stats1.activeTrainees, v2: stats2.activeTrainees, inverse: false },
         { label: "حالات الحرمان (مقرر)", v1: stats1.deprivedCourses, v2: stats2.deprivedCourses, inverse: true },
         { label: "ساعات الغياب (بدون عذر)", v1: stats1.unexcusedHours, v2: stats2.unexcusedHours, inverse: true },
         { label: "ساعات الجلسات الملغاة", v1: stats1.canceledHours, v2: stats2.canceledHours, inverse: true } // الانخفاض هنا جيد
