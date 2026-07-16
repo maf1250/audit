@@ -854,7 +854,7 @@ function saveSettingsLocally() {
         localStorage.setItem('abs_reports_settings', JSON.stringify(settings));
     }
 
-    window.switchTab = function(tabId, el, titleOverride) {
+   window.switchTab = function(tabId, el, titleOverride) {
         document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
         document.getElementById(tabId).classList.remove('hidden');
         
@@ -867,12 +867,27 @@ function saveSettingsLocally() {
         } else if (titleOverride) {
             document.getElementById('pageTitle').innerText = titleOverride;
         }
+
+        // --- التحكم بظهور وإخفاء التصفية السريعة ---
+        let filtersBar = document.getElementById('filtersBar');
+        if (filtersBar) {
+            // إخفاء الشريط في صفحة الرفع، لوحة الإحصائيات، المدربين، والشعب
+            if (['upload', 'report-dashboard', 'report-instructors', 'report-sections'].includes(tabId)) {
+                filtersBar.style.display = 'none';
+            } else {
+                // إظهاره في باقي الصفحات (في حال وجود بيانات)
+                if (processedData && processedData.active && processedData.active.length > 0) {
+                    filtersBar.style.display = 'flex';
+                }
+            }
+        }
+        // ------------------------------------------
         
         if(tabId === 'report-dashboard' && processedData.active.length > 0) {
             setTimeout(() => renderDashboard(), 50);
         }
     };
-
+    
     window.renderFileDate = function(type, fDate) {
         let dateEl = document.getElementById(`date-${type}`);
         if(!dateEl) return;
@@ -1040,22 +1055,26 @@ window.filterTables = function() {
                     if (idTd && nameTd) matchGlobalText = (idVal.toLowerCase().indexOf(globalTextFilter) > -1 || nameVal.toLowerCase().indexOf(globalTextFilter) > -1);
                     else matchGlobalText = (tr.textContent || tr.innerText).toLowerCase().indexOf(globalTextFilter) > -1;
                     
-                    let rowMajor = tr.getAttribute('data-major') || "";
-                    let rowStatus = tr.getAttribute('data-status') || "";
-                    let rowAbsent = tr.getAttribute('data-absent') === 'true';
-                    
-                    // فلتر المستجدين الجديد
-                    let matchCohort = true;
-                    if (cohortFilter === "new" && window.highestCohort) {
-                        matchCohort = idVal.startsWith(window.highestCohort.toString());
-                    }
+                    let show = matchGlobalText;
 
-                    let matchMajor = majorFilter === "" || (tr.hasAttribute('data-major') ? rowMajor === majorFilter : true);
-                    let matchStatus = statusFilter === "" || (tr.hasAttribute('data-status') ? rowStatus === statusFilter : true);
-                    let matchAbsence = absenceFilter === "" || (absenceFilter === "absent" ? rowAbsent : true);
-                    
-                    // دمج جميع الفلاتر معاً
-                    let show = matchGlobalText && matchMajor && matchStatus && matchAbsence && matchCohort;
+                    // --- استثناء المدربين والشعب ولوحة الإحصائيات من فلاتر التصفية السريعة ---
+                    if (!['table-instructors', 'table-sections', 'dashboard-content'].includes(tabId)) {
+                        let rowMajor = tr.getAttribute('data-major') || "";
+                        let rowStatus = tr.getAttribute('data-status') || "";
+                        let rowAbsent = tr.getAttribute('data-absent') === 'true';
+                        
+                        let matchCohort = true;
+                        if (cohortFilter === "new" && window.highestCohort) {
+                            matchCohort = idVal.startsWith(window.highestCohort.toString());
+                        }
+
+                        let matchMajor = majorFilter === "" || (tr.hasAttribute('data-major') ? rowMajor === majorFilter : true);
+                        let matchStatus = statusFilter === "" || (tr.hasAttribute('data-status') ? rowStatus === statusFilter : true);
+                        let matchAbsence = absenceFilter === "" || (absenceFilter === "absent" ? rowAbsent : true);
+                        
+                        // تطبيق فلاتر التصفية السريعة فقط لجداول المتدربين
+                        show = show && matchMajor && matchStatus && matchAbsence && matchCohort;
+                    }
 
                     if (show && colFilters.length > 0) {
                         for (let i = 0; i < colFilters.length; i++) {
@@ -1277,6 +1296,18 @@ window.filterTables = function() {
         [...statusesSet].sort().forEach(s => statusSelect.innerHTML += `<option value="${s}">${s}</option>`);
         document.getElementById('filtersBar').classList.remove('hidden');
 
+        // التحكم بظهور الشريط بناءً على الصفحة المفتوحة وقت انتهاء المعالجة
+        let activeTab = document.querySelector('.tab-content:not(.hidden)');
+        let filtersBar = document.getElementById('filtersBar');
+        if (filtersBar) {
+            filtersBar.classList.remove('hidden');
+            if (activeTab && ['upload', 'report-dashboard', 'report-instructors', 'report-sections'].includes(activeTab.id)) {
+                filtersBar.style.display = 'none';
+            } else {
+                filtersBar.style.display = 'flex';
+            }
+        }
+        
         // --- خوارزمية تحديد دفعة المستجدين ---
         let cohortsSet = new Set();
         Object.keys(traineesMap).forEach(id => {
