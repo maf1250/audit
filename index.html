@@ -1304,7 +1304,33 @@ window.filterTables = function() {
             }
             
             let crn = row['الرقم المرجعي']; let courseCode = row['المقرر']; let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
-            let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي') || (courseName && (courseName.includes('التدريب التعاوني') || courseName.includes('التدريب الميداني'))); 
+            let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي'); 
+            let isCoop = courseName && (courseName.includes('التدريب التعاوني') || courseName.includes('التدريب الميداني'));
+
+if(crn && courseCode && !isCourseExcluded) {
+    // لا نضيف التعاوني لعدد المقررات حتى لا يؤثر على فلتر "الحرمان بكل المقررات"
+    if (!isCoop) traineesMap[id].courseCodes.add(courseCode); 
+    
+    if (!traineesMap[id].crns[crn]) {
+        let ch = courseHours[crn] || 0;
+        traineesMap[id].crns[crn] = { code: courseCode, name: courseName, hours: ch, absHours: 0, isOfficiallyDeprived: isDeprived, regStatus: regStatus, isLifted: isLifted, isCoop: isCoop };
+    } else {
+        if (isDeprived) traineesMap[id].crns[crn].isOfficiallyDeprived = true;
+        if (isLifted) {
+            traineesMap[id].crns[crn].isLifted = true;
+            traineesMap[id].crns[crn].isOfficiallyDeprived = false;
+        }
+        traineesMap[id].crns[crn].regStatus = regStatus;
+        traineesMap[id].crns[crn].isCoop = isCoop;
+    }
+    
+    // استبعاد التعاوني من إحصائيات المدربين والشعب
+    if(crnMap[crn] && !isCoop) {
+        crnMap[crn].enrolled++;
+        if(isDeprived) crnMap[crn].deprived++;
+        if(isLifted) crnMap[crn].liftedCount = (crnMap[crn].liftedCount || 0) + 1;
+    }
+}
             let isDeprived = (grade === 'ح' || regStatus.includes('حرمان بسبب غياب')); 
             let isLifted = regStatus.includes('معاد قيده لتعديل الحرمان') || regStatus.includes('تعديل الحرمان');
 
@@ -1416,6 +1442,7 @@ window.filterTables = function() {
            t.deprivedCourseCodes = new Set(); 
             Object.keys(t.crns).forEach(crn => {
                 let crnData = t.crns[crn]; let totalCrnHours = crnData.hours * totalWeeks;
+                if (crnData.isCoop) return; 
                 
                 // التأكيد على إلغاء الحرمان إذا كان مرفوعاً
                 if (crnData.isLifted) crnData.isOfficiallyDeprived = false;
@@ -1442,6 +1469,7 @@ window.filterTables = function() {
                 let totalActiveCrns = 0;
 
                 activeCrns.forEach(crn => {
+                    if (t.crns[crn].isCoop) return;
                     let scheduleHours = t.crns[crn].hours || 0;
                     // TTH يجلب لنا هل المدرب قام بتحضير أي شخص في هذه الشعبة أم لا
                     let taughtHours = (TTH[w] && TTH[w][crn]) ? TTH[w][crn] : 0; 
@@ -1581,17 +1609,31 @@ window.filterTables = function() {
 
         let tbody = document.querySelector('#tp-courses-table tbody'); tbody.innerHTML = '';
         if(trainee.crns) {
-            Object.keys(trainee.crns).forEach(crn => {
-                let c = trainee.crns[crn];
-                let badge = '';
-                if (c.isLifted) badge = '<span class="badge" style="background:rgba(249, 115, 22, 0.15); color:#ea580c; border:1px solid #ea580c;">رفع حرمان</span>';
-                else if (c.isOfficiallyDeprived) badge = '<span class="badge badge-danger">حرمان</span>';
-                else if (c.absPercentage > 20) badge = '<span class="badge badge-danger" style="background:#ea580c26; color:#ea580c; border-color:#ea580c;">تجاوز 20%</span>';
-                else badge = '<span class="badge badge-success">مستمر</span>';
-                
-                tbody.innerHTML += `<tr><td>${c.name}</td><td class="text-center mono">${crn}</td><td class="text-center mono">${c.absHours}</td><td class="text-center mono" style="color:${c.absPercentage>=15?'var(--danger)':'inherit'}">${c.absPercentage.toFixed(1)}%</td><td class="text-center" style="font-size:10px; color:var(--text-muted);">${c.regStatus || '-'}</td><td class="text-center">${badge}</td></tr>`;
-            });
+    Object.keys(trainee.crns).forEach(crn => {
+        let c = trainee.crns[crn];
+        let badge = '';
+        let pctDisplay = c.absPercentage ? c.absPercentage.toFixed(1) + '%' : '0.0%';
+        let absHoursDisplay = c.absHours;
+
+        if (c.isCoop) {
+            badge = '<span class="badge" style="background:var(--bg-hover); color:var(--text-secondary); border:1px solid var(--border-strong);">تدريب تعاوني</span>';
+            pctDisplay = '-';
+            absHoursDisplay = '-';
+        } else if (c.isLifted) { 
+            badge = '<span class="badge" style="background:rgba(249, 115, 22, 0.15); color:#ea580c; border:1px solid #ea580c;">رفع حرمان</span>';
+        } else if (c.isOfficiallyDeprived) { 
+            badge = '<span class="badge badge-danger">حرمان</span>';
+        } else if (c.absPercentage > 20) { 
+            badge = '<span class="badge badge-danger" style="background:#ea580c26; color:#ea580c; border-color:#ea580c;">تجاوز 20%</span>';
+        } else { 
+            badge = '<span class="badge badge-success">مستمر</span>';
         }
+        
+        let pctColor = (c.absPercentage >= 15 && !c.isCoop) ? 'var(--danger)' : 'inherit';
+        
+        tbody.innerHTML += `<tr><td>${c.name}</td><td class="text-center mono">${crn}</td><td class="text-center mono">${absHoursDisplay}</td><td class="text-center mono" style="color:${pctColor}">${pctDisplay}</td><td class="text-center" style="font-size:10px; color:var(--text-muted);">${c.regStatus || '-'}</td><td class="text-center">${badge}</td></tr>`;
+    });
+}
 
         let ul = document.getElementById('tp-absence-list'); ul.innerHTML = '';
         let details = fullTraineeSessionDetails[trainee.id] || [];
