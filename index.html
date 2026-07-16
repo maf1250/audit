@@ -434,8 +434,15 @@
             </div>
         </div>
 
-        <div id="filtersBar" class="_filtersBar hidden">   
+       <div id="filtersBar" class="_filtersBar hidden">   
             <span style="font-weight: 700; color: var(--text-secondary); font-size: 13px;">تصفية سريعة:</span>
+            
+            <!-- الفلتر الجديد للمستجدين -->
+            <select id="filterCohort" class="input-select" onchange="filterTables(); saveSettingsLocally();">
+                <option value="">الجميع (مستجدين ومستمرين)</option>
+                <option value="new">المستجدين فقط</option>
+            </select>
+
             <select id="filterMajor" class="input-select" onchange="filterTables(); saveSettingsLocally();">
                 <option value="">كل التخصصات</option>
             </select>
@@ -835,9 +842,10 @@ window.deleteCurrentTerm = async function() {
         }
     };
 
-    function saveSettingsLocally() {
+function saveSettingsLocally() {
         let settings = {
             weeks: document.getElementById('totalWeeks').value,
+            cohort: document.getElementById('filterCohort') ? document.getElementById('filterCohort').value : '',
             major: document.getElementById('filterMajor') ? document.getElementById('filterMajor').value : '',
             status: document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '',
             absence: document.getElementById('filterAbsence') ? document.getElementById('filterAbsence').value : '',
@@ -1008,8 +1016,9 @@ window.deleteCurrentTerm = async function() {
         tbody.append(...rows);
     };
 
-    window.filterTables = function() {
+window.filterTables = function() {
         let input = document.getElementById('searchInput'); let globalTextFilter = input.value.trim().toLowerCase();
+        let cohortFilter = document.getElementById('filterCohort') ? document.getElementById('filterCohort').value : "";
         let majorFilter = document.getElementById('filterMajor') ? document.getElementById('filterMajor').value : "";
         let statusFilter = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : "";
         let absenceFilter = document.getElementById('filterAbsence') ? document.getElementById('filterAbsence').value : "";
@@ -1024,7 +1033,8 @@ window.deleteCurrentTerm = async function() {
                 
                 trs.forEach(tr => {
                     let idTd = tr.getElementsByTagName("td")[0]; let nameTd = tr.getElementsByTagName("td")[1];
-                    let idVal = idTd ? (idTd.textContent || idTd.innerText) : ""; let nameVal = nameTd ? (nameTd.textContent || nameTd.innerText) : "";
+                    let idVal = idTd ? (idTd.textContent || idTd.innerText).trim() : ""; 
+                    let nameVal = nameTd ? (nameTd.textContent || nameTd.innerText).trim() : "";
                     
                     let matchGlobalText = false;
                     if (idTd && nameTd) matchGlobalText = (idVal.toLowerCase().indexOf(globalTextFilter) > -1 || nameVal.toLowerCase().indexOf(globalTextFilter) > -1);
@@ -1034,11 +1044,18 @@ window.deleteCurrentTerm = async function() {
                     let rowStatus = tr.getAttribute('data-status') || "";
                     let rowAbsent = tr.getAttribute('data-absent') === 'true';
                     
+                    // فلتر المستجدين الجديد
+                    let matchCohort = true;
+                    if (cohortFilter === "new" && window.highestCohort) {
+                        matchCohort = idVal.startsWith(window.highestCohort.toString());
+                    }
+
                     let matchMajor = majorFilter === "" || (tr.hasAttribute('data-major') ? rowMajor === majorFilter : true);
                     let matchStatus = statusFilter === "" || (tr.hasAttribute('data-status') ? rowStatus === statusFilter : true);
                     let matchAbsence = absenceFilter === "" || (absenceFilter === "absent" ? rowAbsent : true);
                     
-                    let show = matchGlobalText && matchMajor && matchStatus && matchAbsence;
+                    // دمج جميع الفلاتر معاً
+                    let show = matchGlobalText && matchMajor && matchStatus && matchAbsence && matchCohort;
 
                     if (show && colFilters.length > 0) {
                         for (let i = 0; i < colFilters.length; i++) {
@@ -1259,6 +1276,24 @@ window.deleteCurrentTerm = async function() {
         const statusSelect = document.getElementById('filterStatus'); statusSelect.innerHTML = '<option value="">كل الحالات</option>';
         [...statusesSet].sort().forEach(s => statusSelect.innerHTML += `<option value="${s}">${s}</option>`);
         document.getElementById('filtersBar').classList.remove('hidden');
+
+        // --- خوارزمية تحديد دفعة المستجدين ---
+        let cohortsSet = new Set();
+        Object.keys(traineesMap).forEach(id => {
+            let idStr = String(id).trim();
+            if(idStr.length >= 4) {
+                cohortsSet.add(parseInt(idStr.substring(0, 4))); // أخذ أول 4 أرقام
+            }
+        });
+        // تحديد أكبر دفعة (المستجدين)
+        window.highestCohort = cohortsSet.size > 0 ? Math.max(...Array.from(cohortsSet)) : 0;
+        
+        // تحديث نص الفلتر ليوضح للمستخدم رقم الدفعة المكتشفة تلقائياً
+        let cohortSelect = document.getElementById('filterCohort');
+        if(cohortSelect && window.highestCohort > 0) {
+            cohortSelect.options[1].text = `المستجدين (دفعة ${window.highestCohort})`;
+        }
+        // ----------------------------------------
 
         let traineeSessionStatus = {}; fullTraineeSessionDetails = {};
         rawData.so04.forEach(row => {
@@ -1837,7 +1872,7 @@ Object.values(t.crns).forEach(c => {
         htmlThreatened += `</tbody></table>`; document.getElementById('table-threatened').innerHTML = htmlThreatened;
 
         if (window.savedFilters) {
-            ['filterMajor', 'filterStatus', 'filterAbsence', 'searchInput'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = window.savedFilters[id.replace('filter','').toLowerCase()] || ''; });
+['filterCohort', 'filterMajor', 'filterStatus', 'filterAbsence', 'searchInput'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = window.savedFilters[id.replace('filter','').toLowerCase()] || ''; });
         }
         window.filterTables();
     };
