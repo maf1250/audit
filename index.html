@@ -1186,7 +1186,7 @@ window.filterTables = function() {
             let courseName = row['اسم المقرر'] || row['عنوان المقرر'] || '';
             let instId = (row['رقم المدرب'] || row['الرقم الوظيفي'] || row['رقم المدربة'])?.toString().trim();
             let instName = (row['إسم المدرب'] || row['اسم المدرب'] || row['إسم المدربة'] || row['اسم المدربة'])?.toString().trim();
-            
+            if (courseName && (courseName.includes('التدريب التعاوني') || courseName.includes('التدريب الميداني'))) return;
             if(crn && !crnMap[crn]) {
                 crnMap[crn] = { code: courseCode, name: courseName, instId: instId, instName: instName, hours: 0, enrolled:0, deprived:0, totalAbsPct:0 };
             }
@@ -1304,7 +1304,7 @@ window.filterTables = function() {
             }
             
             let crn = row['الرقم المرجعي']; let courseCode = row['المقرر']; let courseName = row['اسم المقرر'] || row['عنوان المقرر'];
-            let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي'); 
+            let isCourseExcluded = regStatus.includes('انسحاب') || regStatus.includes('مطوي') || (courseName && (courseName.includes('التدريب التعاوني') || courseName.includes('التدريب الميداني'))); 
             let isDeprived = (grade === 'ح' || regStatus.includes('حرمان بسبب غياب')); 
             let isLifted = regStatus.includes('معاد قيده لتعديل الحرمان') || regStatus.includes('تعديل الحرمان');
 
