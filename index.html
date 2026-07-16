@@ -267,6 +267,28 @@
 .variance-bad { background: var(--danger-subtle); color: var(--danger); }
 .variance-neutral { background: var(--bg-hover); color: var(--text-secondary); }
 
+        /* تأثيرات مؤشر التحميل */
+#loadingOverlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 10000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: all 0.3s;
+    backdrop-filter: blur(5px);
+}
+#loadingOverlay.active { opacity: 1; visibility: visible; }
+
+.spinner-container { text-align: center; color: #fff; }
+.spinner {
+    width: 60px; height: 60px;
+    border: 5px solid rgba(52, 194, 180, 0.2);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 1s ease-in-out infinite;
+    margin: 0 auto 15px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+        
         /* تثبيت أعمدة رقم المتدرب واسم المتدرب في الجداول ذات الصلة */
         :is(#table-main, #table-matrix, #table-percentages, #table-threatened, #table-fullweek, #table-deprived-all, #table-deprived-except, #table-excluded) table th:nth-child(1),
         :is(#table-main, #table-matrix, #table-percentages, #table-threatened, #table-fullweek, #table-deprived-all, #table-deprived-except, #table-excluded) table td:nth-child(1) {
@@ -535,6 +557,15 @@
     </div>
 </div>
 
+    <!-- شاشة التحميل -->
+<div id="loadingOverlay">
+    <div class="spinner-container">
+        <div class="spinner"></div>
+        <h3 style="margin: 0; font-family: var(--font-family);">جاري تجهيز النسخة الاحتياطية...</h3>
+        <p style="font-size: 13px; color: #aaa; margin-top: 5px;">يرجى الانتظار، قد يستغرق الأمر بضع ثوانٍ</p>
+    </div>
+</div>
+    
 <!-- Modal تعديل الواتساب -->
 <div id="waModal" class="modal-overlay">
     <div class="modal-content">
@@ -2170,7 +2201,12 @@ window.runComparison = async function() {
     });
 };
 
-    window.exportBackup = async function() {
+window.exportBackup = async function() {
+    // 1. إظهار شاشة التحميل
+    document.getElementById('loadingOverlay').classList.add('active');
+
+    // 2. استخدام setTimeout لإعطاء المتصفح فرصة لرسم شاشة التحميل قبل بدء العمل الثقيل
+    setTimeout(async () => {
         try {
             let backupData = {
                 localStorage: {
@@ -2195,19 +2231,39 @@ window.runComparison = async function() {
                     backupData.indexedDB[cursor.key] = cursor.value;
                     cursor.continue();
                 } else {
-                    let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+                    // تم تجميع البيانات - الآن ننشئ الملف بطريقة Blob الأسرع
+                    const jsonString = JSON.stringify(backupData);
+                    const blob = new Blob([jsonString], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    
                     let dlAnchorElem = document.createElement('a');
                     let dateLabel = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-                    dlAnchorElem.setAttribute("href", dataStr);
+                    dlAnchorElem.setAttribute("href", url);
                     dlAnchorElem.setAttribute("download", `نسخة_احتياطية_لنظام_متابعة_الغياب_${dateLabel}.json`);
+                    document.body.appendChild(dlAnchorElem); // ضروري لبعض المتصفحات
                     dlAnchorElem.click();
+                    document.body.removeChild(dlAnchorElem);
+
+                    // 3. إخفاء شاشة التحميل وتنظيف الذاكرة
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                        document.getElementById('loadingOverlay').classList.remove('active');
+                    }, 500);
                 }
             };
+            
+            request.onerror = function() {
+                document.getElementById('loadingOverlay').classList.remove('active');
+                alert("حدث خطأ أثناء قراءة قاعدة البيانات.");
+            };
+
         } catch(e) {
+            document.getElementById('loadingOverlay').classList.remove('active');
             alert("حدث خطأ أثناء استخراج النسخة الاحتياطية.");
             console.error(e);
         }
-    };
+    }, 50); // تأخير 50 جزء من الثانية يكفي لظهور الأنيميشن
+};
 
     window.importBackup = function(e) {
         let file = e.target.files[0];
