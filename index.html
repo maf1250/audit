@@ -924,9 +924,27 @@ window.switchTab = function(tabId, el, titleOverride) {
         }
     };
     
-    window.renderFileDate = function(type, fDate) {
+window.renderFileDate = function(type, fDate) {
         let dateEl = document.getElementById(`date-${type}`);
         if(!dateEl) return;
+        
+        // استخراج الفصل التدريبي من البيانات لمعرفته
+        let terms = new Set();
+        if(rawData && rawData[type] && rawData[type].length > 0) {
+            rawData[type].forEach(row => {
+                let term = row['الفصل التدريبي'] || row['الفصل'];
+                if(term && term.toString().trim() !== "") {
+                    terms.add(term.toString().trim());
+                }
+            });
+        }
+        let termStr = Array.from(terms).join(' + ');
+        if(termStr === "") termStr = "غير محدد";
+        
+        // تنسيق تنبيه بصري إذا كان الملف مدمجاً بأكثر من فصل
+        let termColor = terms.size > 1 ? 'var(--danger)' : 'var(--primary)';
+        let termWarning = terms.size > 1 ? '<br><span style="color:var(--danger); font-size:10.5px;">(تنبيه: الملف يحتوي على بيانات مدمجة لعدة فصول)</span>' : '';
+
         let now = new Date();
         let diffMs = Math.abs(now - fDate);
         let diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
@@ -940,10 +958,15 @@ window.switchTab = function(tabId, el, titleOverride) {
         let dateStr = fDate.toLocaleDateString('en-GB') + ' ' + fDate.toLocaleTimeString('en-US');
         let color = days >= 3 ? 'var(--danger)' : (days >= 1 ? 'var(--warning)' : 'var(--success)');
         
-        dateEl.innerHTML = `<div style="background:var(--bg-elevated); padding:6px 12px; border-radius:6px; border:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; width:100%; font-weight:normal;">
-            <div style="text-align:right;">تاريخ الملف: <span dir="ltr" style="display:inline-block; font-weight:bold;">${dateStr}</span><br>
-            <span style="color:${color}; font-weight:bold; font-size:11px;">(عمر التقرير: ${ageText})</span></div>
-            <button onclick="event.stopPropagation(); deleteReport('${type}');" style="background:var(--danger-subtle); color:var(--danger); border:1px solid var(--danger); border-radius:4px; padding:2px 8px; cursor:pointer; font-weight:bold; font-size:12px; transition:all 0.2s;" title="حذف هذا التقرير">✖</button>
+        dateEl.innerHTML = `<div style="background:var(--bg-elevated); padding:8px 12px; border-radius:6px; border:1px solid var(--border); width:100%; font-weight:normal; text-align:right;">
+            <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--border-strong); font-size: 12px; font-weight: bold; color: var(--text-secondary);">
+                الفصل التدريبي: <span style="color:${termColor};">${termStr}</span>${termWarning}
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div>تاريخ الملف: <span dir="ltr" style="display:inline-block; font-weight:bold;">${dateStr}</span><br>
+                <span style="color:${color}; font-weight:bold; font-size:11px;">(عمر التقرير: ${ageText})</span></div>
+                <button onclick="event.stopPropagation(); deleteReport('${type}');" style="background:var(--danger-subtle); color:var(--danger); border:1px solid var(--danger); border-radius:4px; padding:2px 8px; cursor:pointer; font-weight:bold; font-size:12px; transition:all 0.2s;" title="حذف هذا التقرير">✖</button>
+            </div>
         </div>`;
     };
 
@@ -964,7 +987,7 @@ window.switchTab = function(tabId, el, titleOverride) {
         const file = e.target.files[0]; if (!file) return;
         let dropZone = document.getElementById(`drop-${type}`); dropZone.classList.add('has-file');
         let pEl = dropZone.querySelector('p'); pEl.innerText = file.name;
-        let fDate = new Date(file.lastModified); fileDates[type] = fDate.getTime(); renderFileDate(type, fDate);
+        let fDate = new Date(file.lastModified); fileDates[type] = fDate.getTime(); 
 
         const reader = new FileReader();
         reader.onload = async function(evt) {
@@ -972,6 +995,10 @@ window.switchTab = function(tabId, el, titleOverride) {
             const workbook = XLSX.read(data, {type: 'array'});
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
+            
+            // تم نقل دالة العرض هنا لكي تقرأ الفصل التدريبي بعد تفريغ الإكسل
+            renderFileDate(type, fDate); 
+            
             await saveDataLocally(); window.processData();
         };
         reader.readAsArrayBuffer(file); e.target.value = null; 
