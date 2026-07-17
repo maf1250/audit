@@ -1383,32 +1383,9 @@ window.filterTables = function() {
                 // لا نضيف التعاوني لعدد المقررات حتى لا يؤثر على فلتر "الحرمان بكل المقررات"
                 if (!isCoop) traineesMap[id].courseCodes.add(courseCode); 
                 
-              if (!traineesMap[id].crns[crn]) {
-                    let ch = courseHours[crn] || 0;
-                    traineesMap[id].crns[crn] = { code: courseCode, name: courseName, hours: ch, absHours: 0, absPercentage: 0, isOfficiallyDeprived: isDeprived, regStatus: regStatus, isLifted: isLifted, isCoop: isCoop };
-                } else {
-                    if (isDeprived) traineesMap[id].crns[crn].isOfficiallyDeprived = true;
-                    if (isLifted) {
-                        traineesMap[id].crns[crn].isLifted = true;
-                        traineesMap[id].crns[crn].isOfficiallyDeprived = false;
-                    }
-                    traineesMap[id].crns[crn].regStatus = regStatus;
-                    traineesMap[id].crns[crn].isCoop = isCoop;
-                }
-                
-                // استبعاد التعاوني من إحصائيات المدربين والشعب
-                if(crnMap[crn] && !isCoop) {
-                    crnMap[crn].enrolled++;
-                    if(isDeprived) crnMap[crn].deprived++;
-                    if(isLifted) crnMap[crn].liftedCount = (crnMap[crn].liftedCount || 0) + 1;
-                }
-            }
-        
-            if(crn && courseCode && !isCourseExcluded) {
-                traineesMap[id].courseCodes.add(courseCode);
                 if (!traineesMap[id].crns[crn]) {
                     let ch = courseHours[crn] || 0;
-                    traineesMap[id].crns[crn] = { code: courseCode, name: courseName, hours: ch, absHours: 0, isOfficiallyDeprived: isDeprived, regStatus: regStatus, isLifted: isLifted };
+                    traineesMap[id].crns[crn] = { code: courseCode, name: courseName, hours: ch, absHours: 0, absPercentage: 0, isOfficiallyDeprived: isDeprived, regStatus: regStatus, isLifted: isLifted, isCoop: isCoop };
                 } else {
                     if (isDeprived) traineesMap[id].crns[crn].isOfficiallyDeprived = true;
                     if (isLifted) {
@@ -1416,10 +1393,11 @@ window.filterTables = function() {
                         traineesMap[id].crns[crn].isOfficiallyDeprived = false; // إلغاء الحرمان فوراً إذا تم رفعه
                     }
                     traineesMap[id].crns[crn].regStatus = regStatus; // تحديث بأحدث حالة
+                    traineesMap[id].crns[crn].isCoop = isCoop;
                 }
                 
-                // تحديث بيانات الشُعب والمدربين لحالات الرفع
-                if(crnMap[crn]) {
+                // استبعاد التعاوني من إحصائيات المدربين والشعب وتحديث بيانات الشُعب لحالات الرفع
+                if(crnMap[crn] && !isCoop) {
                     crnMap[crn].enrolled++;
                     if(isDeprived) crnMap[crn].deprived++;
                     if(isLifted) crnMap[crn].liftedCount = (crnMap[crn].liftedCount || 0) + 1;
