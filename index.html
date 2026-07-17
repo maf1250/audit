@@ -1484,10 +1484,19 @@ window.filterTables = function() {
         processedData.active = []; processedData.excluded = []; processedData.percentages = [];
 
        Object.values(traineesMap).forEach(t => {
-            let isFullyExcluded = t.traineeStatus.includes('انسحاب') || t.traineeStatus.includes('مطوي') || t.courseCodes.size === 0;
-            if(isFullyExcluded) { t.totalUniqueCourses = t.courseCodes.size; processedData.excluded.push(t); return; }
+            // 1. التحقق مما إذا كان المتدرب خريجاً
+            let isGraduated = t.traineeStatus && t.traineeStatus.includes('خريج');
+
+            // 2. تصنيف المنسحبين والمطوي قيدهم (بشرط ألا يكون خريجاً حتى لا يتم إخفاؤه)
+            let isFullyExcluded = t.traineeStatus.includes('انسحاب') || t.traineeStatus.includes('مطوي') || (!isGraduated && Object.keys(t.crns).length === 0);
+            
+            if(isFullyExcluded) { 
+                t.totalUniqueCourses = t.courseCodes.size; 
+                processedData.excluded.push(t); 
+                return; 
+            }
            
-           t.deprivedCourseCodes = new Set(); 
+           t.deprivedCourseCodes = new Set();
             Object.keys(t.crns).forEach(crn => {
                 let crnData = t.crns[crn]; let totalCrnHours = crnData.hours * totalWeeks;
                 if (crnData.isCoop) return; 
