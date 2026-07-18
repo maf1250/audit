@@ -1625,7 +1625,7 @@ window.filterTables = function() {
         document.getElementById('badge-matrix').innerText = processedData.active.length;
         document.getElementById('badge-percentages').innerText = processedData.percentages.length;
         document.getElementById('badge-threatened').innerText = processedData.percentages.filter(p => p.absPercentage >= 18 && p.absPercentage <= 20).length;
-        document.getElementById('badge-fullweek').innerText = processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).length;
+        document.getElementById('badge-fullweek').innerText = processedData.active.filter(t => Object.values(t.weekStatuses).some(s => s === 'كامل' || s === 'محتمل')).length;
         document.getElementById('badge-deprived-all').innerText = processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).length;
         document.getElementById('badge-deprived-except').innerText = processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).length;
         document.getElementById('badge-excluded').innerText = processedData.excluded.length;
@@ -1727,7 +1727,7 @@ window.filterTables = function() {
         let deprivedTrainees = processedData.active.filter(t => t.totalDeprivedCourses > 0).length;
         let over20Trainees = new Set(processedData.percentages.filter(p => p.absPercentage > 20).map(p => p.traineeId)).size;
         let warning15Trainees = new Set(processedData.percentages.filter(p => p.absPercentage >= 15 && p.absPercentage <= 20).map(p => p.traineeId)).size;
-        let fullWeekAbsent = processedData.active.filter(t => Object.values(t.weekStatuses || {}).includes('كامل')).length;    
+        let fullWeekAbsent = processedData.active.filter(t => Object.values(t.weekStatuses || {}).some(s => s === 'كامل' || s === 'محتمل')).length;    
         let allAbsPercentages = processedData.percentages.map(p => p.absPercentage);
         let avgAbsence = allAbsPercentages.length > 0 ? (allAbsPercentages.reduce((a,b)=>a+b,0) / allAbsPercentages.length) : 0;
         let statusCounts = {}; [...processedData.active, ...processedData.excluded].forEach(t => { let s = t.traineeStatus && t.traineeStatus.trim() !== "" ? t.traineeStatus : "غير محدد"; statusCounts[s] = (statusCounts[s] || 0) + 1; });
@@ -2023,7 +2023,7 @@ Object.values(t.crns).forEach(c => {
         });
         htmlMatrix += `</tbody></table>`; document.getElementById('table-matrix').innerHTML = htmlMatrix;
 
-        let htmlFull = `<table>${createThead(false)}<tbody>`; processedData.active.filter(t => Object.values(t.weekStatuses).includes('كامل')).forEach(t => htmlFull += createRow(t, false)); htmlFull += `</tbody></table>`; document.getElementById('table-fullweek').innerHTML = htmlFull;
+        let htmlFull = `<table>${createThead(false)}<tbody>`; processedData.active.filter(t => Object.values(t.weekStatuses).some(s => s === 'كامل' || s === 'محتمل')).forEach(t => htmlFull += createRow(t, false)); htmlFull += `</tbody></table>`; document.getElementById('table-fullweek').innerHTML = htmlFull;
         let htmlDepAll = `<table>${createThead(false)}<tbody>`; processedData.active.filter(t => t.totalUniqueCourses > 0 && t.totalDeprivedCourses === t.totalUniqueCourses).forEach(t => htmlDepAll += createRow(t, false)); htmlDepAll += `</tbody></table>`; document.getElementById('table-deprived-all').innerHTML = htmlDepAll;
         let htmlDepExc = `<table>${createThead(false)}<tbody>`; processedData.active.filter(t => t.totalUniqueCourses > 1 && t.totalDeprivedCourses === (t.totalUniqueCourses - 1)).forEach(t => htmlDepExc += createRow(t, false)); htmlDepExc += `</tbody></table>`; document.getElementById('table-deprived-except').innerHTML = htmlDepExc;
         let htmlExc = `<table>${createThead(true)}<tbody>`; processedData.excluded.forEach(t => htmlExc += createRow(t, true)); htmlExc += `</tbody></table>`; document.getElementById('table-excluded').innerHTML = htmlExc;
