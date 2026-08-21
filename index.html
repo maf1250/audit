@@ -1156,10 +1156,10 @@ window.renderFileDate = function(type, fDate) {
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         rawData[type] = XLSX.utils.sheet_to_json(firstSheet, {defval: ""});
         
-        // ---- إضافة التسمية التلقائية للفصل ----
-        if (activeTermName === "الفصل الحالي" && rawData[type] && rawData[type].length > 0) {
+        // ---- إضافة التسمية التلقائية للفصل (من ملف SS01 فقط) ----
+        if (type === 'ss01' && activeTermName === "الفصل الحالي" && rawData.ss01 && rawData.ss01.length > 0) {
             let extractedTerm = null;
-            for (let row of rawData[type]) {
+            for (let row of rawData.ss01) {
                 let term = row['الفصل التدريبي'] || row['الفصل'];
                 if (term && term.toString().trim() !== "") {
                     extractedTerm = term.toString().trim();
@@ -1178,7 +1178,6 @@ window.renderFileDate = function(type, fDate) {
                 } catch(err) {}
             }
         }
-        // ----------------------------------------
         
         // تحديث العرض للملفات المرفوعة لتطبيق اللون الأحمر إذا وُجد تعارض
         if(fileDates.sf01) renderFileDate('sf01', new Date(fileDates.sf01)); 
