@@ -896,19 +896,23 @@
             'so04': 'التقرير التاريخي للغياب'
         };
 
-        ['sf01', 'ss01', 'so04'].forEach(type => {
+      ['sf01', 'ss01', 'so04'].forEach(type => {
             let dropz = document.getElementById(`drop-${type}`);
+            let dateEl = document.getElementById(`date-${type}`);
             if(rawData[type] && rawData[type].length > 0) {
                 dropz.classList.add('has-file');
-                // عرض اسم الملف إن وُجد، وإلا يعرض الوصف الأصلي
                 dropz.querySelector('p').innerText = fileNames[type] || defaultTitles[type];
+                if (fileDates[type]) {
+                    renderFileDate(type, new Date(fileDates[type]));
+                } else if (dateEl) {
+                    dateEl.innerHTML = '';
+                }
             } else {
                 dropz.classList.remove('has-file');
                 dropz.querySelector('p').innerText = defaultTitles[type];
-                let dateEl = document.getElementById(`date-${type}`); if(dateEl) dateEl.innerHTML = '';
+                if(dateEl) dateEl.innerHTML = '';
             }
         });
-
         processData();
         switchTab('report-dashboard', document.getElementById('nav-dashboard'));
     };
@@ -2260,16 +2264,27 @@ Object.values(t.crns).forEach(c => {
                         'so04': 'التقرير التاريخي للغياب'
                     };
                     
-                    Object.keys(fileDates).forEach(type => { 
-                        if (fileDates[type] && rawData[type] && rawData[type].length > 0) { 
-                            renderFileDate(type, new Date(fileDates[type])); 
-                            let dropz = document.getElementById(`drop-${type}`); 
-                            if(dropz) { 
-                                dropz.classList.add('has-file'); 
-                                dropz.querySelector('p').innerText = fileNames[type] || defaultTitles[type]; 
-                            } 
-                        } 
-                    });
+                    ['sf01', 'ss01', 'so04'].forEach(type => {
+                    let dropz = document.getElementById(`drop-${type}`);
+                    let dateEl = document.getElementById(`date-${type}`);
+                    if (rawData[type] && rawData[type].length > 0) {
+                        if (dropz) {
+                            dropz.classList.add('has-file');
+                            dropz.querySelector('p').innerText = fileNames[type] || defaultTitles[type];
+                        }
+                        if (fileDates[type]) {
+                            renderFileDate(type, new Date(fileDates[type]));
+                        } else if (dateEl) {
+                            dateEl.innerHTML = '';
+                        }
+                    } else {
+                        if (dropz) {
+                            dropz.classList.remove('has-file');
+                            dropz.querySelector('p').innerText = defaultTitles[type];
+                        }
+                        if (dateEl) dateEl.innerHTML = '';
+                    }
+                });
                 
                 if (rawData.sf01?.length > 0 && rawData.ss01?.length > 0 && rawData.so04?.length > 0) { 
                     processData(); switchTab('report-dashboard', document.getElementById('nav-dashboard')); 
